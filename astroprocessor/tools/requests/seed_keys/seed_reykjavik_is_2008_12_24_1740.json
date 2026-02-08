@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "2008-12-24",
+    "time": "17:40",
+    "place_query": "Reykjavik, Iceland",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

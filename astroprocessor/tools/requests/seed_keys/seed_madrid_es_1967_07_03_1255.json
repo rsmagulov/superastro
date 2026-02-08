@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1967-07-03",
+    "time": "12:55",
+    "place_query": "Madrid, Spain",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

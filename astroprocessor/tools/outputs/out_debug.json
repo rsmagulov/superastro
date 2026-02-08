@@ -1,0 +1,415 @@
+﻿{
+    "ok":  true,
+    "topic_category":  "money",
+    "coverage":  "empty",
+    "text":  "Пока нет интерпретаций в базе знаний для этих ключей.\nСледующий шаг: добавить записи в knowledge_items для базовых ключей (например, natal.planet.sun.sign.any, natal.angle.asc.sign.any и т.д.).",
+    "meta":  {
+                 "place":  {
+                               "display_name":  "Алматы, Казахстан",
+                               "lat":  43.2363924,
+                               "lon":  76.9457275,
+                               "country_code":  "kz",
+                               "timezone":  "Asia/Almaty",
+                               "source":  "cache"
+                           },
+                 "raw":  {
+                             "blocks":  [
+
+                                        ]
+                         },
+                 "final":  {
+                               "source":  "raw.blocks",
+                               "mode":  "empty",
+                               "blocks_used":  0
+                           },
+                 "trace":  {
+                               "selection":  [
+                                                 {
+                                                     "id":  "sun_core",
+                                                     "candidate_keys":  [
+                                                                            "natal.planet.sun.sign.capricorn.house.10",
+                                                                            "natal.planet.sun.sign.capricorn.house.any",
+                                                                            "natal.planet.sun.sign.capricorn",
+                                                                            "natal.planet.sun.sign.any",
+                                                                            "natal.planet.sun",
+                                                                            "natal.generic"
+                                                                        ],
+                                                     "meta":  {
+                                                                  "planet":  "sun",
+                                                                  "sign":  "capricorn",
+                                                                  "house":  10,
+                                                                  "unknown_time":  false
+                                                              }
+                                                 },
+                                                 {
+                                                     "id":  "moon_core",
+                                                     "candidate_keys":  [
+                                                                            "natal.planet.moon.sign.scorpio.house.8",
+                                                                            "natal.planet.moon.sign.scorpio.house.any",
+                                                                            "natal.planet.moon.sign.scorpio",
+                                                                            "natal.planet.moon.sign.any",
+                                                                            "natal.planet.moon",
+                                                                            "natal.generic"
+                                                                        ],
+                                                     "meta":  {
+                                                                  "planet":  "moon",
+                                                                  "sign":  "scorpio",
+                                                                  "house":  8,
+                                                                  "unknown_time":  false
+                                                              }
+                                                 },
+                                                 {
+                                                     "id":  "mercury_core",
+                                                     "candidate_keys":  [
+                                                                            "natal.planet.mercury.sign.capricorn.house.10",
+                                                                            "natal.planet.mercury.sign.capricorn.house.any",
+                                                                            "natal.planet.mercury.sign.capricorn",
+                                                                            "natal.planet.mercury.sign.any",
+                                                                            "natal.planet.mercury",
+                                                                            "natal.generic"
+                                                                        ],
+                                                     "meta":  {
+                                                                  "planet":  "mercury",
+                                                                  "sign":  "capricorn",
+                                                                  "house":  10,
+                                                                  "unknown_time":  false
+                                                              }
+                                                 },
+                                                 {
+                                                     "id":  "venus_core",
+                                                     "candidate_keys":  [
+                                                                            "natal.planet.venus.sign.sagittarius.house.8",
+                                                                            "natal.planet.venus.sign.sagittarius.house.any",
+                                                                            "natal.planet.venus.sign.sagittarius",
+                                                                            "natal.planet.venus.sign.any",
+                                                                            "natal.planet.venus",
+                                                                            "natal.generic"
+                                                                        ],
+                                                     "meta":  {
+                                                                  "planet":  "venus",
+                                                                  "sign":  "sagittarius",
+                                                                  "house":  8,
+                                                                  "unknown_time":  false
+                                                              }
+                                                 },
+                                                 {
+                                                     "id":  "mars_core",
+                                                     "candidate_keys":  [
+                                                                            "natal.planet.mars.sign.aquarius.house.12",
+                                                                            "natal.planet.mars.sign.aquarius.house.any",
+                                                                            "natal.planet.mars.sign.aquarius",
+                                                                            "natal.planet.mars.sign.any",
+                                                                            "natal.planet.mars",
+                                                                            "natal.generic"
+                                                                        ],
+                                                     "meta":  {
+                                                                  "planet":  "mars",
+                                                                  "sign":  "aquarius",
+                                                                  "house":  12,
+                                                                  "unknown_time":  false
+                                                              }
+                                                 },
+                                                 {
+                                                     "id":  "asc_core",
+                                                     "candidate_keys":  [
+                                                                            "natal.angle.asc.sign.pisces",
+                                                                            "natal.angle.asc.sign.any",
+                                                                            "natal.angle.asc",
+                                                                            "natal.generic"
+                                                                        ],
+                                                     "meta":  {
+                                                                  "angle":  "asc",
+                                                                  "sign":  "pisces"
+                                                              }
+                                                 },
+                                                 {
+                                                     "id":  "mc_core",
+                                                     "candidate_keys":  [
+                                                                            "natal.angle.mc.sign.sagittarius",
+                                                                            "natal.angle.mc.sign.any",
+                                                                            "natal.angle.mc",
+                                                                            "natal.generic"
+                                                                        ],
+                                                     "meta":  {
+                                                                  "angle":  "mc",
+                                                                  "sign":  "sagittarius"
+                                                              }
+                                                 }
+                                             ],
+                               "hits":  [
+
+                                        ]
+                           },
+                 "fallback":  {
+                                  "mode":  "fts_chunks_v1",
+                                  "hits_count":  0,
+                                  "intent":  {
+                                                 "domain":  "natal",
+                                                 "locale":  "ru-RU",
+                                                 "anchors":  [
+                                                                 "натальная карта"
+                                                             ],
+                                                 "tokens":  [
+                                                                {
+                                                                    "text":  "деньги",
+                                                                    "kind":  "topic",
+                                                                    "weight":  1.5,
+                                                                    "source":  "topic_category"
+                                                                },
+                                                                {
+                                                                    "text":  "финансы",
+                                                                    "kind":  "topic",
+                                                                    "weight":  1.5,
+                                                                    "source":  "topic_category"
+                                                                },
+                                                                {
+                                                                    "text":  "солнце",
+                                                                    "kind":  "planet",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.sun.sign.capricorn.house.10"
+                                                                },
+                                                                {
+                                                                    "text":  "козерог",
+                                                                    "kind":  "sign",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.sun.sign.capricorn.house.10"
+                                                                },
+                                                                {
+                                                                    "text":  "10 дом",
+                                                                    "kind":  "house",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.sun.sign.capricorn.house.10"
+                                                                },
+                                                                {
+                                                                    "text":  "any",
+                                                                    "kind":  "sign",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.sun.sign.any"
+                                                                },
+                                                                {
+                                                                    "text":  "луна",
+                                                                    "kind":  "planet",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.moon.sign.scorpio.house.8"
+                                                                },
+                                                                {
+                                                                    "text":  "скорпион",
+                                                                    "kind":  "sign",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.moon.sign.scorpio.house.8"
+                                                                },
+                                                                {
+                                                                    "text":  "8 дом",
+                                                                    "kind":  "house",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.moon.sign.scorpio.house.8"
+                                                                },
+                                                                {
+                                                                    "text":  "меркурий",
+                                                                    "kind":  "planet",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.mercury.sign.capricorn.house.10"
+                                                                },
+                                                                {
+                                                                    "text":  "венера",
+                                                                    "kind":  "planet",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.venus.sign.sagittarius.house.8"
+                                                                },
+                                                                {
+                                                                    "text":  "стрелец",
+                                                                    "kind":  "sign",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.venus.sign.sagittarius.house.8"
+                                                                },
+                                                                {
+                                                                    "text":  "марс",
+                                                                    "kind":  "planet",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.mars.sign.aquarius.house.12"
+                                                                },
+                                                                {
+                                                                    "text":  "водолей",
+                                                                    "kind":  "sign",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.mars.sign.aquarius.house.12"
+                                                                },
+                                                                {
+                                                                    "text":  "12 дом",
+                                                                    "kind":  "house",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.planet.mars.sign.aquarius.house.12"
+                                                                },
+                                                                {
+                                                                    "text":  "рыбы",
+                                                                    "kind":  "sign",
+                                                                    "weight":  2.0,
+                                                                    "source":  "key:natal.angle.asc.sign.pisces"
+                                                                },
+                                                                {
+                                                                    "text":  "асцендент",
+                                                                    "kind":  "angle",
+                                                                    "weight":  1.8,
+                                                                    "source":  "key:natal.angle.asc.sign.pisces"
+                                                                },
+                                                                {
+                                                                    "text":  "mc",
+                                                                    "kind":  "angle",
+                                                                    "weight":  1.8,
+                                                                    "source":  "key:natal.angle.mc.sign.sagittarius"
+                                                                }
+                                                            ],
+                                                 "query":  "(деньги OR финансы) AND \"натальная карта\" AND (солнце OR луна OR меркурий OR венера OR марс OR козерог OR any OR скорпион OR стрелец OR водолей OR рыбы OR \"10 дом\" OR \"8 дом\" OR \"12 дом\" OR асцендент OR mc OR \"мц\" OR \"середина неба\" OR \"asc\" OR \"as\")"
+                                             },
+                                  "trace":  {
+                                                "candidate_keys_used":  [
+                                                                            "natal.planet.sun.sign.capricorn.house.10",
+                                                                            "natal.planet.sun.sign.capricorn.house.any",
+                                                                            "natal.planet.sun.sign.capricorn",
+                                                                            "natal.planet.sun.sign.any",
+                                                                            "natal.planet.sun",
+                                                                            "natal.planet.moon.sign.scorpio.house.8",
+                                                                            "natal.planet.moon.sign.scorpio.house.any",
+                                                                            "natal.planet.moon.sign.scorpio",
+                                                                            "natal.planet.moon.sign.any",
+                                                                            "natal.planet.moon",
+                                                                            "natal.planet.mercury.sign.capricorn.house.10",
+                                                                            "natal.planet.mercury.sign.capricorn.house.any",
+                                                                            "natal.planet.mercury.sign.capricorn",
+                                                                            "natal.planet.mercury.sign.any",
+                                                                            "natal.planet.mercury",
+                                                                            "natal.planet.venus.sign.sagittarius.house.8",
+                                                                            "natal.planet.venus.sign.sagittarius.house.any",
+                                                                            "natal.planet.venus.sign.sagittarius",
+                                                                            "natal.planet.venus.sign.any",
+                                                                            "natal.planet.venus",
+                                                                            "natal.planet.mars.sign.aquarius.house.12",
+                                                                            "natal.planet.mars.sign.aquarius.house.any",
+                                                                            "natal.planet.mars.sign.aquarius",
+                                                                            "natal.planet.mars.sign.any",
+                                                                            "natal.planet.mars",
+                                                                            "natal.angle.asc.sign.pisces",
+                                                                            "natal.angle.asc.sign.any",
+                                                                            "natal.angle.asc",
+                                                                            "natal.angle.mc.sign.sagittarius",
+                                                                            "natal.angle.mc.sign.any",
+                                                                            "natal.angle.mc"
+                                                                        ],
+                                                "rules_fired":  [
+                                                                    "anchor:domain:natal",
+                                                                    "topic:category",
+                                                                    "parse:candidate_keys"
+                                                                ]
+                                            },
+                                  "hits":  [
+
+                                           ]
+                              },
+                 "debug":  {
+                               "unknown_time":  false,
+                               "houses_system":  "P",
+                               "natal_data_raw_keys":  [
+                                                           "chart_type",
+                                                           "subject",
+                                                           "aspects",
+                                                           "element_distribution",
+                                                           "quality_distribution",
+                                                           "active_points",
+                                                           "active_aspects"
+                                                       ],
+                               "raw_subject_type":  "\u003cclass \u0027dict\u0027\u003e",
+                               "raw_subject_keys":  [
+                                                        "name",
+                                                        "city",
+                                                        "nation",
+                                                        "lng",
+                                                        "lat",
+                                                        "tz_str",
+                                                        "iso_formatted_local_datetime",
+                                                        "iso_formatted_utc_datetime",
+                                                        "julian_day",
+                                                        "day_of_week",
+                                                        "zodiac_type",
+                                                        "sidereal_mode",
+                                                        "houses_system_identifier",
+                                                        "houses_system_name",
+                                                        "perspective_type",
+                                                        "sun",
+                                                        "moon",
+                                                        "mercury",
+                                                        "venus",
+                                                        "mars",
+                                                        "jupiter",
+                                                        "saturn",
+                                                        "uranus",
+                                                        "neptune",
+                                                        "pluto",
+                                                        "ascendant",
+                                                        "descendant",
+                                                        "medium_coeli",
+                                                        "imum_coeli",
+                                                        "chiron",
+                                                        "earth",
+                                                        "pholus",
+                                                        "mean_lilith",
+                                                        "true_lilith",
+                                                        "ceres",
+                                                        "pallas",
+                                                        "juno",
+                                                        "vesta",
+                                                        "eris",
+                                                        "sedna",
+                                                        "haumea",
+                                                        "makemake",
+                                                        "ixion",
+                                                        "orcus",
+                                                        "quaoar",
+                                                        "regulus",
+                                                        "spica",
+                                                        "pars_fortunae",
+                                                        "pars_spiritus",
+                                                        "pars_amoris",
+                                                        "pars_fidei",
+                                                        "vertex",
+                                                        "anti_vertex",
+                                                        "first_house",
+                                                        "second_house",
+                                                        "third_house",
+                                                        "fourth_house",
+                                                        "fifth_house",
+                                                        "sixth_house",
+                                                        "seventh_house",
+                                                        "eighth_house",
+                                                        "ninth_house",
+                                                        "tenth_house",
+                                                        "eleventh_house",
+                                                        "twelfth_house",
+                                                        "mean_north_lunar_node",
+                                                        "true_north_lunar_node",
+                                                        "mean_south_lunar_node",
+                                                        "true_south_lunar_node",
+                                                        "houses_names_list",
+                                                        "active_points",
+                                                        "lunar_phase",
+                                                        "year",
+                                                        "month",
+                                                        "day",
+                                                        "hour",
+                                                        "minute"
+                                                    ],
+                               "raw_subject_sun":  "{\u0027name\u0027: \u0027Sun\u0027, \u0027quality\u0027: \u0027Cardinal\u0027, \u0027element\u0027: \u0027Earth\u0027, \u0027sign\u0027: \u0027Cap\u0027, \u0027sign_num\u0027: 9, \u0027position\u0027: 10.114064438700211, \u0027abs_pos\u0027: 280.1140644387002, \u0027emoji\u0027: \u0027♑️\u0027, \u0027point_type\u0027: \u0027AstrologicalPoint\u0027, \u0027house\u0027: \u0027Tenth_House\u0027, \u0027retrograde\u0027: False, \u0027speed\u0027: 1.0194069598453004, \u0027declination\u0027: -23.05201114310295}",
+                               "raw_subject_ascendant":  "{\u0027name\u0027: \u0027Ascendant\u0027, \u0027quality\u0027: \u0027Mutable\u0027, \u0027element\u0027: \u0027Water\u0027, \u0027sign\u0027: \u0027Pis\u0027, \u0027sign_num\u0027: 11, \u0027position\u0027: 24.77379996360696, \u0027abs_pos\u0027: 354.77379996360696, \u0027emoji\u0027: \u0027♓️\u0027, \u0027point_type\u0027: \u0027AstrologicalPoint\u0027, \u0027house\u0027: \u0027First_House\u0027, \u0027retrograde\u0027: False, \u0027speed\u0027: 360.0, \u0027declination\u0027: None}",
+                               "raw_subject_medium_coeli":  "{\u0027name\u0027: \u0027Medium_Coeli\u0027, \u0027quality\u0027: \u0027Mutable\u0027, \u0027element\u0027: \u0027Fire\u0027, \u0027sign\u0027: \u0027Sag\u0027, \u0027sign_num\u0027: 8, \u0027position\u0027: 27.39066625654698, \u0027abs_pos\u0027: 267.390666256547, \u0027emoji\u0027: \u0027♐️\u0027, \u0027point_type\u0027: \u0027AstrologicalPoint\u0027, \u0027house\u0027: \u0027Tenth_House\u0027, \u0027retrograde\u0027: False, \u0027speed\u0027: 360.0, \u0027declination\u0027: None}",
+                               "key_input_sample":  {
+                                                        "sun":  {
+                                                                    "sign":  "capricorn",
+                                                                    "house":  10
+                                                                },
+                                                        "angles":  {
+                                                                       "asc":  "pisces",
+                                                                       "mc":  "sagittarius"
+                                                                   }
+                                                    }
+                           }
+             }
+}

@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1971-11-08",
+    "time": "02:20",
+    "place_query": "Berlin, Germany",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

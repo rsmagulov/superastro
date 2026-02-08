@@ -1,0 +1,209 @@
+Структура папок
+Серийный номер тома: 4030-B7C4
+C:.
+|   .env
+|   .gitattributes
+|   project.txt
+|   readme.txt
+|   
++---astroprocessor
+|   |   astro.db
+|   |   структура.txt
+|   |   
+|   +---app
+|   |   |   db.py
+|   |   |   main.py
+|   |   |   models.py
+|   |   |   settings.py
+|   |   |   
+|   |   +---api
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   +---routes
+|   |   |   |   |   natal.py
+|   |   |   |   |   __init__.py
+|   |   |   |   |   
+|   |   |   |   \---__pycache__
+|   |   |   |           natal.cpython-311.pyc
+|   |   |   |           __init__.cpython-311.pyc
+|   |   |   |           
+|   |   |   \---__pycache__
+|   |   |           __init__.cpython-311.pyc
+|   |   |           
+|   |   +---astro
+|   |   |   |   kerykeion_adapter.py
+|   |   |   |   key_builder.py
+|   |   |   |   natal_normalizer.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           kerykeion_adapter.cpython-311.pyc
+|   |   |           key_builder.cpython-311.pyc
+|   |   |           natal_normalizer.cpython-311.pyc
+|   |   |           __init__.cpython-311.pyc
+|   |   |           
+|   |   +---knowledge
+|   |   |   |   builder.py
+|   |   |   |   models.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           builder.cpython-311.pyc
+|   |   |           models.cpython-311.pyc
+|   |   |           __init__.cpython-311.pyc
+|   |   |           
+|   |   +---schemas
+|   |   |   |   natal.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           natal.cpython-311.pyc
+|   |   |           __init__.cpython-311.pyc
+|   |   |           
+|   |   +---services
+|   |   |   |   chart_service.py
+|   |   |   |   chunks_repo.py
+|   |   |   |   geocode.py
+|   |   |   |   knowledge_chunks_repo.py
+|   |   |   |   knowledge_repo.py
+|   |   |   |   search_intent_builder.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           chunks_repo.cpython-311.pyc
+|   |   |           geocode.cpython-311.pyc
+|   |   |           knowledge_repo.cpython-311.pyc
+|   |   |           search_intent_builder.cpython-311.pyc
+|   |   |           
+|   |   +---tools
+|   |   |       import_knowledge_layer_b.py
+|   |   |       knowledge_importer.py
+|   |   |       
+|   |   \---__pycache__
+|   |           db.cpython-311.pyc
+|   |           main.cpython-311.pyc
+|   |           models.cpython-311.pyc
+|   |           settings.cpython-311.pyc
+|   |           
+|   +---data
+|   |   |   knowledge.db
+|   |   |   
+|   |   +---knowledge
+|   |   |   \---ru
+|   |   |       \---natal
+|   |   +---knowledge_sources
+|   |   |   +---failed
+|   |   |   |   \---inbox
+|   |   |   |           Гудмен Линда - Знаки зодиака или астрология с улыбкой.fb2
+|   |   |   |           Лозовой Алексей - Астрология Базовые знания и ключи к пониманию.fb2
+|   |   |   |           
+|   |   |   +---inbox
+|   |   |   |       Гудмен Линда - Знаки зодиака или астрология с улыбкой.fb2
+|   |   |   |       Лозовой Алексей - Астрология Базовые знания и ключи к пониманию.fb2
+|   |   |   |       
+|   |   |   \---processed
+|   |   |       \---inbox
+|   |   |           |   Бондаренко Е - Астрология Карманный самоучитель для начинающих.fb2
+|   |   |           |   
+|   |   |           \---inbox
+|   |   |                   Вэлс Мартин - Астрология Простой самоучитель Как построить космограмму и трактовать влияние планет и звезд на вашу судьбу.fb2
+|   |   |                   Колесников Дмитрий - Полная книга от Ллевеллин по астрологии простой способ стать астрологом  Астрология Алгоритм тайного знания.fb2
+|   |   |                   Кондратова Ирина - Квантовая астрология.fb2
+|   |   |                   
+|   |   \---sources
+|   |       +---articles
+|   |       \---books
+|   |               Бондаренко Е - Астрология Карманный самоучитель для начинающих.fb2
+|   |               Вэлс Мартин - Астрология Простой самоучитель Как построить космограмму и трактовать влияние планет и звезд на вашу судьбу.fb2
+|   |               Гудмен Линда - Знаки зодиака или астрология с улыбкой.fb2
+|   |               Колесников Дмитрий - Полная книга от Ллевеллин по астрологии простой способ стать астрологом  Астрология Алгоритм тайного знания.fb2
+|   |               Кондратова Ирина - Квантовая астрология.fb2
+|   |               Лозовой Алексей - Астрология Базовые знания и ключи к пониманию.fb2
+|   |               
+|   +---migrations
+|   |       002_knowledge_docs_chunks.sql
+|   |       
+|   +---se
+|   |       seasm06.se1
+|   |       seasm12.se1
+|   |       seasm18.se1
+|   |       seasm24.se1
+|   |       seasm30.se1
+|   |       seas_00.se1
+|   |       seas_06.se1
+|   |       seas_12.se1
+|   |       seas_18.se1
+|   |       seas_24.se1
+|   |       semom06.se1
+|   |       semom12.se1
+|   |       semom18.se1
+|   |       semom24.se1
+|   |       semom30.se1
+|   |       semo_00.se1
+|   |       semo_06.se1
+|   |       semo_12.se1
+|   |       semo_18.se1
+|   |       semo_24.se1
+|   |       seplm06.se1
+|   |       seplm12.se1
+|   |       seplm18.se1
+|   |       seplm24.se1
+|   |       seplm30.se1
+|   |       sepl_00.se1
+|   |       sepl_06.se1
+|   |       sepl_12.se1
+|   |       sepl_18.se1
+|   |       sepl_24.se1
+|   |       
+|   +---specs
+|   |       natal_core_base_v1.json
+|   |       natal_core_base_v2.json
+|   |       natal_runtime_base_v1.json
+|   |       
+|   \---tools
+|       +---experiments
+|       |       insert_version_sun_leo.py
+|       |       inspect_indexes.py
+|       |       test_priority.py
+|       |       update_sun_leo_text.py
+|       |       
+|       +---import
+|       |       import_knowledge_layer_b.py
+|       |       knowledge_importer.py
+|       |       validate_knowledge_coverage.py
+|       |       
+|       +---migrations_local
+|       |       migrate_add_created_at_is_active.py
+|       |       migration_remove_unique.py
+|       |       
+|       +---outputs
+|       |       out_debug.json
+|       |       out_general.json
+|       |       out_raw.txt
+|       |       
+|       +---patches
+|       |       2026-02-06_mc_signs_ru.sql
+|       |       
+|       \---requests
+|               req_bad.json
+|               req_general.json
+|               req_known.json
+|               req_money.json
+|               req_null.json
+|               req_unknown.json
+|               
++---requirements
+|       astro.txt
+|       bot.txt
+|       constraints.txt
+|       
++---telegram_bot
+|   \---app
+|       |   bot.py
+|       |   client.py
+|       |   settings.py
+|       |   
+|       \---__pycache__
+|               bot.cpython-311.pyc
+|               client.cpython-311.pyc
+|               settings.cpython-311.pyc
+ 

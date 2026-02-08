@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1985-06-12",
+    "time": "21:45",
+    "place_query": "Moscow, Russia",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

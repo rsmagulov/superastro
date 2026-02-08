@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1989-02-14",
+    "time": "00:40",
+    "place_query": "Rome, Italy",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

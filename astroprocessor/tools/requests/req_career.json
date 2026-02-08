@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1990-01-01",
+    "time": "07:30",
+    "place_query": "Almaty, Kazakhstan",
+    "gender": "male"
+  },
+  "topic_category": "career",
+  "locale": "ru-RU"
+}

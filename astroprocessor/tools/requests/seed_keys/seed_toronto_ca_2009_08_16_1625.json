@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "2009-08-16",
+    "time": "16:25",
+    "place_query": "Toronto, Canada",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

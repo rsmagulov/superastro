@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1991-01-29",
+    "time": null,
+    "place_query": "Lima, Peru",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

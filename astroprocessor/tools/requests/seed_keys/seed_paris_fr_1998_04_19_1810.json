@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1998-04-19",
+    "time": "18:10",
+    "place_query": "Paris, France",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

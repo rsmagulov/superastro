@@ -1,0 +1,10 @@
+# planets — sign.any
+natal.planet.sun.sign.any
+natal.planet.moon.sign.any
+natal.planet.mercury.sign.any
+natal.planet.venus.sign.any
+natal.planet.mars.sign.any
+
+# angles — sign.any
+natal.angle.asc.sign.any
+natal.angle.mc.sign.any

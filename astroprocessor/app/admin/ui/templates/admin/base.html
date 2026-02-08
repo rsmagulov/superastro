@@ -1,0 +1,15 @@
+<!-- app/admin/ui/templates/admin/base.html -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title or "Admin" }}</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="stylesheet" href="/admin/static/admin.css">
+</head>
+<body>
+  <div class="app">
+    {% block body %}{% endblock %}
+  </div>
+</body>
+</html>

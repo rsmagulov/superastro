@@ -1,0 +1,21 @@
+<!-- app/admin/ui/templates/admin/_bulk_bar.html -->
+<div class="bulk">
+  <h3>Bulk</h3>
+
+  <!-- Пример: активировать -->
+  <form
+    hx-post="/admin/ui/items/bulk/set-active"
+    hx-target="#flash-area"
+    hx-swap="innerHTML"
+    onsubmit="
+      const ids=[...document.querySelectorAll('.row-check:checked')].map(x=>x.value).join(',');
+      this.querySelector('input[name=ids]').value=ids;
+    "
+  >
+    <input type="hidden" name="ids" value="">
+    <button name="active" value="1" type="submit">Включить</button>
+    <button name="active" value="0" type="submit">Выключить</button>
+  </form>
+
+  <!-- Аналогично добавишь set-tone/set-abstraction/add-tag/remove-tag -->
+</div>

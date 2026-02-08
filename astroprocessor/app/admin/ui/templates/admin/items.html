@@ -1,0 +1,58 @@
+<!-- app/admin/ui/templates/admin/items.html -->
+{% extends "admin/base.html" %}
+{% block body %}
+<div class="layout">
+  <div class="left">
+    <h2>Фрагменты</h2>
+
+    <form id="filters"
+      hx-get="/admin/ui/items/table"
+      hx-target="#items-table"
+      hx-trigger="keyup changed delay:300ms from:#q, change from:#locale, change from:#topic_category, change from:#is_active"
+    >
+      <input id="q" name="q" placeholder="Поиск (q)" value="{{ filters.q }}">
+      <select id="locale" name="locale">
+        <option value="ru-RU" {% if filters.locale=="ru-RU" %}selected{% endif %}>ru-RU</option>
+        <option value="en-US" {% if filters.locale=="en-US" %}selected{% endif %}>en-US</option>
+      </select>
+
+      <select id="topic_category" name="topic_category">
+        <option value="" {% if not filters.topic_category %}selected{% endif %}>(любой / включая NULL)</option>
+        <option value="__NULL__" {% if filters.topic_category=="__NULL__" %}selected{% endif %}>(только NULL)</option>
+        <option value="personality_core">personality_core</option>
+        <option value="purpose_path">purpose_path</option>
+        <!-- дополни списком -->
+      </select>
+
+      <select id="is_active" name="is_active">
+        <option value="" {% if filters.is_active=="" %}selected{% endif %}>(любой)</option>
+        <option value="1" {% if filters.is_active=="1" %}selected{% endif %}>active</option>
+        <option value="0" {% if filters.is_active=="0" %}selected{% endif %}>inactive</option>
+      </select>
+    </form>
+
+    <div id="flash-area"></div>
+
+    <div id="bulk-bar">
+      {% include "admin/_bulk_bar.html" %}
+    </div>
+  </div>
+
+  <div class="center">
+    <div id="items-table"
+         hx-get="/admin/ui/items/table?{{ request.query_params }}"
+         hx-trigger="load, itemsChanged from:body"
+         hx-target="#items-table">
+      {% include "admin/_items_table.html" %}
+    </div>
+  </div>
+
+  <div class="right" id="item-editor">
+    {% if selected_item %}
+      {% include "admin/_item_editor.html" with context %}
+    {% else %}
+      <div class="placeholder">Выберите строку слева</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

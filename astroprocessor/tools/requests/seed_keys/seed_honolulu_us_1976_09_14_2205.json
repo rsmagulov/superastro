@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1976-09-14",
+    "time": "22:05",
+    "place_query": "Honolulu, United States",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}
