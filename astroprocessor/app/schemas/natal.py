@@ -1,12 +1,10 @@
-# =========================================
-# FILE: astroprocessor/app/schemas/natal.py
-# (ЗАМЕНИ СОДЕРЖИМОЕ ФАЙЛА ЦЕЛИКОМ)
-# =========================================
+# astroprocessor/app/schemas/natal.py
 from __future__ import annotations
 
+from datetime import date, time
 from typing import Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from .birth import BirthInput
 
@@ -32,16 +30,24 @@ TopicCategory = Literal[
 
 class BirthPayload(BaseModel):
     """
-    Backward-compatible оболочка под твой текущий формат.
-
-    Оставляем, чтобы не ломать клиента, но дальше внутри конвертируем в BirthInput.
+    Входной payload (backward-compatible под текущего клиента).
     """
 
-    date: BirthInput.model_fields["date"].annotation  # date
-    time: BirthInput.model_fields["time"].annotation = None  # Optional[time]
+    date: date
+    time: Optional[time] = None
+
     place_query: str
     gender: str
     unknown_time: bool = False
+
+    @model_validator(mode="after")
+    def _validate_time(self) -> "BirthPayload":
+        if self.unknown_time:
+            # time может быть None
+            return self
+        if self.time is None:
+            raise ValueError("birth.time is required when unknown_time=false")
+        return self
 
     def to_birth_input(self) -> BirthInput:
         return BirthInput(date=self.date, time=self.time, unknown_time=self.unknown_time)

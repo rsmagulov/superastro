@@ -10,12 +10,30 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from timezonefinder import TimezoneFinder
 
-from ..models import GeocodeCache
-from ..schemas.place import PlaceResolved
-from ..settings import settings
+from app.models import GeocodeCache
+from app.schemas.place import PlaceResolved
+from app.settings import settings
 
 _ws = re.compile(r"\s+")
 _TF = TimezoneFinder()
+
+# dev/offline shortcuts (только для локальной разработки)
+_DEV_PLACES: dict[str, dict[str, Any]] = {
+    "almaty": {
+        "display_name": "Almaty, Kazakhstan",
+        "lat": 43.238949,
+        "lon": 76.889709,
+        "country_code": "kz",
+        "tz_str": "Asia/Almaty",
+    },
+    "алматы": {
+        "display_name": "Алматы, Казахстан",
+        "lat": 43.238949,
+        "lon": 76.889709,
+        "country_code": "kz",
+        "tz_str": "Asia/Almaty",
+    },
+}
 
 
 def normalize_query(q: str) -> str:
@@ -31,6 +49,22 @@ def _now_utc() -> datetime:
 async def resolve_place(query: str, locale: str, session: AsyncSession) -> PlaceResolved:
     query_raw = query
     qn = normalize_query(query)
+
+    # 0) DEV shortcut (если включен debug_meta)
+    if settings.debug_meta and qn in _DEV_PLACES:
+        p = _DEV_PLACES[qn]
+        return PlaceResolved(
+            ok=True,
+            query_raw=query_raw,
+            query_norm=qn,
+            locale=locale,
+            display_name=p["display_name"],
+            lat=float(p["lat"]),
+            lon=float(p["lon"]),
+            country_code=p["country_code"],
+            tz_str=p["tz_str"],
+            source="dev_stub",
+        )
 
     # 1) cache
     now = _now_utc()
@@ -56,7 +90,6 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
             source="cache",
         )
 
-    # (optional) cleanup expired rows for this key
     await session.execute(
         delete(GeocodeCache).where(
             GeocodeCache.query_norm == qn,
@@ -78,8 +111,10 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
         "limit": 1,
     }
 
+    timeout = httpx.Timeout(connect=5.0, read=8.0, write=5.0, pool=5.0)
+
     try:
-        async with httpx.AsyncClient(timeout=20) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             r = await client.get(
                 "https://nominatim.openstreetmap.org/search",
                 params=params,
@@ -124,10 +159,8 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
             source="nominatim",
         )
 
-    # 3) timezonefinder (offline)
     tz_str = _TF.timezone_at(lat=lat, lng=lon)
 
-    # 4) cache write
     ttl_days = 30
     expires = now + timedelta(days=ttl_days)
     payload = {
