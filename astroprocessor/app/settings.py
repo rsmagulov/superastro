@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,7 +12,9 @@ class Settings(BaseSettings):
 
     astro_db_path: str = "./astro.db"
     knowledge_db_path: str = "./data/knowledge.db"
+    ephemeris_path: str | None = None  # путь к Swiss Ephemeris, optional
     se_ephe_path: str = "./se"
+    model_config = SettingsConfigDict(env_prefix="ASTRO_", extra="ignore")
     nominatim_user_agent: str = "SuperAstro_AI_bot/1.0"
     debug_meta: bool = True
     trace_meta: bool = True

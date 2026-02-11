@@ -6,10 +6,11 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from astroprocessor.app.astro.kerykeion_adapter import BirthData, KerykeionAdapter
-from astroprocessor.app.schemas.place import PlaceResolved
-from astroprocessor.app.astro.key_builder import build_knowledge_key_blocks
-from astroprocessor.app.services.knowledge_repo import KnowledgeHit, KnowledgeRepo
+from app.astro.kerykeion_adapter import BirthData, KerykeionAdapter
+from app.schemas.place import PlaceResolved
+from app.astro.key_builder import build_knowledge_key_blocks
+from app.services.knowledge_repo import KnowledgeHit, KnowledgeRepo
+
 
 
 @dataclass(frozen=True)
