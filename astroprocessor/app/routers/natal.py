@@ -4,7 +4,7 @@
 # =========================================
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_knowledge_session
@@ -26,11 +26,12 @@ _chart_service = ChartService(ephemeris_path=settings.ephemeris_path)
 @router.post("/interpret", response_model=NatalInterpretOut)
 async def natal_interpret(
     req: NatalRequest,
+    request: Request,
     locale: str = Query(default="ru"),
     topic_category: str = Query(default="personality_core"),
     session: AsyncSession = Depends(get_knowledge_session),
 ) -> NatalInterpretOut:
-    request_id = uuid4()
+    request_id = request.state.request_id
 
     # 1) resolve place
     place_domain = await resolve_place(
@@ -42,7 +43,7 @@ async def natal_interpret(
         raise HTTPException(
             status_code=400,
             detail={
-                "request_id": str(request_id),
+                "request_id": request_id,
                 "error": place_domain.error,
                 "source": place_domain.source,
             },
@@ -56,10 +57,9 @@ async def natal_interpret(
     except ValueError as e:
         raise HTTPException(
             status_code=422,
-            detail={"request_id": str(request_id), "error": str(e)},
+            detail={"request_id": request_id, "error": str(e)},
         )
 
-    # 3) interpret
     payload = await _chart_service.interpret_natal(
         session=session,
         user_name=req.name,
