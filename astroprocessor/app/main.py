@@ -30,7 +30,8 @@ from app.routers.admin_knowledge_items import router as admin_knowledge_items_ro
 
 # UI router (внутри уже include_router(sources_router))
 from app.admin.ui.router import router as admin_ui_router
-
+from app.routers.place_resolve import router as place_router
+from app.routers.natal import router as natal_router
 
 class UTF8JSONResponse(JSONResponse):
     media_type = "application/json; charset=utf-8"
@@ -63,6 +64,8 @@ async def on_startup() -> None:
 # API admin routers (JSON)
 app.include_router(admin_knowledge_router)
 app.include_router(admin_knowledge_items_router)
+app.include_router(place_router)
+app.include_router(natal_router)
 
 # UI routers (HTML/HTMX)
 app.include_router(admin_ui_router, prefix="/admin/ui")
