@@ -1,3 +1,4 @@
+# astroprocessor/app/services/chart_service.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,13 +6,10 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from astroprocessor.app.astrology.kerykeion_adapter import (
-    KerykeionAdapter,
-    BirthData,
-    PlaceResolved,
-)
+from astroprocessor.app.astro.kerykeion_adapter import BirthData, KerykeionAdapter
+from astroprocessor.app.schemas.place import PlaceResolved
 from astroprocessor.app.astro.key_builder import build_knowledge_key_blocks
-from astroprocessor.app.services.knowledge_repo import KnowledgeRepo, KnowledgeHit
+from astroprocessor.app.services.knowledge_repo import KnowledgeHit, KnowledgeRepo
 
 
 @dataclass(frozen=True)
@@ -33,6 +31,8 @@ class ChartService:
         self.repo = KnowledgeRepo()
 
     async def build_natal(self, *, user_name: str, birth: BirthData, place: PlaceResolved) -> dict:
+        place.require_ready()
+
         if birth.time_unknown:
             h, m = self.k.pick_time_for_unknown_birthtime(
                 name=user_name,
@@ -42,8 +42,11 @@ class ChartService:
                 place=place,
             )
             birth = BirthData(
-                year=birth.year, month=birth.month, day=birth.day,
-                hour=h, minute=m,
+                year=birth.year,
+                month=birth.month,
+                day=birth.day,
+                hour=h,
+                minute=m,
                 time_unknown=True,
             )
             houses_id = "E"
@@ -79,21 +82,18 @@ class ChartService:
         )
 
         raw_blocks: List[RawBlock] = []
-        # NEW: trace контейнеры (это и есть “debug”, но структурированный)
         selection_trace: List[dict] = []
         hits_trace: List[dict] = []
 
         for kb in knowledge_blocks:
-            # 1) selection trace: кандидатные ключи (НЕ raw)
             selection_trace.append(
                 {
                     "block_id": kb.id,
                     "candidate_keys": list(kb.candidate_keys),
-                    "meta": kb.meta,  # полезно для OrderStage позже
+                    "meta": kb.meta,
                 }
             )
 
-            # 2) выбираем лучший hit
             hit: KnowledgeHit | None = await self.repo.pick_first_match(
                 session,
                 candidate_keys=kb.candidate_keys,
@@ -103,10 +103,9 @@ class ChartService:
             if not hit:
                 continue
 
-            # 3) raw block: только использованный контент (НЕ candidate_keys)
             raw_blocks.append(
                 RawBlock(
-                    block_id=kb.id,  # ВАЖНО: логический block id (sun_core), а не "key__id"
+                    block_id=kb.id,
                     knowledge_item_id=hit.id,
                     key=hit.key,
                     priority=hit.priority,
@@ -117,8 +116,6 @@ class ChartService:
                     weight=1.0,
                 )
             )
-
-            # 4) hits trace: без текста (чтобы не дублировать raw)
             hits_trace.append(
                 {
                     "block_id": kb.id,
@@ -129,7 +126,6 @@ class ChartService:
                 }
             )
 
-        # Budget MVP: лимит блоков + символов
         used: List[RawBlock] = []
         total_chars = 0
         for b in raw_blocks:
@@ -141,7 +137,6 @@ class ChartService:
             total_chars += len(b.text)
 
         final_text = "\n\n".join(b.text for b in used)
-
         final_meta = {
             "source": "raw.blocks",
             "mode": "concat_v0",
@@ -163,24 +158,13 @@ class ChartService:
             }
             for b in used
         ]
-
-        # knowledge_blocks_dump можно оставить как было — это уже debug, не raw
-        knowledge_blocks_dump = [
-            {"id": kb.id, "candidate_keys": kb.candidate_keys, "meta": kb.meta}
-            for kb in knowledge_blocks
-        ]
+        knowledge_blocks_dump = [{"id": kb.id, "candidate_keys": kb.candidate_keys, "meta": kb.meta} for kb in knowledge_blocks]
 
         return {
             "natal_data": natal_data,
             "knowledge_blocks": knowledge_blocks_dump,
-
             "final_text": final_text,
             "raw_blocks": raw_blocks_dicts,
             "final_meta": final_meta,
-
-            # NEW: trace
-            "trace": {
-                "selection": selection_trace,
-                "hits": hits_trace,
-            },
+            "trace": {"selection": selection_trace, "hits": hits_trace},
         }

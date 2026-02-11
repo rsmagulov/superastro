@@ -1,41 +1,24 @@
+# astroprocessor/app/services/geocode.py
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
-from timezonefinder import TimezoneFinder
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from timezonefinder import TimezoneFinder
 
 from ..models import GeocodeCache
+from ..schemas.place import PlaceResolved
 from ..settings import settings
 
-
-@dataclass(frozen=True)
-class PlaceResolved:
-    ok: bool
-    query_raw: str
-    query_norm: str
-    locale: str
-
-    display_name: str | None = None
-    lat: float | None = None
-    lon: float | None = None
-    country_code: str | None = None
-    timezone: str | None = None
-
-    source: str | None = None  # "cache" | "nominatim"
-    error: str | None = None
-
-
 _ws = re.compile(r"\s+")
+_TF = TimezoneFinder()
 
 
 def normalize_query(q: str) -> str:
-    # Предсказуемая нормализация ключа кеша
     q = q.strip()
     q = _ws.sub(" ", q)
     return q.casefold()
@@ -49,9 +32,8 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
     query_raw = query
     qn = normalize_query(query)
 
-    # 1) Попытка из кеша
+    # 1) cache
     now = _now_utc()
-
     stmt = select(GeocodeCache).where(
         GeocodeCache.query_norm == qn,
         GeocodeCache.locale == locale,
@@ -70,11 +52,11 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
             lat=p.get("lat"),
             lon=p.get("lon"),
             country_code=p.get("country_code"),
-            timezone=p.get("timezone"),
+            tz_str=p.get("tz_str"),
             source="cache",
         )
 
-    # (опционально) чистим протухшие записи для этого ключа
+    # (optional) cleanup expired rows for this key
     await session.execute(
         delete(GeocodeCache).where(
             GeocodeCache.query_norm == qn,
@@ -84,7 +66,7 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
     )
     await session.commit()
 
-    # 2) Запрос в Nominatim
+    # 2) nominatim
     headers = {
         "User-Agent": settings.nominatim_user_agent,
         "Accept-Language": locale,
@@ -98,7 +80,11 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
 
     try:
         async with httpx.AsyncClient(timeout=20) as client:
-            r = await client.get("https://nominatim.openstreetmap.org/search", params=params, headers=headers)
+            r = await client.get(
+                "https://nominatim.openstreetmap.org/search",
+                params=params,
+                headers=headers,
+            )
             r.raise_for_status()
             data = r.json()
     except Exception as e:
@@ -127,7 +113,7 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
         lon = float(item["lon"])
         display_name = str(item.get("display_name") or query_raw)
         address = item.get("address") or {}
-        country_code = (address.get("country_code") or None)
+        country_code = address.get("country_code") or None
     except Exception as e:
         return PlaceResolved(
             ok=False,
@@ -139,10 +125,9 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
         )
 
     # 3) timezonefinder (offline)
-    tf = TimezoneFinder()
-    tz = tf.timezone_at(lat=lat, lng=lon)
+    tz_str = _TF.timezone_at(lat=lat, lng=lon)
 
-    # 4) Пишем в кеш
+    # 4) cache write
     ttl_days = 30
     expires = now + timedelta(days=ttl_days)
     payload = {
@@ -150,9 +135,8 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
         "lat": lat,
         "lon": lon,
         "country_code": country_code,
-        "timezone": tz,
+        "tz_str": tz_str,
     }
-
     session.add(
         GeocodeCache(
             query_norm=qn,
@@ -174,6 +158,6 @@ async def resolve_place(query: str, locale: str, session: AsyncSession) -> Place
         lat=lat,
         lon=lon,
         country_code=country_code,
-        timezone=tz,
+        tz_str=tz_str,
         source="nominatim",
     )
