@@ -1,0 +1,6 @@
+<!-- app/admin/ui/templates/admin/_save_response.html -->
+{% include "admin/_item_editor.html" %}
+
+<div hx-swap-oob="outerHTML:#row-{{ item.id }}">
+  {{ row_html | safe }}
+</div>

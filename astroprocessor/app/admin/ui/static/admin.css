@@ -1,0 +1,4 @@
+.tbl tr.selected { outline: 2px solid #333; }
+.tbl tr { cursor: pointer; }
+.tbl td:first-child { width: 34px; }
+.row-check { position: relative; z-index: 5; }

@@ -7,6 +7,7 @@ from typing import Any, Literal, Optional
 
 from fastapi import Depends, FastAPI, Query
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,11 +24,15 @@ from app.services.chunks_repo import ChunksRepo
 from app.services.fallback_composer import compose_fallback_text_v1
 from app.services.knowledge_repo import KnowledgeRepo
 from app.services.search_intent_builder import SearchIntentBuilder
+
 from app.routers.admin_knowledge import router as admin_knowledge_router
 from app.routers.admin_knowledge_items import router as admin_knowledge_items_router
 
+# UI router (внутри уже include_router(sources_router))
+from app.admin.ui.router import router as admin_ui_router
+
+
 class UTF8JSONResponse(JSONResponse):
-    """JSONResponse that explicitly declares UTF-8 in Content-Type."""
     media_type = "application/json; charset=utf-8"
 
 
@@ -37,8 +42,16 @@ app = FastAPI(
     default_response_class=UTF8JSONResponse,
 )
 
-app.include_router(admin_knowledge_router)
-app.include_router(admin_knowledge_items_router)
+@app.get("/__routes")
+def __routes():
+    out = []
+    for r in app.router.routes:
+        path = getattr(r, "path", "")
+        methods = sorted(list(getattr(r, "methods", []) or []))
+        name = getattr(r, "name", "")
+        out.append({"path": path, "methods": methods, "name": name})
+    return out
+
 
 @app.on_event("startup")
 async def on_startup() -> None:
@@ -47,9 +60,18 @@ async def on_startup() -> None:
         print(f"[WARN] Knowledge DB file not found: {settings.knowledge_db_path}")
 
 
+# API admin routers (JSON)
+app.include_router(admin_knowledge_router)
+app.include_router(admin_knowledge_items_router)
+
+# UI routers (HTML/HTMX)
+app.include_router(admin_ui_router, prefix="/admin/ui")
+
+# Static for admin UI
+app.mount("/admin/static", StaticFiles(directory="app/admin/ui/static"), name="admin_static")
+
+
 # -------------------- Health --------------------
-
-
 class HealthResponse(BaseModel):
     ok: bool = True
     service: str = "astroprocessor"
@@ -68,8 +90,6 @@ async def health() -> HealthResponse:
 
 
 # -------------------- Place resolve --------------------
-
-
 class PlaceResolveRequest(BaseModel):
     query: str = Field(..., min_length=2, max_length=512)
     locale: str = "ru-RU"
@@ -109,8 +129,6 @@ async def place_resolve(
 
 
 # -------------------- Interpret --------------------
-
-
 class BirthInput(BaseModel):
     date: str = Field(..., description="DD.MM.YYYY or YYYY-MM-DD")
     time: str | None = Field(None, description="HH:MM or null if unknown")
@@ -149,7 +167,6 @@ def _iso(dt: Any) -> Optional[str]:
     if isinstance(dt, datetime):
         return dt.replace(microsecond=0).isoformat()
     s = str(dt).strip()
-    # sqlite часто отдаёт "YYYY-MM-DD HH:MM:SS"
     if len(s) >= 19 and s[10] == " ":
         s = s[:19].replace(" ", "T", 1)
     return s
@@ -163,30 +180,21 @@ def _make_snippet(text: str, limit: int = 450) -> str:
 
 
 def _topic_to_domain(topic_category: Optional[TopicCategory]) -> str:
-    # пока только natal
     return "natal"
 
 
 def expected_ids(blocks: list[KeyBlock], *, unknown_time: bool) -> set[str]:
-    """
-    E = planet cores + asc_core (+ mc_core only if known time).
-    aspects and other extras are NOT part of E.
-    """
     ids_present = {b.id for b in (blocks or [])}
-
     planet_cores = {
         b.id
         for b in (blocks or [])
         if b.id.endswith("_core") and isinstance(b.meta, dict) and ("planet" in b.meta)
     }
-
     expected = set(planet_cores)
-
     if "asc_core" in ids_present:
         expected.add("asc_core")
     if (not unknown_time) and ("mc_core" in ids_present):
         expected.add("mc_core")
-
     return expected
 
 
@@ -196,12 +204,8 @@ def _attach_debug(meta: dict[str, Any], debug: dict[str, Any], *, debug_on: bool
 
 
 def _pick_fts_lang(req_locale: str) -> str:
-    """
-    Сейчас FTS-слой B заполнен только ru-RU документами (knowledge_docs.lang = 'ru-RU').
-    Поэтому всегда ищем по ru-RU, чтобы locale miss не убивал fallback.
-    Позже можно сделать маппинг/фоллбек по наличию lang в knowledge_docs.
-    """
     return "ru-RU"
+
 
 class KeysEV1Response(BaseModel):
     ok: bool = True
@@ -209,6 +213,7 @@ class KeysEV1Response(BaseModel):
     expected_ids: list[str]
     selection: list[dict[str, Any]]
     ev1_candidate_keys: dict[str, list[str]]  # block_id -> keys
+
 
 @app.post("/v1/keys/ev1", response_model=KeysEV1Response)
 async def keys_ev1(
@@ -288,6 +293,7 @@ async def keys_ev1(
         ev1_candidate_keys=ev1_keys,
     )
 
+
 @app.post("/v1/natal/interpret", response_model=InterpretResponse)
 async def natal_interpret(
     req: InterpretRequest,
@@ -296,7 +302,7 @@ async def natal_interpret(
     use_fallback_text: bool = Query(False, alias="use_fallback_text"),
     session: AsyncSession = Depends(get_session),
     knowledge_session: AsyncSession = Depends(get_knowledge_session),
-    content_locale = "ru-RU"  # пока только русский
+    content_locale: str = "ru-RU",  # пока только русский
 ) -> InterpretResponse:
     topic_category: Optional[TopicCategory] = req.topic_category
 
@@ -753,11 +759,10 @@ async def natal_interpret(
     )
 
     meta["locale"] = {
-    "requested": req.locale,
-    "effective": content_locale,
-    "note": "Only ru-RU content is supported currently",
+        "requested": req.locale,
+        "effective": content_locale,
+        "note": "Only ru-RU content is supported currently",
     }
-
 
     if settings.trace_meta:
         meta["trace"] = {"selection": selection, "hits": trace_hits}

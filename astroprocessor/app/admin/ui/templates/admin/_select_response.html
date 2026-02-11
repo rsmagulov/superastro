@@ -1,0 +1,6 @@
+<!-- app/admin/ui/templates/admin/_select_response.html -->
+{% include "admin/_item_editor.html" %}
+
+<div id="items-table" hx-swap-oob="outerHTML">
+  {{ table_html | safe }}
+</div>

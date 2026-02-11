@@ -1,35 +1,85 @@
 Структура папок
 Серийный номер тома: 4030-B7C4
-C:.
+C:\Projects\superastro
 |   .env
 |   .gitattributes
+|   ev1_keys_unique.txt
 |   project.txt
 |   readme.txt
 |   
++---.pytest_cache
+|   |   .gitignore
+|   |   CACHEDIR.TAG
+|   |   README.md
+|   |   
+|   \---v
+|       \---cache
+|               lastfailed
+|               nodeids
+|               
 +---astroprocessor
 |   |   astro.db
+|   |   pytest.ini
+|   |   req_dbg.json
 |   |   структура.txt
 |   |   
+|   +---.pytest_cache
+|   |   |   .gitignore
+|   |   |   CACHEDIR.TAG
+|   |   |   README.md
+|   |   |   
+|   |   \---v
+|   |       \---cache
+|   |               lastfailed
+|   |               nodeids
+|   |               
 |   +---app
 |   |   |   db.py
 |   |   |   main.py
 |   |   |   models.py
 |   |   |   settings.py
+|   |   |   __init__.py
 |   |   |   
-|   |   +---api
-|   |   |   |   __init__.py
-|   |   |   |   
-|   |   |   +---routes
-|   |   |   |   |   natal.py
-|   |   |   |   |   __init__.py
-|   |   |   |   |   
-|   |   |   |   \---__pycache__
-|   |   |   |           natal.cpython-311.pyc
-|   |   |   |           __init__.cpython-311.pyc
-|   |   |   |           
-|   |   |   \---__pycache__
-|   |   |           __init__.cpython-311.pyc
-|   |   |           
+|   |   +---admin
+|   |   |   \---ui
+|   |   |       |   constants.py
+|   |   |       |   forms.py
+|   |   |       |   router.py
+|   |   |       |   sources_router.py
+|   |   |       |   viewmodels.py
+|   |   |       |   
+|   |   |       +---static
+|   |   |       |       admin.css
+|   |   |       |       admin.js
+|   |   |       |       favicon.ico
+|   |   |       |       
+|   |   |       +---templates
+|   |   |       |   \---admin
+|   |   |       |           base.html
+|   |   |       |           builds.html
+|   |   |       |           dashboard.html
+|   |   |       |           items.html
+|   |   |       |           labeling.html
+|   |   |       |           settings.html
+|   |   |       |           sources.html
+|   |   |       |           source_card.html
+|   |   |       |           verify_build.html
+|   |   |       |           _bulk_bar.html
+|   |   |       |           _flash.html
+|   |   |       |           _items_table.html
+|   |   |       |           _items_table_block.html
+|   |   |       |           _item_editor.html
+|   |   |       |           _item_row.html
+|   |   |       |           _pagination.html
+|   |   |       |           _save_response.html
+|   |   |       |           _select_response.html
+|   |   |       |           _sources_table.html
+|   |   |       |           
+|   |   |       \---__pycache__
+|   |   |               constants.cpython-311.pyc
+|   |   |               router.cpython-311.pyc
+|   |   |               sources_router.cpython-311.pyc
+|   |   |               
 |   |   +---astro
 |   |   |   |   kerykeion_adapter.py
 |   |   |   |   key_builder.py
@@ -44,48 +94,77 @@ C:.
 |   |   |           
 |   |   +---knowledge
 |   |   |   |   builder.py
+|   |   |   |   meta_schema.py
 |   |   |   |   models.py
 |   |   |   |   __init__.py
 |   |   |   |   
 |   |   |   \---__pycache__
 |   |   |           builder.cpython-311.pyc
+|   |   |           meta_schema.cpython-311.pyc
 |   |   |           models.cpython-311.pyc
 |   |   |           __init__.cpython-311.pyc
 |   |   |           
+|   |   +---routers
+|   |   |   |   admin_knowledge.py
+|   |   |   |   admin_knowledge_items.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           admin_knowledge.cpython-311.pyc
+|   |   |           admin_knowledge_items.cpython-311.pyc
+|   |   |           
 |   |   +---schemas
+|   |   |   |   admin_knowledge.py
 |   |   |   |   natal.py
 |   |   |   |   __init__.py
 |   |   |   |   
 |   |   |   \---__pycache__
+|   |   |           admin_knowledge.cpython-311.pyc
 |   |   |           natal.cpython-311.pyc
 |   |   |           __init__.cpython-311.pyc
 |   |   |           
 |   |   +---services
+|   |   |   |   admin_input_validator.py
 |   |   |   |   chart_service.py
 |   |   |   |   chunks_repo.py
+|   |   |   |   fallback_composer.py
 |   |   |   |   geocode.py
 |   |   |   |   knowledge_chunks_repo.py
+|   |   |   |   knowledge_items_admin_repo.py
+|   |   |   |   knowledge_items_validator.py
 |   |   |   |   knowledge_repo.py
 |   |   |   |   search_intent_builder.py
 |   |   |   |   
 |   |   |   \---__pycache__
+|   |   |           admin_input_validator.cpython-311.pyc
 |   |   |           chunks_repo.cpython-311.pyc
+|   |   |           fallback_composer.cpython-311.pyc
 |   |   |           geocode.cpython-311.pyc
+|   |   |           knowledge_items_admin_repo.cpython-311.pyc
+|   |   |           knowledge_items_validator.cpython-311.pyc
 |   |   |           knowledge_repo.cpython-311.pyc
 |   |   |           search_intent_builder.cpython-311.pyc
 |   |   |           
-|   |   +---tools
-|   |   |       import_knowledge_layer_b.py
-|   |   |       knowledge_importer.py
-|   |   |       
 |   |   \---__pycache__
 |   |           db.cpython-311.pyc
 |   |           main.cpython-311.pyc
 |   |           models.cpython-311.pyc
 |   |           settings.cpython-311.pyc
+|   |           __init__.cpython-311.pyc
 |   |           
 |   +---data
+|   |   |   knowledge.backup.db
 |   |   |   knowledge.db
+|   |   |   knowledge.db-shm
+|   |   |   knowledge.db-wal
+|   |   |   knowledge_items_01_elements_ip__ETALON.jsonl
+|   |   |   knowledge_items_02_planets__ETALON.jsonl
+|   |   |   knowledge_items_03_signs__ETALON.jsonl
+|   |   |   knowledge_items_04_house_rulers__ETALON.jsonl
+|   |   |   knowledge_items_05_house_space_and_cusp__ETALON.jsonl
+|   |   |   knowledge_items_06_aspects__ETALON.jsonl
+|   |   |   knowledge_items_07_aspect_configurations__ETALON.jsonl
+|   |   |   knowledge_items_distortions.jsonl
+|   |   |   knowledge_items_houses_distortions_2levels_and_boundaries.jsonl
 |   |   |   
 |   |   +---knowledge
 |   |   |   \---ru
@@ -109,16 +188,17 @@ C:.
 |   |   |                   Колесников Дмитрий - Полная книга от Ллевеллин по астрологии простой способ стать астрологом  Астрология Алгоритм тайного знания.fb2
 |   |   |                   Кондратова Ирина - Квантовая астрология.fb2
 |   |   |                   
-|   |   \---sources
-|   |       +---articles
-|   |       \---books
-|   |               Бондаренко Е - Астрология Карманный самоучитель для начинающих.fb2
-|   |               Вэлс Мартин - Астрология Простой самоучитель Как построить космограмму и трактовать влияние планет и звезд на вашу судьбу.fb2
-|   |               Гудмен Линда - Знаки зодиака или астрология с улыбкой.fb2
-|   |               Колесников Дмитрий - Полная книга от Ллевеллин по астрологии простой способ стать астрологом  Астрология Алгоритм тайного знания.fb2
-|   |               Кондратова Ирина - Квантовая астрология.fb2
-|   |               Лозовой Алексей - Астрология Базовые знания и ключи к пониманию.fb2
-|   |               
+|   |   +---sources
+|   |   |   +---articles
+|   |   |   \---books
+|   |   |           Бондаренко Е - Астрология Карманный самоучитель для начинающих.fb2
+|   |   |           Вэлс Мартин - Астрология Простой самоучитель Как построить космограмму и трактовать влияние планет и звезд на вашу судьбу.fb2
+|   |   |           Гудмен Линда - Знаки зодиака или астрология с улыбкой.fb2
+|   |   |           Колесников Дмитрий - Полная книга от Ллевеллин по астрологии простой способ стать астрологом  Астрология Алгоритм тайного знания.fb2
+|   |   |           Кондратова Ирина - Квантовая астрология.fb2
+|   |   |           Лозовой Алексей - Астрология Базовые знания и ключи к пониманию.fb2
+|   |   |           
+|   |   \---uploads
 |   +---migrations
 |   |       002_knowledge_docs_chunks.sql
 |   |       
@@ -159,20 +239,42 @@ C:.
 |   |       natal_core_base_v2.json
 |   |       natal_runtime_base_v1.json
 |   |       
+|   +---tests
+|   |   |   conftest.py
+|   |   |   test_admin_sources_ui.py
+|   |   |   test_admin_ui.py
+|   |   |   
+|   |   \---__pycache__
+|   |           conftest.cpython-311-pytest-9.0.2.pyc
+|   |           test_admin_sources_ui.cpython-311-pytest-9.0.2.pyc
+|   |           test_admin_ui.cpython-311-pytest-9.0.2.pyc
+|   |           
 |   \---tools
+|       |   import_jsonl_items.py
+|       |   make_keybuilder_clones.py
+|       |   migrate_add_sources.py
+|       |   
 |       +---experiments
-|       |       insert_version_sun_leo.py
-|       |       inspect_indexes.py
-|       |       test_priority.py
-|       |       update_sun_leo_text.py
-|       |       
+|       |   |   insert_version_sun_leo.py
+|       |   |   inspect_indexes.py
+|       |   |   test_priority.py
+|       |   |   update_sun_leo_text.py
+|       |   |   
+|       |   \---__pycache__
+|       |           test_priority.cpython-311-pytest-9.0.2.pyc
+|       |           
 |       +---import
 |       |       import_knowledge_layer_b.py
 |       |       knowledge_importer.py
 |       |       validate_knowledge_coverage.py
 |       |       
+|       +---knowledge
+|       |       seed_keys_core_v1.txt
+|       |       
 |       +---migrations_local
 |       |       migrate_add_created_at_is_active.py
+|       |       migrate_add_meta_json.py
+|       |       migrate_add_updated_at.py
 |       |       migration_remove_unique.py
 |       |       
 |       +---outputs
@@ -183,18 +285,84 @@ C:.
 |       +---patches
 |       |       2026-02-06_mc_signs_ru.sql
 |       |       
-|       \---requests
-|               req_bad.json
-|               req_general.json
-|               req_known.json
-|               req_money.json
-|               req_null.json
-|               req_unknown.json
-|               
+|       +---requests
+|       |   |   req_bad.json
+|       |   |   req_career.json
+|       |   |   req_general.json
+|       |   |   req_known.json
+|       |   |   req_locale_miss.json
+|       |   |   req_money.json
+|       |   |   req_null.json
+|       |   |   req_unknown.json
+|       |   |   
+|       |   \---seed_keys
+|       |           seed_almaty_kz_1990_01_01_0730.json
+|       |           seed_anchorage_us_1980_04_07_0125.json
+|       |           seed_beijing_cn_2006_02_28_1110.json
+|       |           seed_berlin_de_1971_11_08_0220.json
+|       |           seed_buenos_aires_ar_1960_05_09_1935.json
+|       |           seed_cairo_eg_1969_10_12_1002.json
+|       |           seed_cape_town_za_1995_06_30_2008.json
+|       |           seed_delhi_in_1987_09_05_1445.json
+|       |           seed_honolulu_us_1976_09_14_2205.json
+|       |           seed_jakarta_id_2007_09_02_unknown.json
+|       |           seed_kyiv_ua_2003_09_27_1305.json
+|       |           seed_lima_pe_1991_01_29_unknown.json
+|       |           seed_london_uk_2001_09_11_0830.json
+|       |           seed_los_angeles_us_1992_10_22_0505.json
+|       |           seed_madrid_es_1967_07_03_1255.json
+|       |           seed_moscow_ru_1985_06_12_2145.json
+|       |           seed_nairobi_ke_2002_05_11_unknown.json
+|       |           seed_new_york_us_1975_03_03_2315.json
+|       |           seed_paris_fr_1998_04_19_1810.json
+|       |           seed_reykjavik_is_2008_12_24_1740.json
+|       |           seed_rome_it_1989_02_14_0040.json
+|       |           seed_santiago_cl_1964_02_02_0707.json
+|       |           seed_sao_paulo_br_1982_12_01_0950.json
+|       |           seed_seoul_kr_1978_01_17_0615.json
+|       |           seed_singapore_sg_1993_03_26_1559.json
+|       |           seed_sydney_au_1973_08_21_0333.json
+|       |           seed_tokyo_jp_1999_12_31_2355.json
+|       |           seed_toronto_ca_2009_08_16_1625.json
+|       |           seed_tromso_no_1962_12_10_unknown.json
+|       |           seed_ulaanbaatar_mn_1996_11_06_unknown.json
+|       |           seed_vladivostok_ru_1984_07_18_unknown.json
+|       |           seed_wellington_nz_1970_03_15_unknown.json
+|       |           
+|       +---seed
+|       |       ev1_seed_any_ru.jsonl
+|       |       load_seed_jsonl.py
+|       |       load_seed_jsonl_upsert.py
+|       |       seed_knowledge_84.jsonl
+|       |       
+|       +---tests
+|       |   |   conftest.py
+|       |   |   regress_knowledge_pick.ps1
+|       |   |   test_admin_ui.py
+|       |   |   
+|       |   \---__pycache__
+|       |           conftest.cpython-311-pytest-9.0.2.pyc
+|       |           
+|       \---_archive
+|           \---app_api_unused
+|               |   __init__.py
+|               |   
+|               +---routes
+|               |   |   natal.py
+|               |   |   __init__.py
+|               |   |   
+|               |   \---__pycache__
+|               |           natal.cpython-311.pyc
+|               |           __init__.cpython-311.pyc
+|               |           
+|               \---__pycache__
+|                       __init__.cpython-311.pyc
+|                       
 +---requirements
 |       astro.txt
 |       bot.txt
 |       constraints.txt
+|       dev.txt
 |       
 +---telegram_bot
 |   \---app
@@ -206,4 +374,9 @@ C:.
 |               bot.cpython-311.pyc
 |               client.cpython-311.pyc
 |               settings.cpython-311.pyc
+|               
++---tools
+|   \---tests
+|           regress_knowledge_pick.ps1
+|           
  

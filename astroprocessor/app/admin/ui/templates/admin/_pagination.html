@@ -1,0 +1,33 @@
+<div class="pagination">
+  <div class="summary">
+    {% if pagination.total == 0 %}
+      Показано 0 из 0
+    {% else %}
+      Показано {{ pagination.shown_from }}–{{ pagination.shown_to }} из {{ pagination.total }}
+    {% endif %}
+  </div>
+
+  <div class="controls">
+    <button
+        type="button"
+        {% if not pagination.has_prev %}disabled{% endif %}
+        hx-get="/admin/ui/items/table"
+        hx-vals='{"offset": {{ pagination.prev_offset }}, "limit": {{ pagination.limit }} }'
+        hx-target="#items-table"
+        hx-include="#filters"
+    >
+        Prev
+    </button>
+
+    <button
+        type="button"
+        {% if not pagination.has_next %}disabled{% endif %}
+        hx-get="/admin/ui/items/table"
+        hx-vals='{"offset": {{ pagination.next_offset }}, "limit": {{ pagination.limit }} }'
+        hx-target="#items-table"
+        hx-include="#filters"
+    >
+        Next
+    </button>
+  </div>
+</div>

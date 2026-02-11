@@ -10,3 +10,4 @@ kerykeion
 pyswisseph
 timezonefinder
 orjson
+jinja2

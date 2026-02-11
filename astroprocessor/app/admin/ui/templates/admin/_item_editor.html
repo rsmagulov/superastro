@@ -5,6 +5,7 @@
   {% endif %}
 
   <h3>Редактор #{{ item.id }}</h3>
+
   <div class="meta">
     <div><b>key:</b> <span class="mono">{{ item.key }}</span></div>
     <div><b>locale:</b> {{ item.locale }}</div>
@@ -16,6 +17,12 @@
     hx-target="#item-editor"
     hx-swap="outerHTML"
   >
+    <!-- context: сохраняем фильтры/контекст таблицы при save -->
+    <input type="hidden" name="q" value="{{ request.query_params.get('q','') }}">
+    <input type="hidden" name="locale" value="{{ request.query_params.get('locale','ru-RU') }}">
+    <input type="hidden" name="topic_category" value="{{ request.query_params.get('topic_category','') }}">
+    <input type="hidden" name="is_active_filter" value="{{ request.query_params.get('is_active','') }}">
+
     <label>text</label>
     <textarea name="text" rows="12">{{ item.text }}</textarea>
 
@@ -54,7 +61,12 @@
 
     <div class="actions">
       <button type="submit">Сохранить</button>
-      <button type="button" onclick="document.querySelector('#item-editor').innerHTML='<div class=&quot;placeholder&quot;>Выберите строку слева</div>'">Отменить</button>
+      <button
+        type="button"
+        onclick="document.querySelector('#item-editor').innerHTML='<div class=&quot;placeholder&quot;>Выберите строку слева</div>'"
+      >
+        Отменить
+      </button>
     </div>
   </form>
 </div>
