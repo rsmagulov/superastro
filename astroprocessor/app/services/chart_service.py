@@ -51,9 +51,7 @@ class ChartService:
                 time_unknown=True,
             )
             houses_id = "P"
-        else:
-            houses_id = "P"
-
+        
         subject = self.k.build_subject(
             name=user_name,
             birth=birth,

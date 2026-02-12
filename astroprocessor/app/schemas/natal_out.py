@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .place_out import PlaceResolvedOut
 
@@ -44,11 +44,11 @@ class NatalInterpretOut(BaseModel):
     place: PlaceResolvedOut
 
     natal_data: Dict[str, Any]
-    knowledge_blocks: List[KnowledgeBlockOut]
+    knowledge_blocks: list[KnowledgeBlockOut] = Field(default_factory=list)
     final_text: str
-    raw_blocks: List[RawBlockOut]
-    final_meta: Dict[str, Any]
-    trace: TraceOut
+    raw_blocks: list[RawBlockOut] = Field(default_factory=list)
+    final_meta: dict = Field(default_factory=dict)
+    trace: TraceOut = Field(default_factory=TraceOut)
 
     @classmethod
     def from_service(
