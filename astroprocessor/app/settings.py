@@ -49,4 +49,6 @@ class Settings(BaseSettings):
 
     button_catalog: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
+    structured_errors: bool = Field(default=True)
+
 settings = Settings()

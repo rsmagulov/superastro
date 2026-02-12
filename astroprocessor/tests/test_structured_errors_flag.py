@@ -1,13 +1,17 @@
 # ============================================================
-# File: astroprocessor/tests/test_public_v2_locale.py  (PATCH)
+# File: astroprocessor/tests/test_structured_errors_flag.py  (NEW)
 # ============================================================
+from __future__ import annotations
+
 from fastapi.testclient import TestClient
 
 from app.main import app
-from tests.utils import assert_422_code
+from app.settings import settings
 
 
-def test_v2_locale_only_ru_returns_422():
+def test_structured_errors_flag_off_returns_plain_detail(monkeypatch):
+    monkeypatch.setattr(settings, "structured_errors", False)
+
     client = TestClient(app)
 
     payload = {
@@ -23,9 +27,5 @@ def test_v2_locale_only_ru_returns_422():
     }
 
     resp = client.post("/v2/interpret?locale=en", json=payload)
-    assert_422_code(resp, "only_ru_locale_supported")
-    body = resp.json()
-
-    assert isinstance(body["detail"], dict)
-    assert body["detail"]["code"] == "only_ru_locale_supported"
-    assert body["detail"]["message"] == "only_ru_locale_supported"
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == "only_ru_locale_supported"

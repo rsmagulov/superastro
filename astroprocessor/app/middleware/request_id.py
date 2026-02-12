@@ -1,25 +1,21 @@
-# =========================================
-# FILE: astroprocessor/app/middleware/request_id.py
-# =========================================
+# astroprocessor/app/middleware/request_id.py
 from __future__ import annotations
 
-from uuid import uuid4
+import uuid
 
-from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 from starlette.responses import Response
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
-    """
-    Генерирует request_id для каждого запроса
-    и добавляет X-Request-ID в header ответа.
-    """
-
     async def dispatch(self, request: Request, call_next):
-        request_id = str(uuid4())
-        request.state.request_id = request_id
+        req_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        request.state.request_id = req_id
 
+        # IMPORTANT:
+        # - do NOT catch exceptions here
+        # - let FastAPI/Starlette exception handlers build the error response body
         response: Response = await call_next(request)
-        response.headers["X-Request-ID"] = request_id
+        response.headers["X-Request-ID"] = req_id
         return response

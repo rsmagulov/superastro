@@ -240,13 +240,22 @@ async def buttons_v2(
     request: Request,
     response: Response,
     enabled_only: int = Query(0, ge=0, le=1),
-    ids: list[str] | None = Query(None),  # repeatable
+    ids: list[str] | None = Query(None),
     ids_csv: str | None = Query(None, min_length=1, max_length=2000),
     strict: int = Query(1, ge=0, le=1),
 ) -> Any:
-    all_buttons = _button_defs()
+    if ids and ids_csv:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "use_only_one_of_ids_or_ids_csv",
+                "message": "Provide either 'ids' (repeatable) or 'ids_csv' (comma-separated), not both.",
+                "meta": {"enabled_only": bool(enabled_only), "strict": bool(strict)},
+            },
+        )
 
     # NEW: deduped ids list (source of truth for meta.ids)
+    all_buttons = _button_defs()
     ids_list = _parse_ids_sources(ids, ids_csv)
 
     unknown: list[str] = []

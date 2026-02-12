@@ -1,12 +1,16 @@
+# astroprocessor/app/main.py
 from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.admin.ui.router import router as admin_ui_router
 from app.db import init_db
@@ -16,13 +20,13 @@ from app.routers.admin_knowledge_items import router as admin_knowledge_items_ro
 from app.routers.keys import router as keys_router
 from app.routers.natal import router as natal_router
 from app.routers.place_resolve import router as place_router
-from app.settings import settings
 from app.routers.public_v2 import router as public_v2_router
-
+from app.settings import settings
 
 
 class UTF8JSONResponse(JSONResponse):
     media_type = "application/json; charset=utf-8"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,6 +35,7 @@ async def lifespan(app: FastAPI):
         print(f"[WARN] Knowledge DB file not found: {settings.knowledge_db_path}")
     yield
 
+
 app = FastAPI(
     title="SuperAstro Astroprocessor",
     version="1.0.0",
@@ -38,11 +43,131 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Public API v2
-app.include_router(public_v2_router)
+# ---------------------------------------------------------------------
+# Error contract helpers
+# ---------------------------------------------------------------------
+
+
+def _req_id(request: Request) -> str:
+    return getattr(request.state, "request_id", "")
+
+
+def _base_error_meta(request: Request) -> dict[str, Any]:
+    return {
+        "request_id": _req_id(request),
+        "path": request.url.path,
+        "method": request.method,
+    }
+
+
+def _error_headers(request: Request) -> dict[str, str]:
+    rid = _req_id(request)
+    return {"X-Request-ID": rid} if rid else {}
+
+
+def _structured_detail(*, code: str, message: str, meta: dict | None = None) -> dict[str, Any]:
+    return {"code": code, "message": message, "meta": meta or {}}
+
+
+def _normalize_http_code(status_code: int, raw_message: str) -> str:
+    if status_code == 404 and raw_message == "Not Found":
+        return "not_found"
+    if status_code == 405 and raw_message == "Method Not Allowed":
+        return "method_not_allowed"
+    return raw_message
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_error_handler(request: Request, exc: RequestValidationError):
+    if not settings.structured_errors:
+        # fastapi-like: detail is list of errors
+        return JSONResponse(
+            status_code=422,
+            content={"detail": exc.errors()},
+            headers=_error_headers(request),
+        )
+
+    meta = {**_base_error_meta(request), "errors": exc.errors()}
+    detail = _structured_detail(
+        code="request_validation_error",
+        message="Request validation failed",
+        meta=meta,
+    )
+    return JSONResponse(status_code=422, content={"detail": detail}, headers=_error_headers(request))
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if not settings.structured_errors:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+            headers=_error_headers(request),
+        )
+
+    base_meta = _base_error_meta(request)
+
+    if isinstance(exc.detail, dict):
+        detail = dict(exc.detail)
+        old_meta = detail.get("meta") if isinstance(detail.get("meta"), dict) else {}
+        detail["meta"] = {**old_meta, **base_meta}
+        return JSONResponse(status_code=exc.status_code, content={"detail": detail}, headers=_error_headers(request))
+
+    raw_message = str(exc.detail) if exc.detail is not None else "http_exception"
+    code = _normalize_http_code(exc.status_code, raw_message)
+    detail = _structured_detail(code=code, message=raw_message, meta=base_meta)
+    return JSONResponse(status_code=exc.status_code, content={"detail": detail}, headers=_error_headers(request))
+
+
+@app.exception_handler(StarletteHTTPException)
+async def starlette_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if not settings.structured_errors:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+            headers=_error_headers(request),
+        )
+
+    base_meta = _base_error_meta(request)
+
+    if isinstance(exc.detail, dict):
+        detail = dict(exc.detail)
+        old_meta = detail.get("meta") if isinstance(detail.get("meta"), dict) else {}
+        detail["meta"] = {**old_meta, **base_meta}
+        return JSONResponse(status_code=exc.status_code, content={"detail": detail}, headers=_error_headers(request))
+
+    raw_message = str(exc.detail) if exc.detail is not None else "http_exception"
+    code = _normalize_http_code(exc.status_code, raw_message)
+    detail = _structured_detail(code=code, message=raw_message, meta=base_meta)
+    return JSONResponse(status_code=exc.status_code, content={"detail": detail}, headers=_error_headers(request))
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    if not settings.structured_errors:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal Server Error"},
+            headers=_error_headers(request),
+        )
+
+    detail = _structured_detail(
+        code="internal_server_error",
+        message="Internal Server Error",
+        meta=_base_error_meta(request),
+    )
+    return JSONResponse(status_code=500, content={"detail": detail}, headers=_error_headers(request))
+
+
+# ---------------------------------------------------------------------
+# Routers / middleware
+# ---------------------------------------------------------------------
 
 # middleware
 app.add_middleware(RequestIDMiddleware)
+
+# Public API v2
+app.include_router(public_v2_router)
 
 # API routers
 app.include_router(place_router)
@@ -71,14 +196,10 @@ else:
 
 @app.get("/__routes")
 def __routes():
-    out = []
+    out: list[dict[str, Any]] = []
     for r in app.router.routes:
         path = getattr(r, "path", "")
         methods = sorted(list(getattr(r, "methods", []) or []))
         name = getattr(r, "name", "")
         out.append({"path": path, "methods": methods, "name": name})
     return out
-
-
-
-
