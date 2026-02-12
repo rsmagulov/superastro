@@ -29,10 +29,6 @@ TopicCategory = Literal[
 
 
 class BirthPayload(BaseModel):
-    """
-    Входной payload (backward-compatible под текущего клиента).
-    """
-
     date: date
     time: Optional[time] = None
 
@@ -43,7 +39,6 @@ class BirthPayload(BaseModel):
     @model_validator(mode="after")
     def _validate_time(self) -> "BirthPayload":
         if self.unknown_time:
-            # time может быть None
             return self
         if self.time is None:
             raise ValueError("birth.time is required when unknown_time=false")
@@ -51,7 +46,6 @@ class BirthPayload(BaseModel):
 
     def to_birth_input(self) -> BirthInput:
         return BirthInput(date=self.date, time=self.time, unknown_time=self.unknown_time)
-
 
 class NatalRequest(BaseModel):
     name: str
