@@ -14,9 +14,6 @@ from app.services.chart_service import ChartService
 from app.services.geocode import resolve_place
 from app.settings import settings
 from app.schemas.place_out import PlaceResolvedOut
-from uuid import uuid4
-
-
 
 router = APIRouter(prefix="/v1/natal", tags=["natal"])
 

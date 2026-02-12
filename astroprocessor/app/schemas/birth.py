@@ -1,7 +1,8 @@
 # astroprocessor/app/schemas/birth.py
 from __future__ import annotations
 
-from datetime import date, time
+import datetime as dt
+
 from pydantic import BaseModel, Field, model_validator
 
 from app.astro.kerykeion_adapter import BirthData
@@ -15,9 +16,9 @@ class BirthInput(BaseModel):
     - unknown_time=False => time обязателен
     """
 
-    date: date
-    time: time | None = None
-    unknown_time: bool = False
+    date: dt.date
+    time: dt.time | None = None
+    unknown_time: bool = Field(default=False)
 
     @model_validator(mode="after")
     def _validate(self) -> "BirthInput":
@@ -39,11 +40,12 @@ class BirthInput(BaseModel):
             )
 
         # time гарантированно не None из validator
+        t = self.time
         return BirthData(
             year=self.date.year,
             month=self.date.month,
             day=self.date.day,
-            hour=int(self.time.hour),
-            minute=int(self.time.minute),
+            hour=int(t.hour),
+            minute=int(t.minute),
             time_unknown=False,
         )

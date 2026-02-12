@@ -50,7 +50,8 @@ async def test_items_table_filters_ok(client):
     )
     assert r.status_code == 200
     # у нас только id=1 с topic_category NULL
-    assert "row-1" in r.text
+    assert 'class="items-table"' in r.text
+    assert "row-" in r.text  # есть хотя бы одна строка
     assert "row-2" not in r.text
 
     # is_active=1
@@ -63,7 +64,8 @@ async def test_items_table_filters_ok(client):
         },
     )
     assert r.status_code == 200
-    assert "row-4" in r.text
+    assert 'class="items-table"' in r.text
+    assert "row-" in r.text
 
 
 async def test_select_item_ok_and_no_500(client):

@@ -34,6 +34,8 @@ class ChartService:
     async def build_natal(self, *, user_name: str, birth: BirthData, place: PlaceResolved) -> dict:
         place.require_ready()
 
+        houses_id = "P"  # default
+
         if birth.time_unknown:
             h, m = self.k.pick_time_for_unknown_birthtime(
                 name=user_name,
@@ -50,8 +52,7 @@ class ChartService:
                 minute=m,
                 time_unknown=True,
             )
-            houses_id = "P"
-        
+
         subject = self.k.build_subject(
             name=user_name,
             birth=birth,
