@@ -27,7 +27,7 @@ async def keys_ev1(
 ) -> dict:
     # 1) resolve place
     place = await resolve_place(req.birth.place_query, "ru", session)
-    if not place.ok or not place.timezone:
+    if not place.ok or not place.tz_str:
         return {
             "request_id": getattr(request.state, "request_id", ""),
             "ok": False,
@@ -41,7 +41,7 @@ async def keys_ev1(
         display_name=place.display_name,
         lat=float(place.lat),
         lon=float(place.lon),
-        tz_str=str(place.timezone),
+        tz_str=str(place.tz_str),
         country_code=place.country_code,
     )
 

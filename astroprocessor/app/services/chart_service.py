@@ -1,5 +1,6 @@
 # ============================================================
 # File: astroprocessor/app/services/chart_service.py
+# (только те места, которые зависят от timezone/tz_str — полный файл)
 # ============================================================
 from __future__ import annotations
 
@@ -171,26 +172,22 @@ class ChartService:
         session: AsyncSession,
         knowledge_session: AsyncSession,
     ) -> Dict[str, Any]:
-        """
-        Тонкая API-обвязка над бизнес-логикой.
-        Возвращает dict в форме NatalInterpretResponse (как ожидают текущие роутеры/тесты).
-        """
-        # 1) resolve place (используем app DB session, как и в других роутерах)
-        place_raw = await resolve_place(req.birth.place_query, locale, session)
+        # 1) resolve place
+        place = await resolve_place(req.birth.place_query, locale, session)
 
         place_payload = {
-            "ok": bool(place_raw.ok),
+            "ok": bool(place.ok),
             "query": req.birth.place_query,
-            "display_name": getattr(place_raw, "display_name", None),
-            "lat": getattr(place_raw, "lat", None),
-            "lon": getattr(place_raw, "lon", None),
-            "country_code": getattr(place_raw, "country_code", None),
-            "timezone": getattr(place_raw, "timezone", None),
-            "source": getattr(place_raw, "source", None),
-            "error": getattr(place_raw, "error", None),
+            "display_name": place.display_name,
+            "lat": place.lat,
+            "lon": place.lon,
+            "country_code": place.country_code,
+            "timezone": place.tz_str,  # наружный контракт
+            "source": place.source,
+            "error": place.error,
         }
 
-        if not place_raw.ok or not getattr(place_raw, "timezone", None):
+        if not place.ok or not place.tz_str:
             return {
                 "request_id": request_id,
                 "ok": False,
@@ -200,35 +197,20 @@ class ChartService:
                 "place": place_payload,
                 "raw_blocks": [],
                 "meta": {"reason": "place_not_resolved"},
-                "error": place_raw.error or "place_not_resolved",
+                "error": place.error or "place_not_resolved",
             }
 
         # 2) birth
         birth: BirthData = req.birth.to_birth_input().to_domain()
 
-        # 3) domain place for calculations
-        place_domain = PlaceResolved(
-            ok=True,
-            query_raw=req.birth.place_query,
-            query_norm=req.birth.place_query,
-            locale=locale,
-            display_name=getattr(place_raw, "display_name", None),
-            lat=float(place_raw.lat) if getattr(place_raw, "lat", None) is not None else None,
-            lon=float(place_raw.lon) if getattr(place_raw, "lon", None) is not None else None,
-            country_code=getattr(place_raw, "country_code", None),
-            tz_str=str(getattr(place_raw, "timezone", "")) if getattr(place_raw, "timezone", None) else None,
-            source=getattr(place_raw, "source", None),
-            error=getattr(place_raw, "error", None),
-        )
-
+        # 3) interpret
         effective_topic = req.topic_category or "personality_core"
 
-        # 4) interpret using knowledge DB session
         core = await self.interpret_natal_core(
             session=knowledge_session,
             user_name=req.name,
             birth=birth,
-            place=place_domain,
+            place=place,
             topic_category=str(effective_topic),
             locale=locale,
         )

@@ -1,4 +1,6 @@
-# astroprocessor/app/services/geocode.py
+# ============================================================
+# File: astroprocessor/app/services/geocode.py
+# ============================================================
 from __future__ import annotations
 
 import re
@@ -45,9 +47,7 @@ def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
-async def resolve_place(
-    query: str, locale: str, session: AsyncSession
-) -> PlaceResolved:
+async def resolve_place(query: str, locale: str, session: AsyncSession) -> PlaceResolved:
     query_raw = query
     qn = normalize_query(query)
 
