@@ -1,7 +1,7 @@
 # astroprocessor/app/schemas/natal.py
 from __future__ import annotations
 
-from datetime import date, time
+import datetime as dt
 from typing import Literal, Optional
 
 from pydantic import BaseModel, model_validator
@@ -29,8 +29,8 @@ TopicCategory = Literal[
 
 
 class BirthPayload(BaseModel):
-    date: date
-    time: Optional[time] = None
+    date: dt.date
+    time: dt.time | None = None
 
     place_query: str
     gender: str
@@ -46,6 +46,7 @@ class BirthPayload(BaseModel):
 
     def to_birth_input(self) -> BirthInput:
         return BirthInput(date=self.date, time=self.time, unknown_time=self.unknown_time)
+
 
 class NatalRequest(BaseModel):
     name: str

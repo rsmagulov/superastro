@@ -1,10 +1,10 @@
-﻿{
-    "name":  "Test",
-    "birth":  {
-                  "date":  "1990-01-01",
-                  "time":  "12:30:00",
-                  "unknown_time":  false,
-                  "gender":  "m",
-                  "place_query":  "Almaty"
-              }
+{
+  "birth": {
+    "place_query": "Almaty",
+    "gender": "m",
+    "time": null,
+    "date": "1990-01-01",
+    "unknown_time": true
+  },
+  "name": "Test"
 }

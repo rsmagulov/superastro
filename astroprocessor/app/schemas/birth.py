@@ -1,32 +1,35 @@
-# =========================================
-# FILE: astroprocessor/app/schemas/birth.py
-# =========================================
+# astroprocessor/app/schemas/birth.py
 from __future__ import annotations
 
-from datetime import date, time
-from typing import Optional
+import datetime as dt
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
-from ..astro.kerykeion_adapter import BirthData
+from app.astro.kerykeion_adapter import BirthData
 
 
 class BirthInput(BaseModel):
     """
-    Pydantic вход для API.
+    Вход для API → доменная BirthData.
 
-    Правила:
-    - time может быть None, если unknown_time=True (в таком случае час/минута подберутся).
-    - unknown_time=False => time обязателен.
+    - unknown_time=True => time может быть None
+    - unknown_time=False => time обязателен
     """
 
-    date: date
-    time: Optional[time] = None
+    date: dt.date
+    time: dt.time | None = None
     unknown_time: bool = Field(default=False)
+
+    @model_validator(mode="after")
+    def _validate(self) -> "BirthInput":
+        if self.unknown_time:
+            return self
+        if self.time is None:
+            raise ValueError("birth.time is required when unknown_time=false")
+        return self
 
     def to_domain(self) -> BirthData:
         if self.unknown_time:
-            # будет подобрано в KerykeionAdapter.pick_time_for_unknown_birthtime()
             return BirthData(
                 year=self.date.year,
                 month=self.date.month,
@@ -36,9 +39,7 @@ class BirthInput(BaseModel):
                 time_unknown=True,
             )
 
-        if self.time is None:
-            raise ValueError("birth.time is required when unknown_time=false")
-
+        # time гарантированно не None из validator
         return BirthData(
             year=self.date.year,
             month=self.date.month,
@@ -47,5 +48,3 @@ class BirthInput(BaseModel):
             minute=int(self.time.minute),
             time_unknown=False,
         )
-
-
