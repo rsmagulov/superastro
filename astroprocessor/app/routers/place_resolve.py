@@ -1,25 +1,38 @@
-# =========================================
-# FILE: astroprocessor/app/routers/place_resolve.py
-# (НОВЫЙ ФАЙЛ: стабильный /v1/place/resolve)
-# =========================================
+# astroprocessor/app/routers/place_resolve.py
 from __future__ import annotations
 
-from app.db import get_knowledge_session
+from fastapi import APIRouter, Depends, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db import get_session
 from app.schemas.place_out import PlaceResolvedOut
 from app.services.geocode import resolve_place
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/v1/place", tags=["place"])
 
 
-@router.get("/resolve", response_model=PlaceResolvedOut)
+@router.get("/resolve", response_model=dict)
 async def place_resolve(
-    q: str = Query(
-        ..., min_length=2, description="Название места: город/страна и т.д."
-    ),
-    locale: str = Query(default="ru"),
-    session: AsyncSession = Depends(get_knowledge_session),
-) -> PlaceResolvedOut:
-    p = await resolve_place(query=q, locale=locale, session=session)
-    return PlaceResolvedOut.from_domain(p)
+    request: Request,
+    q: str = Query(..., min_length=2, max_length=512),
+    locale: str = Query("ru", min_length=2, max_length=32),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    place = await resolve_place(q, locale, session)
+
+    body = PlaceResolvedOut(
+        ok=place.ok,
+        query=q,
+        display_name=place.display_name,
+        lat=place.lat,
+        lon=place.lon,
+        country_code=place.country_code,
+        timezone=place.timezone,
+        source=place.source,
+        error=place.error,
+    ).model_dump()
+
+    return {
+        "request_id": getattr(request.state, "request_id", ""),
+        **body,
+    }

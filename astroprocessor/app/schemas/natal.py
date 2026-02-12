@@ -31,22 +31,26 @@ TopicCategory = Literal[
 class BirthPayload(BaseModel):
     date: dt.date
     time: dt.time | None = None
-
     place_query: str
     gender: str
     unknown_time: bool = False
 
     @model_validator(mode="after")
     def _validate_time(self) -> "BirthPayload":
+        # если unknown_time=true — time может быть None
         if self.unknown_time:
             return self
+
+        # если unknown_time=false — time обязателен
         if self.time is None:
             raise ValueError("birth.time is required when unknown_time=false")
         return self
 
     def to_birth_input(self) -> BirthInput:
         return BirthInput(
-            date=self.date, time=self.time, unknown_time=self.unknown_time
+            date=self.date,
+            time=self.time,
+            unknown_time=self.unknown_time,
         )
 
 
@@ -54,3 +58,8 @@ class NatalRequest(BaseModel):
     name: str
     birth: BirthPayload
     topic_category: Optional[TopicCategory] = None
+
+
+# ---- backward compat ----
+# Раньше некоторые роутеры/код могли импортировать InterpretRequest из schemas.natal
+InterpretRequest = NatalRequest

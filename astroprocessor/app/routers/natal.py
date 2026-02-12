@@ -1,73 +1,54 @@
-# =========================================
-# FILE: astroprocessor/app/routers/natal.py
-# (Если файла нет — создай. Если есть — замени содержимое/внеси правки по сути)
-# =========================================
+# astroprocessor/app/routers/natal.py
 from __future__ import annotations
 
-from app.db import get_knowledge_session
+from fastapi import APIRouter, Depends, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db import get_knowledge_session, get_session
 from app.schemas.natal import NatalRequest
-from app.schemas.natal_out import NatalInterpretOut
+from app.schemas.natal_out import NatalInterpretResponse
 from app.schemas.place_out import PlaceResolvedOut
 from app.services.chart_service import ChartService
-from app.services.geocode import resolve_place
-from app.settings import settings
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/v1/natal", tags=["natal"])
 
-_chart_service = ChartService(ephemeris_path=settings.ephemeris_path)
+_chart_service = ChartService()
 
 
-@router.post("/interpret", response_model=NatalInterpretOut)
+@router.post("/interpret", response_model=NatalInterpretResponse)
 async def natal_interpret(
-    req: NatalRequest,
     request: Request,
-    locale: str = Query(default="ru"),
-    topic_category: str = Query(default="personality_core"),
-    session: AsyncSession = Depends(get_knowledge_session),
-) -> NatalInterpretOut:
-    request_id = request.state.request_id
-
-    # 1) resolve place
-    place_domain = await resolve_place(
-        query=req.birth.place_query,
-        locale=locale,
-        session=session,
-    )
-    if not place_domain.ok:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "request_id": request_id,
-                "error": place_domain.error,
-                "source": place_domain.source,
-            },
-        )
-
-    place_out = PlaceResolvedOut.from_domain(place_domain)
-
-    # 2) convert birth
-    try:
-        birth_domain = req.birth.to_birth_input().to_domain()
-    except ValueError as e:
-        raise HTTPException(
-            status_code=422,
-            detail={"request_id": request_id, "error": str(e)},
-        )
+    req: NatalRequest,
+    locale: str = Query("ru", min_length=2, max_length=32),
+    topic_category: str | None = Query(None),
+    session: AsyncSession = Depends(get_session),
+    knowledge_session: AsyncSession = Depends(get_knowledge_session),
+) -> NatalInterpretResponse:
+    # topic_category можно прокинуть из query, но приоритет у body
+    if req.topic_category is None and topic_category:
+        req = req.model_copy(update={"topic_category": topic_category})
 
     payload = await _chart_service.interpret_natal(
-        session=session,
-        user_name=req.name,
-        birth=birth_domain,
-        place=place_domain,
-        topic_category=req.topic_category or topic_category,
+        request_id=getattr(request.state, "request_id", ""),
+        req=req,
         locale=locale,
-        tone_namespace="natal",
+        session=session,
+        knowledge_session=knowledge_session,
     )
 
-    return NatalInterpretOut.from_service(
-        request_id=request_id,
+    # ChartService уже возвращает dict в форме NatalInterpretResponse,
+    # но на всякий случай нормализуем
+    place = payload.get("place")
+    place_out = PlaceResolvedOut(**place) if isinstance(place, dict) else None
+
+    return NatalInterpretResponse(
+        request_id=payload.get("request_id") or getattr(request.state, "request_id", ""),
+        ok=bool(payload.get("ok", True)),
+        topic_category=payload.get("topic_category"),
+        coverage=payload.get("coverage", "empty"),
+        text=payload.get("text") or "",
         place=place_out,
-        payload=payload,
+        raw_blocks=payload.get("raw_blocks") or [],
+        meta=payload.get("meta") or {},
+        error=payload.get("error"),
     )
