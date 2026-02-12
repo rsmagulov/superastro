@@ -18,19 +18,22 @@ class Settings(BaseSettings):
       - лишние переменные игнорируем (extra="ignore")
     """
 
+    model_config = SettingsConfigDict(
+        env_prefix="ASTRO_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    build_version: str = Field(default="dev")
+    knowledge_build_version: str | None = Field(default=None)  # <-- ADDED
+
     button_topic_map: dict[str, list[str]] = Field(
         default_factory=lambda: {
             "btn_core_pack": ["personality_core", "career"],
             "btn_career": ["career"],
             "btn_psychology": ["psychology"],
         }
-    )
-
-    model_config = SettingsConfigDict(
-        env_prefix="ASTRO_",
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
     )
 
     astro_db_path: str = "./astro.db"
@@ -44,5 +47,6 @@ class Settings(BaseSettings):
     debug_meta: bool = True
     trace_meta: bool = True
 
+    button_catalog: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 settings = Settings()

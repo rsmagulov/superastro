@@ -38,6 +38,15 @@ class InterpretV2Response(BaseModel):
     error: Optional[str] = None
 
 
+class ButtonDefV2(BaseModel):
+    topics: list[TopicCategory] = Field(default_factory=list)
+    label: str
+    order: int = 0
+    icon: Optional[str] = None
+    is_enabled: bool = True
+
+
 class ButtonsV2Response(BaseModel):
     ok: bool = True
-    buttons: dict[str, list[TopicCategory]] = Field(default_factory=dict)
+    buttons: dict[str, ButtonDefV2] = Field(default_factory=dict)
+    meta: dict[str, Any] = Field(default_factory=dict)

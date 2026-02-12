@@ -1,15 +1,20 @@
 # ============================================================
-# File: astroprocessor/app/routers/public_v2.py  (REPLACE ENTIRE FILE)
+# File: astroprocessor/app/routers/public_v2.py  (PATCH)
+# - If-None-Match / ETag / 304
+# - richer /v2/buttons (label/order/icon/is_enabled)
 # ============================================================
 from __future__ import annotations
 
-from typing import Any, cast
+import hashlib
+import json
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_knowledge_session, get_session
 from app.schemas.public_v2 import (
+    ButtonDefV2,
     ButtonsV2Response,
     InterpretV2Request,
     InterpretV2Response,
@@ -21,20 +26,18 @@ from app.services.geocode import resolve_place
 from app.settings import settings
 
 router = APIRouter(prefix="/v2", tags=["public_v2"])
-
 _chart_service = ChartService()
-
 SAFE_LIMIT = 3500
 
 
+def _effective_build_version() -> str:
+    return settings.knowledge_build_version or settings.build_version
+
+
 def _button_topic_map() -> dict[str, list[str]]:
-    """
-    Source of truth: settings.button_topic_map (mutable in tests via monkeypatch).
-    """
     m = getattr(settings, "button_topic_map", None)
     if not isinstance(m, dict):
         return {}
-
     out: dict[str, list[str]] = {}
     for k, v in m.items():
         if not isinstance(k, str):
@@ -44,13 +47,51 @@ def _button_topic_map() -> dict[str, list[str]]:
     return out
 
 
+def _button_catalog() -> dict[str, dict[str, Any]]:
+    c = getattr(settings, "button_catalog", None)
+    if not isinstance(c, dict):
+        return {}
+    out: dict[str, dict[str, Any]] = {}
+    for k, v in c.items():
+        if isinstance(k, str) and isinstance(v, dict):
+            out[k] = dict(v)
+    return out
+
+
+def _button_defs() -> dict[str, ButtonDefV2]:
+    topics_map = _button_topic_map()
+    catalog = _button_catalog()
+
+    defs: dict[str, ButtonDefV2] = {}
+    for button_id, topics in topics_map.items():
+        meta = catalog.get(button_id, {})
+        defs[button_id] = ButtonDefV2(
+            topics=topics,
+            label=str(meta.get("label") or button_id),
+            order=int(meta.get("order") or 0),
+            icon=(str(meta["icon"]) if meta.get("icon") is not None else None),
+            is_enabled=bool(meta.get("is_enabled", True)),
+        )
+    return defs
+
+
+def _buttons_etag(buttons: dict[str, ButtonDefV2]) -> str:
+    # ETag only depends on buttons content, not build_version.
+    raw = {
+        bid: {
+            "topics": b.topics,
+            "label": b.label,
+            "order": b.order,
+            "icon": b.icon,
+            "is_enabled": b.is_enabled,
+        }
+        for bid, b in buttons.items()
+    }
+    payload = json.dumps(raw, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+
 def _resolve_topics(req: InterpretV2Request) -> list[str]:
-    """
-    Priority:
-    1) explicit topic_categories
-    2) button_id mapping from settings
-    3) default
-    """
     if req.topic_categories:
         return [str(t) for t in req.topic_categories]
 
@@ -97,13 +138,8 @@ def _split_to_messages(text: str, limit: int = SAFE_LIMIT) -> list[str]:
 
 
 def _build_meta(*, place: dict[str, Any], locale: str, topics: list[str], button_id: str | None) -> dict[str, Any]:
-    build_version = (
-        getattr(settings, "knowledge_build_version", None)
-        or getattr(settings, "build_version", None)
-        or "dev"
-    )
     return {
-        "build_version": build_version,
+        "build_version": _effective_build_version(),
         "locale": locale,
         "button_id": button_id,
         "topics": topics,
@@ -112,9 +148,21 @@ def _build_meta(*, place: dict[str, Any], locale: str, topics: list[str], button
 
 
 @router.get("/buttons", response_model=ButtonsV2Response)
-async def buttons_v2() -> ButtonsV2Response:
-    # ButtonsV2Response expects TopicCategory values; we return strings that must be valid TopicCategory.
-    return ButtonsV2Response(ok=True, buttons=cast(Any, _button_topic_map()))
+async def buttons_v2(request: Request, response: Response) -> Any:
+    buttons = _button_defs()              # dict[str, ButtonDefV2]
+    etag = _buttons_etag(buttons)
+
+    inm = request.headers.get("if-none-match")
+    response.headers["ETag"] = etag
+
+    if inm and inm.strip() == etag:
+        return Response(status_code=304, headers={"ETag": etag})
+
+    return ButtonsV2Response(
+        ok=True,
+        buttons=buttons,
+        meta={"build_version": _effective_build_version(), "etag": etag},
+    )
 
 
 @router.post("/interpret", response_model=InterpretV2Response)
