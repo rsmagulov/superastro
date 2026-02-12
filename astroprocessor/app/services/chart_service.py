@@ -4,13 +4,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.astro.kerykeion_adapter import BirthData, KerykeionAdapter
-from app.schemas.place import PlaceResolved
 from app.astro.key_builder import build_knowledge_key_blocks
+from app.schemas.place import PlaceResolved
 from app.services.knowledge_repo import KnowledgeHit, KnowledgeRepo
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @dataclass(frozen=True)
@@ -31,7 +29,9 @@ class ChartService:
         self.k = KerykeionAdapter(ephemeris_path=ephemeris_path)
         self.repo = KnowledgeRepo()
 
-    async def build_natal(self, *, user_name: str, birth: BirthData, place: PlaceResolved) -> dict:
+    async def build_natal(
+        self, *, user_name: str, birth: BirthData, place: PlaceResolved
+    ) -> dict:
         place.require_ready()
 
         houses_id = "P"  # default
@@ -74,7 +74,9 @@ class ChartService:
         max_blocks: int = 50,
         max_chars: int = 30_000,
     ) -> Dict[str, Any]:
-        natal_data = await self.build_natal(user_name=user_name, birth=birth, place=place)
+        natal_data = await self.build_natal(
+            user_name=user_name, birth=birth, place=place
+        )
 
         knowledge_blocks = build_knowledge_key_blocks(
             natal_data,
@@ -158,7 +160,10 @@ class ChartService:
             }
             for b in used
         ]
-        knowledge_blocks_dump = [{"id": kb.id, "candidate_keys": kb.candidate_keys, "meta": kb.meta} for kb in knowledge_blocks]
+        knowledge_blocks_dump = [
+            {"id": kb.id, "candidate_keys": kb.candidate_keys, "meta": kb.meta}
+            for kb in knowledge_blocks
+        ]
 
         return {
             "natal_data": natal_data,

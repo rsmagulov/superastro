@@ -121,8 +121,7 @@ def _default_db_path() -> Path:
 def ensure_schema(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
 
-    cur.execute(
-        """
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS knowledge_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             key TEXT NOT NULL,
@@ -135,21 +134,28 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
             meta_json TEXT NOT NULL DEFAULT '{}',
             updated_at TEXT
         );
-        """
-    )
+        """)
 
     # Add missing columns for older DBs
-    cols = {row[1] for row in cur.execute("PRAGMA table_info(knowledge_items)").fetchall()}
+    cols = {
+        row[1] for row in cur.execute("PRAGMA table_info(knowledge_items)").fetchall()
+    }
 
     if "priority" not in cols:
-        cur.execute("ALTER TABLE knowledge_items ADD COLUMN priority INTEGER NOT NULL DEFAULT 100")
+        cur.execute(
+            "ALTER TABLE knowledge_items ADD COLUMN priority INTEGER NOT NULL DEFAULT 100"
+        )
 
     if "created_at" not in cols:
         cur.execute("ALTER TABLE knowledge_items ADD COLUMN created_at TEXT")
-        cur.execute("UPDATE knowledge_items SET created_at = COALESCE(created_at, datetime('now'))")
+        cur.execute(
+            "UPDATE knowledge_items SET created_at = COALESCE(created_at, datetime('now'))"
+        )
 
     if "is_active" not in cols:
-        cur.execute("ALTER TABLE knowledge_items ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
+        cur.execute(
+            "ALTER TABLE knowledge_items ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1"
+        )
 
     conn.commit()
 
@@ -164,7 +170,9 @@ def _parse_only_keys(s: Optional[str]) -> Optional[List[str]]:
     return keys or None
 
 
-def _read_text_from_args(text: Optional[str], text_file: Optional[str]) -> Optional[str]:
+def _read_text_from_args(
+    text: Optional[str], text_file: Optional[str]
+) -> Optional[str]:
     if text is not None and text_file is not None:
         raise SystemExit("ERROR: use only one of --text or --text-file")
 
@@ -319,12 +327,16 @@ def apply_version(
     errors: List[str] = []
 
     for key in only_keys:
-        src = None if text_override is not None else _pick_source_row_for_version(
-            conn,
-            key=key,
-            locale=locale,
-            topic=topic,
-            include_inactive=include_inactive_source,
+        src = (
+            None
+            if text_override is not None
+            else _pick_source_row_for_version(
+                conn,
+                key=key,
+                locale=locale,
+                topic=topic,
+                include_inactive=include_inactive_source,
+            )
         )
 
         if text_override is not None:
@@ -337,7 +349,11 @@ def apply_version(
             )
             continue
 
-        pr = set_priority if set_priority is not None else (int(src["priority"]) if src is not None else 200)
+        pr = (
+            set_priority
+            if set_priority is not None
+            else (int(src["priority"]) if src is not None else 200)
+        )
         pr = int(pr) + int(priority_offset)
 
         if dry_run:
@@ -409,7 +425,9 @@ def set_active(
 ) -> int:
     cur = conn.cursor()
     if dry_run:
-        row = cur.execute("SELECT 1 FROM knowledge_items WHERE id = ? LIMIT 1", (int(row_id),)).fetchone()
+        row = cur.execute(
+            "SELECT 1 FROM knowledge_items WHERE id = ? LIMIT 1", (int(row_id),)
+        ).fetchone()
         return 1 if row else 0
 
     cur.execute(
@@ -434,15 +452,36 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         default=None,
         help="Path to knowledge.db (default: settings.knowledge_db_path or data/knowledge.db)",
     )
-    p.add_argument("--dry-run", action="store_true", help="Don't write to DB; only show what would happen.")
+    p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Don't write to DB; only show what would happen.",
+    )
 
     sub = p.add_subparsers(dest="command", required=True)
 
     # seed
-    p_seed = sub.add_parser("seed", help="Idempotent: insert default seeds if not exists (active).")
-    p_seed.add_argument("--only-keys", type=str, default=None, help="Comma-separated list of keys to apply (optional).")
-    p_seed.add_argument("--set-priority", type=int, default=None, help="Override priority for inserted items.")
-    p_seed.add_argument("--priority-offset", type=int, default=0, help="Add offset to each item's priority.")
+    p_seed = sub.add_parser(
+        "seed", help="Idempotent: insert default seeds if not exists (active)."
+    )
+    p_seed.add_argument(
+        "--only-keys",
+        type=str,
+        default=None,
+        help="Comma-separated list of keys to apply (optional).",
+    )
+    p_seed.add_argument(
+        "--set-priority",
+        type=int,
+        default=None,
+        help="Override priority for inserted items.",
+    )
+    p_seed.add_argument(
+        "--priority-offset",
+        type=int,
+        default=0,
+        help="Add offset to each item's priority.",
+    )
 
     # version (fixed)
     p_ver = sub.add_parser(
@@ -458,17 +497,42 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         required=True,
         help="Comma-separated list of keys to version, e.g. natal.planet.sun.sign.leo",
     )
-    p_ver.add_argument("--locale", type=str, default="ru-RU", help="Locale for cloning/inserting (default ru-RU).")
+    p_ver.add_argument(
+        "--locale",
+        type=str,
+        default="ru-RU",
+        help="Locale for cloning/inserting (default ru-RU).",
+    )
     p_ver.add_argument(
         "--topic",
         type=str,
         default="personality_core",
         help="Topic category for cloning/inserting (default personality_core).",
     )
-    p_ver.add_argument("--set-priority", type=int, default=None, help="Force priority for inserted versions.")
-    p_ver.add_argument("--priority-offset", type=int, default=0, help="Add offset to computed priority.")
-    p_ver.add_argument("--text", type=str, default=None, help="Inline text for ALL keys in --only-keys.")
-    p_ver.add_argument("--text-file", type=str, default=None, help="Read text from file (utf-8) for ALL keys.")
+    p_ver.add_argument(
+        "--set-priority",
+        type=int,
+        default=None,
+        help="Force priority for inserted versions.",
+    )
+    p_ver.add_argument(
+        "--priority-offset",
+        type=int,
+        default=0,
+        help="Add offset to computed priority.",
+    )
+    p_ver.add_argument(
+        "--text",
+        type=str,
+        default=None,
+        help="Inline text for ALL keys in --only-keys.",
+    )
+    p_ver.add_argument(
+        "--text-file",
+        type=str,
+        default=None,
+        help="Read text from file (utf-8) for ALL keys.",
+    )
     p_ver.add_argument(
         "--include-inactive-source",
         action="store_true",
@@ -482,11 +546,27 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 
     # list
     p_list = sub.add_parser("list", help="List versions for a given key.")
-    p_list.add_argument("--key", required=True, type=str, help="Knowledge key, e.g. natal.planet.sun.sign.leo")
-    p_list.add_argument("--locale", default=None, type=str, help="Locale filter, e.g. ru-RU (optional)")
-    p_list.add_argument("--topic", default=None, type=str, help="Topic filter, e.g. personality_core (optional)")
-    p_list.add_argument("--include-inactive", action="store_true", help="Include inactive versions too.")
-    p_list.add_argument("--limit", default=20, type=int, help="Max rows to show (default 20).")
+    p_list.add_argument(
+        "--key",
+        required=True,
+        type=str,
+        help="Knowledge key, e.g. natal.planet.sun.sign.leo",
+    )
+    p_list.add_argument(
+        "--locale", default=None, type=str, help="Locale filter, e.g. ru-RU (optional)"
+    )
+    p_list.add_argument(
+        "--topic",
+        default=None,
+        type=str,
+        help="Topic filter, e.g. personality_core (optional)",
+    )
+    p_list.add_argument(
+        "--include-inactive", action="store_true", help="Include inactive versions too."
+    )
+    p_list.add_argument(
+        "--limit", default=20, type=int, help="Max rows to show (default 20)."
+    )
 
     # activate/deactivate
     p_act = sub.add_parser("activate", help="Set is_active=1 for row by id.")
@@ -503,7 +583,9 @@ def _print_rows(rows: List[sqlite3.Row]) -> None:
         print("No rows found.")
         return
 
-    print("id | pr | act | created_at           | locale | topic_category         | text")
+    print(
+        "id | pr | act | created_at           | locale | topic_category         | text"
+    )
     print("-" * 110)
     for r in rows:
         txt = (r["text"] or "").replace("\n", " ").strip()
@@ -512,7 +594,9 @@ def _print_rows(rows: List[sqlite3.Row]) -> None:
         created = (r["created_at"] or "")[:19].ljust(19)
         topic = (r["topic_category"] or "").ljust(22)[:22]
         loc = (r["locale"] or "").ljust(6)[:6]
-        print(f"{r['id']:>3} | {r['priority']:>3} |  {r['is_active']}  | {created} | {loc} | {topic} | {txt}")
+        print(
+            f"{r['id']:>3} | {r['priority']:>3} |  {r['is_active']}  | {created} | {loc} | {topic} | {txt}"
+        )
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -558,7 +642,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             if not keys:
                 raise SystemExit("ERROR: --only-keys must contain at least 1 key")
 
-            text_override = _read_text_from_args(getattr(args, "text", None), getattr(args, "text_file", None))
+            text_override = _read_text_from_args(
+                getattr(args, "text", None), getattr(args, "text_file", None)
+            )
             locale = str(getattr(args, "locale", "ru-RU"))
             topic = str(getattr(args, "topic", "personality_core"))
 
@@ -626,7 +712,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if args.command in ("activate", "deactivate"):
             row_id = int(args.id)
             active = args.command == "activate"
-            affected = set_active(conn, row_id=row_id, active=active, dry_run=bool(args.dry_run))
+            affected = set_active(
+                conn, row_id=row_id, active=active, dry_run=bool(args.dry_run)
+            )
 
             label = "ACTIVATE" if active else "DEACTIVATE"
             print(f"[{label}] DB: {db_path.as_posix()}")

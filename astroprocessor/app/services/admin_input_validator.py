@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Optional, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
+from app.knowledge.meta_schema import ALLOWED_ABSTRACTION_LEVELS, ALLOWED_TONES
 from fastapi import HTTPException
-
-from app.knowledge.meta_schema import ALLOWED_TONES, ALLOWED_ABSTRACTION_LEVELS
-
 
 _REPLACEMENT_CHAR = "\ufffd"  # Unicode replacement char
 
@@ -24,13 +22,17 @@ def validate_text_not_garbled(text: str, field_name: str = "text") -> None:
         return
 
     if _REPLACEMENT_CHAR in text:
-        _raise400(f"{field_name}: обнаружен символ замены (�). Проверь кодировку запроса (нужен UTF-8).")
+        _raise400(
+            f"{field_name}: обнаружен символ замены (�). Проверь кодировку запроса (нужен UTF-8)."
+        )
 
     # Эвристика: много '?' подряд — часто признак "????" вместо кириллицы.
     # Не блокируем единичные знаки вопроса.
     q_count = text.count("?")
     if q_count >= 8 and (q_count / max(len(text), 1)) > 0.2:
-        _raise400(f"{field_name}: похоже на испорченную кодировку (много '?'). Отправь JSON в UTF-8 (bytes).")
+        _raise400(
+            f"{field_name}: похоже на испорченную кодировку (много '?'). Отправь JSON в UTF-8 (bytes)."
+        )
 
 
 def normalize_and_validate_meta_json(
@@ -76,9 +78,12 @@ def normalize_and_validate_meta_json(
             _raise400("meta_json.tone: отсутствует или недопустимое значение")
         lvl = meta.get("abstraction_level")
         if not lvl or not isinstance(lvl, str) or lvl not in ALLOWED_ABSTRACTION_LEVELS:
-            _raise400("meta_json.abstraction_level: отсутствует или недопустимое значение")
+            _raise400(
+                "meta_json.abstraction_level: отсутствует или недопустимое значение"
+            )
 
     return json.dumps(meta, ensure_ascii=False)
+
 
 def normalize_and_validate_meta_obj(
     meta: dict,

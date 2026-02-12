@@ -2,33 +2,28 @@ from __future__ import annotations
 
 import json
 from typing import Any, Dict
-from fastapi import APIRouter, Depends, HTTPException, Query
-from requests import patch, session
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
 
 from app.db import get_knowledge_session
-from app.schemas.admin_knowledge import (
-    KnowledgeItemOut,
-    KnowledgeItemCreate,
-    KnowledgeItemPatch,
-    KnowledgeItemListOut,
-    BulkFillDefaultMetaRequest,
-    BulkSetToneRequest,
-    BulkSetAbstractionRequest,
-    BulkTagRequest,
-    BulkSetActiveRequest,
-)
+from app.knowledge.meta_schema import ALLOWED_ABSTRACTION_LEVELS, ALLOWED_TONES
+from app.schemas.admin_knowledge import (BulkFillDefaultMetaRequest,
+                                         BulkSetAbstractionRequest,
+                                         BulkSetActiveRequest,
+                                         BulkSetToneRequest, BulkTagRequest,
+                                         KnowledgeItemCreate,
+                                         KnowledgeItemListOut,
+                                         KnowledgeItemOut, KnowledgeItemPatch)
 from app.services.admin_input_validator import (
-    normalize_and_validate_meta_obj,
-    validate_text_not_garbled,
-    normalize_and_validate_meta_json,
-)
+    normalize_and_validate_meta_json, normalize_and_validate_meta_obj,
+    validate_text_not_garbled)
 from app.services.knowledge_items_admin_repo import KnowledgeItemsAdminRepo
-from app.knowledge.meta_schema import ALLOWED_TONES, ALLOWED_ABSTRACTION_LEVELS
+from fastapi import APIRouter, Depends, HTTPException, Query
+from requests import patch, session
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/knowledge/items", tags=["admin-knowledge-items"])
 repo = KnowledgeItemsAdminRepo()
+
 
 def _meta_obj(meta_json: str) -> dict[str, Any]:
     try:
@@ -37,12 +32,15 @@ def _meta_obj(meta_json: str) -> dict[str, Any]:
     except Exception:
         return {}
 
+
 @router.get("", response_model=KnowledgeItemListOut)
 async def list_items(
     session: AsyncSession = Depends(get_knowledge_session),
     q: str | None = Query(default=None),
     locale: str | None = Query(default=None),
-    topic_category: str | None = Query(default=None, description="__NULL__ чтобы выбрать NULL"),
+    topic_category: str | None = Query(
+        default=None, description="__NULL__ чтобы выбрать NULL"
+    ),
     is_active: bool | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -73,8 +71,11 @@ async def list_items(
     ]
     return KnowledgeItemListOut(items=items, total=total, limit=limit, offset=offset)
 
+
 @router.get("/{item_id}", response_model=KnowledgeItemOut)
-async def get_item(item_id: int, session: AsyncSession = Depends(get_knowledge_session)):
+async def get_item(
+    item_id: int, session: AsyncSession = Depends(get_knowledge_session)
+):
     r = await repo.get_item(session, item_id=item_id)
     if not r:
         raise HTTPException(status_code=404, detail="Не найдено")
@@ -91,8 +92,11 @@ async def get_item(item_id: int, session: AsyncSession = Depends(get_knowledge_s
         meta=_meta_obj(r.meta_json),
     )
 
+
 @router.post("", response_model=KnowledgeItemOut, status_code=201)
-async def create_item(payload: KnowledgeItemCreate, session: AsyncSession = Depends(get_knowledge_session)):
+async def create_item(
+    payload: KnowledgeItemCreate, session: AsyncSession = Depends(get_knowledge_session)
+):
     data = payload.model_dump()
     incoming_is_active = bool(data.get("is_active", True))
 
@@ -111,7 +115,6 @@ async def create_item(payload: KnowledgeItemCreate, session: AsyncSession = Depe
         )
 
     data.pop("meta", None)
-
 
     validate_text_not_garbled(data["text"], "text")
     # meta может прийти как объект или как строка
@@ -168,7 +171,10 @@ async def create_item(payload: KnowledgeItemCreate, session: AsyncSession = Depe
     )
     if existing_id is None:
         # редкий случай: конфликт был, но найти не смогли
-        raise HTTPException(status_code=409, detail="Конфликт уникальности, но запись не найдена для upsert")
+        raise HTTPException(
+            status_code=409,
+            detail="Конфликт уникальности, но запись не найдена для upsert",
+        )
 
     # 3) Обновляем поля (что именно перезаписываем — определяем здесь)
     patch = {
@@ -195,7 +201,9 @@ async def create_item(payload: KnowledgeItemCreate, session: AsyncSession = Depe
         await session.commit()
     except IntegrityError:
         await session.rollback()
-        raise HTTPException(status_code=409, detail="Конфликт уникальности при обновлении")
+        raise HTTPException(
+            status_code=409, detail="Конфликт уникальности при обновлении"
+        )
 
     r = await repo.get_item(session, item_id=existing_id)
     assert r is not None
@@ -213,10 +221,15 @@ async def create_item(payload: KnowledgeItemCreate, session: AsyncSession = Depe
         meta=_meta_obj(r.meta_json),
     )
 
+
 @router.patch("/{item_id}", response_model=KnowledgeItemOut)
-async def patch_item(item_id: int, payload: KnowledgeItemPatch, session: AsyncSession = Depends(get_knowledge_session)):
+async def patch_item(
+    item_id: int,
+    payload: KnowledgeItemPatch,
+    session: AsyncSession = Depends(get_knowledge_session),
+):
     patch = {k: v for k, v in payload.model_dump().items() if v is not None}
-    
+
     # --- НОВОЕ: если правим text, защищаемся от "????" ---
     if "text" in patch and patch["text"] is not None:
         validate_text_not_garbled(str(patch["text"]), "text")
@@ -297,13 +310,17 @@ async def patch_item(item_id: int, payload: KnowledgeItemPatch, session: AsyncSe
         meta=_meta_obj(r.meta_json),
     )
 
+
 @router.delete("/{item_id}", status_code=204)
-async def delete_item(item_id: int, session: AsyncSession = Depends(get_knowledge_session)):
+async def delete_item(
+    item_id: int, session: AsyncSession = Depends(get_knowledge_session)
+):
     ok = await repo.delete_item(session, item_id=item_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Не найдено")
     await session.commit()
     return None
+
 
 @router.post("/bulk/fill-default-meta")
 async def bulk_fill_default_meta(
@@ -325,36 +342,56 @@ async def bulk_fill_default_meta(
     await session.commit()
     return {"ok": True, "affected": affected}
 
+
 @router.post("/bulk/set-tone")
-async def bulk_set_tone(req: BulkSetToneRequest, session: AsyncSession = Depends(get_knowledge_session)):
+async def bulk_set_tone(
+    req: BulkSetToneRequest, session: AsyncSession = Depends(get_knowledge_session)
+):
     if req.tone not in ALLOWED_TONES:
         raise HTTPException(status_code=400, detail="tone: недопустимое значение")
 
     f = req.filter
     affected = await repo.bulk_set_tone(
         session,
-        q=f.q, locale=f.locale, topic_category=f.topic_category, is_active=f.is_active, ids=f.ids,
+        q=f.q,
+        locale=f.locale,
+        topic_category=f.topic_category,
+        is_active=f.is_active,
+        ids=f.ids,
         tone=req.tone,
     )
     await session.commit()
     return {"ok": True, "affected": affected}
 
+
 @router.post("/bulk/set-abstraction")
-async def bulk_set_abstraction(req: BulkSetAbstractionRequest, session: AsyncSession = Depends(get_knowledge_session)):
+async def bulk_set_abstraction(
+    req: BulkSetAbstractionRequest,
+    session: AsyncSession = Depends(get_knowledge_session),
+):
     if req.abstraction_level not in ALLOWED_ABSTRACTION_LEVELS:
-        raise HTTPException(status_code=400, detail="abstraction_level: недопустимое значение")
+        raise HTTPException(
+            status_code=400, detail="abstraction_level: недопустимое значение"
+        )
 
     f = req.filter
     affected = await repo.bulk_set_abstraction(
         session,
-        q=f.q, locale=f.locale, topic_category=f.topic_category, is_active=f.is_active, ids=f.ids,
+        q=f.q,
+        locale=f.locale,
+        topic_category=f.topic_category,
+        is_active=f.is_active,
+        ids=f.ids,
         abstraction_level=req.abstraction_level,
     )
     await session.commit()
     return {"ok": True, "affected": affected}
 
+
 @router.post("/bulk/add-tag")
-async def bulk_add_tag(req: BulkTagRequest, session: AsyncSession = Depends(get_knowledge_session)):
+async def bulk_add_tag(
+    req: BulkTagRequest, session: AsyncSession = Depends(get_knowledge_session)
+):
     tag = (req.tag or "").strip().lower()
     if not tag:
         raise HTTPException(status_code=400, detail="tag: пустой")
@@ -364,14 +401,21 @@ async def bulk_add_tag(req: BulkTagRequest, session: AsyncSession = Depends(get_
     f = req.filter
     affected = await repo.bulk_add_tag(
         session,
-        q=f.q, locale=f.locale, topic_category=f.topic_category, is_active=f.is_active, ids=f.ids,
+        q=f.q,
+        locale=f.locale,
+        topic_category=f.topic_category,
+        is_active=f.is_active,
+        ids=f.ids,
         tag=tag,
     )
     await session.commit()
     return {"ok": True, "affected": affected}
 
+
 @router.post("/bulk/remove-tag")
-async def bulk_remove_tag(req: BulkTagRequest, session: AsyncSession = Depends(get_knowledge_session)):
+async def bulk_remove_tag(
+    req: BulkTagRequest, session: AsyncSession = Depends(get_knowledge_session)
+):
     tag = (req.tag or "").strip().lower()
     if not tag:
         raise HTTPException(status_code=400, detail="tag: пустой")
@@ -379,14 +423,21 @@ async def bulk_remove_tag(req: BulkTagRequest, session: AsyncSession = Depends(g
     f = req.filter
     affected = await repo.bulk_remove_tag(
         session,
-        q=f.q, locale=f.locale, topic_category=f.topic_category, is_active=f.is_active, ids=f.ids,
+        q=f.q,
+        locale=f.locale,
+        topic_category=f.topic_category,
+        is_active=f.is_active,
+        ids=f.ids,
         tag=tag,
     )
     await session.commit()
     return {"ok": True, "affected": affected}
 
+
 @router.post("/bulk/set-active")
-async def bulk_set_active(req: BulkSetActiveRequest, session: AsyncSession = Depends(get_knowledge_session)):
+async def bulk_set_active(
+    req: BulkSetActiveRequest, session: AsyncSession = Depends(get_knowledge_session)
+):
     f = req.filter
 
     # 1) Если включаем — делаем preflight
@@ -422,5 +473,3 @@ async def bulk_set_active(req: BulkSetActiveRequest, session: AsyncSession = Dep
     )
     await session.commit()
     return {"ok": True, "affected": affected}
-
-

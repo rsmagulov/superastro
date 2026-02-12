@@ -5,17 +5,17 @@ import json
 import re
 from typing import Any, get_args
 
-from fastapi import APIRouter, Depends, Form, Query, Request
-from fastapi.responses import HTMLResponse
-from starlette.templating import Jinja2Templates
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.admin.ui.sources_router import \
+    router as \
+    sources_router  # <-- важно: тесты подключают только этот router.py
 from app.db import get_knowledge_session
 from app.knowledge.meta_schema import ALLOWED_ABSTRACTION_LEVELS, ALLOWED_TONES
 from app.schemas.natal import TopicCategory as TopicCategoryLiteral
-
-from app.admin.ui.sources_router import router as sources_router  # <-- важно: тесты подключают только этот router.py
+from fastapi import APIRouter, Depends, Form, Query, Request
+from fastapi.responses import HTMLResponse
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.templating import Jinja2Templates
 
 # ВАЖНО: без /admin/ui — его добавит include_router(..., prefix="/admin/ui")
 router = APIRouter(tags=["admin-ui"])
@@ -52,7 +52,10 @@ def _items_table_html(rows: list[dict[str, Any]]) -> str:
     out.append("</table>")
     return "".join(out)
 
+
 templates = Jinja2Templates(directory="app/admin/ui/templates")
+
+
 @router.get("/items", response_class=HTMLResponse)
 async def items_page(request: Request) -> HTMLResponse:
     # Тест ждёт, что "Фрагменты" присутствует в HTML.
@@ -133,9 +136,7 @@ async def items_table(
         "next_offset": next_offset,
     }
 
-
-    sql = text(
-        f"""
+    sql = text(f"""
         SELECT
           id, key, topic_category, locale, text,
           is_active, priority, created_at, meta_json
@@ -143,8 +144,7 @@ async def items_table(
         WHERE {where_sql}
         ORDER BY id ASC
         LIMIT :limit OFFSET :offset
-        """
-    )
+        """)
     res = await session.execute(sql, params)
 
     items: list[dict[str, Any]] = []
@@ -175,17 +175,17 @@ async def items_table(
     selected_id = int(selected) if (selected and selected.isdigit()) else None
 
     ctx = {
-    "request": request,
-    "items": items,
-    "selected_id": selected_id,
-    "pagination": pagination,
-    "filters": {
-        "q": q,
-        "locale": locale,
-        "topic_category": topic_category,
-        "is_active": is_active,
-    },
-}
+        "request": request,
+        "items": items,
+        "selected_id": selected_id,
+        "pagination": pagination,
+        "filters": {
+            "q": q,
+            "locale": locale,
+            "topic_category": topic_category,
+            "is_active": is_active,
+        },
+    }
 
     return templates.TemplateResponse("admin/_items_table_block.html", ctx)
 
@@ -200,7 +200,9 @@ async def select_item(
     is_active: str = Query(""),
     selected: str = Query("", alias="selected"),
 ) -> HTMLResponse:
-    res = await session.execute(text("SELECT id FROM knowledge_items WHERE id=:id"), {"id": item_id})
+    res = await session.execute(
+        text("SELECT id FROM knowledge_items WHERE id=:id"), {"id": item_id}
+    )
     if not res.fetchone():
         return HTMLResponse("Not Found", status_code=404)
 
@@ -213,7 +215,9 @@ async def select_item(
 
 
 async def _load_meta(session: AsyncSession, item_id: int) -> dict[str, Any]:
-    res = await session.execute(text("SELECT meta_json FROM knowledge_items WHERE id=:id"), {"id": item_id})
+    res = await session.execute(
+        text("SELECT meta_json FROM knowledge_items WHERE id=:id"), {"id": item_id}
+    )
     row = res.fetchone()
     if not row:
         return {}
@@ -302,13 +306,18 @@ async def bulk_set_active(
         for item_id in id_list:
             meta = await _load_meta(session, item_id)
             if meta.get("__invalid__"):
-                return HTMLResponse(_flash_html("Нельзя активировать: meta_json битый"), status_code=400)
+                return HTMLResponse(
+                    _flash_html("Нельзя активировать: meta_json битый"), status_code=400
+                )
             lvl = (meta.get("abstraction_level") or "").strip()
             if lvl == "" or (lvl not in ALLOWED_ABSTRACTION_LEVELS):
                 return HTMLResponse(_flash_html("Нельзя активировать"), status_code=400)
 
     id_csv = ",".join(str(i) for i in id_list)
-    await session.execute(text(f"UPDATE knowledge_items SET is_active=:v WHERE id IN ({id_csv})"), {"v": int(active)})
+    await session.execute(
+        text(f"UPDATE knowledge_items SET is_active=:v WHERE id IN ({id_csv})"),
+        {"v": int(active)},
+    )
     await session.commit()
 
     resp = HTMLResponse(_flash_html("ok"), status_code=200)
@@ -327,17 +336,23 @@ async def bulk_set_topic_category(
         return HTMLResponse(_flash_html("No ids"), status_code=400)
 
     tc = (topic_category or "").strip()
-    is_null = (tc == "")
+    is_null = tc == ""
 
     if (not is_null) and (tc not in TOPIC_CATEGORIES):
         return HTMLResponse(_flash_html("Invalid topic_category"), status_code=400)
 
     id_csv = ",".join(str(i) for i in id_list)
     if is_null:
-        await session.execute(text(f"UPDATE knowledge_items SET topic_category=NULL WHERE id IN ({id_csv})"))
+        await session.execute(
+            text(
+                f"UPDATE knowledge_items SET topic_category=NULL WHERE id IN ({id_csv})"
+            )
+        )
     else:
         await session.execute(
-            text(f"UPDATE knowledge_items SET topic_category=:tc WHERE id IN ({id_csv})"),
+            text(
+                f"UPDATE knowledge_items SET topic_category=:tc WHERE id IN ({id_csv})"
+            ),
             {"tc": tc},
         )
 

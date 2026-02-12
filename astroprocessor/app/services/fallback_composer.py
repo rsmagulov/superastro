@@ -149,4 +149,3 @@ def compose_fallback_text_v1(
 
     final = "\n\n".join(parts).strip()
     return ComposeResult(text=final, used=len(parts), total=total)
-

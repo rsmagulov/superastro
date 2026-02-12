@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import String, Integer, DateTime, JSON, Index
+from sqlalchemy import JSON, DateTime, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .db import Base

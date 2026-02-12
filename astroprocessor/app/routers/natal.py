@@ -4,16 +4,15 @@
 # =========================================
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db import get_knowledge_session
 from app.schemas.natal import NatalRequest
 from app.schemas.natal_out import NatalInterpretOut
+from app.schemas.place_out import PlaceResolvedOut
 from app.services.chart_service import ChartService
 from app.services.geocode import resolve_place
 from app.settings import settings
-from app.schemas.place_out import PlaceResolvedOut
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/v1/natal", tags=["natal"])
 

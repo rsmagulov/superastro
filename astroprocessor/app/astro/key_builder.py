@@ -1,19 +1,37 @@
 # astro/key_builder.py
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Tuple
-
 
 # --- строгие словари нормализации ---
 
 PLANETS = {
-    "sun", "moon", "mercury", "venus", "mars",
-    "jupiter", "saturn", "uranus", "neptune", "pluto",
+    "sun",
+    "moon",
+    "mercury",
+    "venus",
+    "mars",
+    "jupiter",
+    "saturn",
+    "uranus",
+    "neptune",
+    "pluto",
 }
 
 SIGNS = {
-    "aries", "taurus", "gemini", "cancer", "leo", "virgo",
-    "libra", "scorpio", "sagittarius", "capricorn", "aquarius", "pisces",
+    "aries",
+    "taurus",
+    "gemini",
+    "cancer",
+    "leo",
+    "virgo",
+    "libra",
+    "scorpio",
+    "sagittarius",
+    "capricorn",
+    "aquarius",
+    "pisces",
 }
 
 ANGLES = {"asc", "mc"}
@@ -31,6 +49,7 @@ class KeyBlock:
     Один смысловой блок ответа (например, Sun core, ASC, аспект Sun-Saturn).
     candidate_keys идут от наиболее специфичного к наиболее общему.
     """
+
     id: str
     candidate_keys: List[str]
     meta: Dict[str, Any]  # удобно для дебага/логов, но не обязательно использовать
@@ -85,7 +104,12 @@ def _planet_sign_block(
     return KeyBlock(
         id=f"{planet}_core",
         candidate_keys=keys,
-        meta={"planet": planet, "sign": sign, "house": house, "unknown_time": unknown_time},
+        meta={
+            "planet": planet,
+            "sign": sign,
+            "house": house,
+            "unknown_time": unknown_time,
+        },
     )
 
 
@@ -218,7 +242,9 @@ def build_knowledge_key_blocks(
 
             sign = _norm_token(v)
             sign = _require_in_set("sign", sign, SIGNS)
-            blocks.append(_angle_block(angle=angle, sign=sign, tone_namespace=tone_namespace))
+            blocks.append(
+                _angle_block(angle=angle, sign=sign, tone_namespace=tone_namespace)
+            )
 
     # --- аспекты ---
     if include_aspects:
@@ -243,7 +269,9 @@ def build_knowledge_key_blocks(
             if asp not in ASPECTS:
                 continue
 
-            blocks.append(_aspect_block(p1=p1, aspect=asp, p2=p2, tone_namespace=tone_namespace))
+            blocks.append(
+                _aspect_block(p1=p1, aspect=asp, p2=p2, tone_namespace=tone_namespace)
+            )
             count += 1
 
     # --- общий блок только если вообще ничего не получилось ---
@@ -257,4 +285,3 @@ def build_knowledge_key_blocks(
         )
 
     return blocks
-

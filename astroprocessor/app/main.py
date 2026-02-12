@@ -5,6 +5,23 @@ import os
 from datetime import datetime
 from typing import Any, Literal, Optional
 
+# UI router (внутри уже include_router(sources_router))
+from app.admin.ui.router import router as admin_ui_router
+from app.astro.kerykeion_adapter import (BirthData, KerykeionAdapter,
+                                         PlaceResolved)
+from app.astro.key_builder import KeyBlock, build_knowledge_key_blocks
+from app.astro.natal_normalizer import normalize_for_keybuilder
+from app.middleware.request_id import RequestIDMiddleware
+from app.routers.admin_knowledge import router as admin_knowledge_router
+from app.routers.admin_knowledge_items import \
+    router as admin_knowledge_items_router
+from app.routers.natal import router as natal_router
+from app.routers.place_resolve import router as place_router
+from app.schemas.natal import TopicCategory
+from app.services.chunks_repo import ChunksRepo
+from app.services.fallback_composer import compose_fallback_text_v1
+from app.services.knowledge_repo import KnowledgeRepo
+from app.services.search_intent_builder import SearchIntentBuilder
 from fastapi import Depends, FastAPI, Query
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,23 +33,6 @@ from .db import get_knowledge_session, get_session, init_db
 from .services.geocode import resolve_place
 from .settings import settings
 
-from app.astro.kerykeion_adapter import BirthData, KerykeionAdapter, PlaceResolved
-from app.astro.key_builder import KeyBlock, build_knowledge_key_blocks
-from app.astro.natal_normalizer import normalize_for_keybuilder
-from app.schemas.natal import TopicCategory
-from app.services.chunks_repo import ChunksRepo
-from app.services.fallback_composer import compose_fallback_text_v1
-from app.services.knowledge_repo import KnowledgeRepo
-from app.services.search_intent_builder import SearchIntentBuilder
-
-from app.routers.admin_knowledge import router as admin_knowledge_router
-from app.routers.admin_knowledge_items import router as admin_knowledge_items_router
-
-# UI router (внутри уже include_router(sources_router))
-from app.admin.ui.router import router as admin_ui_router
-from app.routers.place_resolve import router as place_router
-from app.routers.natal import router as natal_router
-from app.middleware.request_id import RequestIDMiddleware
 
 class UTF8JSONResponse(JSONResponse):
     media_type = "application/json; charset=utf-8"
@@ -47,6 +47,7 @@ app = FastAPI(
 app.include_router(place_router)
 app.include_router(natal_router)
 app.add_middleware(RequestIDMiddleware)
+
 
 @app.get("/__routes")
 def __routes():
@@ -75,7 +76,9 @@ app.include_router(admin_knowledge_items_router)
 app.include_router(admin_ui_router, prefix="/admin/ui")
 
 # Static for admin UI
-app.mount("/admin/static", StaticFiles(directory="app/admin/ui/static"), name="admin_static")
+app.mount(
+    "/admin/static", StaticFiles(directory="app/admin/ui/static"), name="admin_static"
+)
 
 
 # -------------------- Health --------------------
@@ -205,7 +208,9 @@ def expected_ids(blocks: list[KeyBlock], *, unknown_time: bool) -> set[str]:
     return expected
 
 
-def _attach_debug(meta: dict[str, Any], debug: dict[str, Any], *, debug_on: bool) -> None:
+def _attach_debug(
+    meta: dict[str, Any], debug: dict[str, Any], *, debug_on: bool
+) -> None:
     if settings.debug_meta and debug_on:
         meta["debug"] = debug
 
@@ -230,7 +235,13 @@ async def keys_ev1(
     # 1) place resolve
     place = await resolve_place(req.birth.place_query, req.locale, session)
     if not place.ok:
-        return KeysEV1Response(ok=False, unknown_time=True, expected_ids=[], selection=[], ev1_candidate_keys={})
+        return KeysEV1Response(
+            ok=False,
+            unknown_time=True,
+            expected_ids=[],
+            selection=[],
+            ev1_candidate_keys={},
+        )
 
     # 2) parse birth
     dt = _parse_birth_date(req.birth.date)
@@ -244,11 +255,24 @@ async def keys_ev1(
         hour, minute = 12, 0
         time_unknown = True
 
-    birth = BirthData(year=year, month=month, day=day, hour=hour, minute=minute, time_unknown=time_unknown)
+    birth = BirthData(
+        year=year,
+        month=month,
+        day=day,
+        hour=hour,
+        minute=minute,
+        time_unknown=time_unknown,
+    )
 
     tz_str = str(place.timezone) if place.timezone else ""
     if not tz_str:
-        return KeysEV1Response(ok=False, unknown_time=time_unknown, expected_ids=[], selection=[], ev1_candidate_keys={})
+        return KeysEV1Response(
+            ok=False,
+            unknown_time=time_unknown,
+            expected_ids=[],
+            selection=[],
+            ev1_candidate_keys={},
+        )
 
     place_resolved = PlaceResolved(
         query=req.birth.place_query,
@@ -269,7 +293,14 @@ async def keys_ev1(
             day=birth.day,
             place=place_resolved,
         )
-        birth = BirthData(year=birth.year, month=birth.month, day=birth.day, hour=h, minute=m, time_unknown=True)
+        birth = BirthData(
+            year=birth.year,
+            month=birth.month,
+            day=birth.day,
+            hour=h,
+            minute=m,
+            time_unknown=True,
+        )
 
     subject = adapter.build_subject(
         name="User",
@@ -280,11 +311,15 @@ async def keys_ev1(
     natal_data_raw = adapter.natal_chart_data(subject)
 
     # 4) keybuilder
-    key_input = normalize_for_keybuilder(natal_data_raw, unknown_time=birth.time_unknown)
+    key_input = normalize_for_keybuilder(
+        natal_data_raw, unknown_time=birth.time_unknown
+    )
     blocks_all = build_knowledge_key_blocks(key_input, tone_namespace="natal")
     blocks = [b for b in blocks_all if b.id != "generic"]
 
-    selection = [{"id": b.id, "candidate_keys": b.candidate_keys, "meta": b.meta} for b in blocks]
+    selection = [
+        {"id": b.id, "candidate_keys": b.candidate_keys, "meta": b.meta} for b in blocks
+    ]
     exp = expected_ids(blocks, unknown_time=birth.time_unknown)
 
     ev1_keys: dict[str, list[str]] = {}
@@ -458,7 +493,9 @@ async def natal_interpret(
     # -------- 4) normalize + keybuilder --------
     blocks: list[KeyBlock] = []
     try:
-        key_input = normalize_for_keybuilder(natal_data_raw, unknown_time=birth.time_unknown)
+        key_input = normalize_for_keybuilder(
+            natal_data_raw, unknown_time=birth.time_unknown
+        )
 
         if settings.debug_meta and debug_on:
             debug["key_input_sample"] = {
@@ -468,7 +505,10 @@ async def natal_interpret(
 
         blocks_all = build_knowledge_key_blocks(key_input, tone_namespace="natal")
         blocks = [b for b in blocks_all if b.id != "generic"]
-        selection = [{"id": b.id, "candidate_keys": b.candidate_keys, "meta": b.meta} for b in blocks]
+        selection = [
+            {"id": b.id, "candidate_keys": b.candidate_keys, "meta": b.meta}
+            for b in blocks
+        ]
     except Exception as e:
         debug["knowledge_blocks_error"] = f"{type(e).__name__}: {e}"
         blocks = []
@@ -664,7 +704,12 @@ async def natal_interpret(
                     "locale": intent_result.intent.locale,
                     "anchors": intent_result.intent.anchors,
                     "tokens": [
-                        {"text": t.text, "kind": t.kind, "weight": t.weight, "source": t.source}
+                        {
+                            "text": t.text,
+                            "kind": t.kind,
+                            "weight": t.weight,
+                            "source": t.source,
+                        }
                         for t in intent_result.intent.tokens
                     ],
                     "query": fts_query_used,
@@ -791,7 +836,10 @@ async def natal_interpret(
                 "fts_lang_used": fts_lang_preview,
                 "query": intent_preview.intent.query,
                 "query_soft": intent_preview.intent.query_soft,
-                "tokens": [{"kind": t.kind, "text": t.text, "source": t.source} for t in intent_preview.intent.tokens],
+                "tokens": [
+                    {"kind": t.kind, "text": t.text, "source": t.source}
+                    for t in intent_preview.intent.tokens
+                ],
             }
         except Exception as e:
             debug["intent_preview_error"] = f"{type(e).__name__}: {e}"

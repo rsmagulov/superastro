@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Union, Sequence
 from datetime import datetime
+from typing import Optional, Sequence, Union
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,7 +30,9 @@ class KnowledgeRepo:
         if not candidate_keys:
             return None
 
-        order_cases = " ".join([f"WHEN :k{i} THEN {i}" for i in range(len(candidate_keys))])
+        order_cases = " ".join(
+            [f"WHEN :k{i} THEN {i}" for i in range(len(candidate_keys))]
+        )
         keys_in = ",".join([f":k{i}" for i in range(len(candidate_keys))])
 
         params: dict[str, object] = {"locale": locale}
@@ -42,11 +45,15 @@ class KnowledgeRepo:
         else:
             topic_where = "(topic_category = :topic_category OR topic_category IS NULL)"
             params["topic_category"] = topic_category
-            topic_rank_order = "CASE WHEN topic_category = :topic_category THEN 0 ELSE 1 END ASC,"
+            topic_rank_order = (
+                "CASE WHEN topic_category = :topic_category THEN 0 ELSE 1 END ASC,"
+            )
 
         order_topic = ""
         if topic_category is not None:
-            order_topic = "CASE WHEN topic_category = :topic_category THEN 0 ELSE 1 END ASC,"
+            order_topic = (
+                "CASE WHEN topic_category = :topic_category THEN 0 ELSE 1 END ASC,"
+            )
 
         sql = text(f"""
             SELECT id, key, text, priority, created_at, is_active

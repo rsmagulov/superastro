@@ -33,8 +33,7 @@ class KnowledgeChunksRepo:
         limit: int = 5,
     ) -> list[ChunkHit]:
         # BM25: меньше = лучше. Мы инвертируем в score для удобства.
-        sql = text(
-            """
+        sql = text("""
             SELECT
                 kc.id,
                 kc.doc_id,
@@ -55,8 +54,7 @@ class KnowledgeChunksRepo:
                 AND (:domain IS NULL OR kc.topic_domain = :domain)
             ORDER BY bm ASC, kc.id DESC
             LIMIT :limit
-            """
-        )
+            """)
 
         params: dict[str, Any] = {
             "lang": lang,

@@ -45,7 +45,9 @@ class BirthPayload(BaseModel):
         return self
 
     def to_birth_input(self) -> BirthInput:
-        return BirthInput(date=self.date, time=self.time, unknown_time=self.unknown_time)
+        return BirthInput(
+            date=self.date, time=self.time, unknown_time=self.unknown_time
+        )
 
 
 class NatalRequest(BaseModel):

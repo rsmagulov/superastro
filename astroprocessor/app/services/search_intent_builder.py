@@ -148,7 +148,7 @@ def _quote_if_phrase(s: str) -> str:
     if not s:
         return s
     if " " in s or "-" in s:
-        return f"\"{s}\""
+        return f'"{s}"'
     return s
 
 
@@ -186,12 +186,14 @@ class SearchIntentBuilder:
         # topic tokens
         topic_words = self._topic_words(topic_category, locale)
         for w in topic_words:
-            tokens.append(IntentToken(text=w, kind="topic", weight=1.5, source="topic_category"))
+            tokens.append(
+                IntentToken(text=w, kind="topic", weight=1.5, source="topic_category")
+            )
         if topic_words:
             rules.append("topic:category")
 
         # parse candidate_keys
-        for blk in (selection or []):
+        for blk in selection or []:
             ckeys = blk.get("candidate_keys") or []
             for k in ckeys:
                 if not k:
@@ -207,7 +209,11 @@ class SearchIntentBuilder:
                     p = pm.group(1)
                     txt = self._map_planet(p, locale)
                     if txt:
-                        tokens.append(IntentToken(text=txt, kind="planet", weight=2.0, source=f"key:{ks}"))
+                        tokens.append(
+                            IntentToken(
+                                text=txt, kind="planet", weight=2.0, source=f"key:{ks}"
+                            )
+                        )
 
                 sm = SIGN_RE.search(ks)
                 if sm:
@@ -215,18 +221,33 @@ class SearchIntentBuilder:
 
                     txt = self._map_sign(s_key, locale)
                     if txt:
-                        tokens.append(IntentToken(text=txt, kind="sign", weight=2.0, source=f"key:{ks}"))
+                        tokens.append(
+                            IntentToken(
+                                text=txt, kind="sign", weight=2.0, source=f"key:{ks}"
+                            )
+                        )
 
                     # фразы "в <локатив>" и "в знаке <родительный>"
                     for phr, w in self._sign_phrases(s_key, locale):
-                        tokens.append(IntentToken(text=phr, kind="sign_phrase", weight=w, source=f"key:{ks}"))
+                        tokens.append(
+                            IntentToken(
+                                text=phr,
+                                kind="sign_phrase",
+                                weight=w,
+                                source=f"key:{ks}",
+                            )
+                        )
 
                 am = ANGLE_RE.search(ks)
                 if am:
                     a = am.group(1)
                     txt = self._map_angle(a, locale)
                     if txt:
-                        tokens.append(IntentToken(text=txt, kind="angle", weight=1.8, source=f"key:{ks}"))
+                        tokens.append(
+                            IntentToken(
+                                text=txt, kind="angle", weight=1.8, source=f"key:{ks}"
+                            )
+                        )
 
                 hm = HOUSE_RE.search(ks)
                 if hm:
@@ -245,8 +266,12 @@ class SearchIntentBuilder:
         tokens = self._limit_tokens_smart(tokens, max_total=14)
 
         topic_required = bool(topic_words)
-        query = self._build_match_query_strict(tokens=tokens, anchors=anchors, topic_required=topic_required)
-        query_soft = self._build_match_query_soft(tokens=tokens, anchors=anchors, topic_required=topic_required)
+        query = self._build_match_query_strict(
+            tokens=tokens, anchors=anchors, topic_required=topic_required
+        )
+        query_soft = self._build_match_query_soft(
+            tokens=tokens, anchors=anchors, topic_required=topic_required
+        )
 
         trace = SearchIntentTrace(
             candidate_keys_used=_dedup_keep_order(candidate_keys_used)[:80],
@@ -323,7 +348,9 @@ class SearchIntentBuilder:
             out.append(t)
         return out
 
-    def _limit_tokens_smart(self, tokens: list[IntentToken], *, max_total: int = 14) -> list[IntentToken]:
+    def _limit_tokens_smart(
+        self, tokens: list[IntentToken], *, max_total: int = 14
+    ) -> list[IntentToken]:
         """
         Лимит по видам: сначала planet/angle, потом sign_phrase/sign, topic.
         Это защищает от ситуации, когда sign_phrase выталкивает марс/асц.
@@ -386,7 +413,9 @@ class SearchIntentBuilder:
 
     # -------- query build --------
 
-    def _build_match_query_soft(self, *, tokens: list[IntentToken], anchors: list[str], topic_required: bool) -> str:
+    def _build_match_query_soft(
+        self, *, tokens: list[IntentToken], anchors: list[str], topic_required: bool
+    ) -> str:
         by_kind = self._group_by_kind(tokens)
 
         topic_block = self._or_group(by_kind.get("topic", []))
@@ -412,11 +441,15 @@ class SearchIntentBuilder:
 
         return " AND ".join([p for p in parts if p]).strip()
 
-    def _build_match_query_strict(self, *, tokens: list[IntentToken], anchors: list[str], topic_required: bool) -> str:
+    def _build_match_query_strict(
+        self, *, tokens: list[IntentToken], anchors: list[str], topic_required: bool
+    ) -> str:
         by_kind = self._group_by_kind(tokens)
 
         topic_block = self._or_group(by_kind.get("topic", []))
-        objects_block = self._or_group((by_kind.get("planet", []) or []) + (by_kind.get("angle", []) or []))
+        objects_block = self._or_group(
+            (by_kind.get("planet", []) or []) + (by_kind.get("angle", []) or [])
+        )
 
         # предпочитаем фразу ("в тельце"), иначе просто знак ("телец")
         sign_phrase_block = self._or_group(by_kind.get("sign_phrase", []) or [])

@@ -1,10 +1,10 @@
+from app.db import get_knowledge_session
+from app.services.knowledge_items_validator import validate_knowledge_items
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db import get_knowledge_session
-from app.services.knowledge_items_validator import validate_knowledge_items
-
 router = APIRouter(prefix="/admin/knowledge", tags=["admin-knowledge"])
+
 
 @router.get("/validate")
 async def admin_validate(session: AsyncSession = Depends(get_knowledge_session)):

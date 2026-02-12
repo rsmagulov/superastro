@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import AsyncIterator
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 from sqlalchemy.orm import DeclarativeBase
 
 from .settings import settings
@@ -28,8 +29,12 @@ def _ensure_parent_dir(path_str: str) -> None:
 # -------------------------
 
 _ensure_parent_dir(settings.astro_db_path)
-astro_engine = create_async_engine(_make_sqlite_url(settings.astro_db_path), echo=False, future=True)
-AstroSessionLocal = async_sessionmaker(astro_engine, class_=AsyncSession, expire_on_commit=False)
+astro_engine = create_async_engine(
+    _make_sqlite_url(settings.astro_db_path), echo=False, future=True
+)
+AstroSessionLocal = async_sessionmaker(
+    astro_engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 class Base(DeclarativeBase):
@@ -41,8 +46,12 @@ class Base(DeclarativeBase):
 # -------------------------
 
 _ensure_parent_dir(settings.knowledge_db_path)
-knowledge_engine = create_async_engine(_make_sqlite_url(settings.knowledge_db_path), echo=False, future=True)
-KnowledgeSessionLocal = async_sessionmaker(knowledge_engine, class_=AsyncSession, expire_on_commit=False)
+knowledge_engine = create_async_engine(
+    _make_sqlite_url(settings.knowledge_db_path), echo=False, future=True
+)
+KnowledgeSessionLocal = async_sessionmaker(
+    knowledge_engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 async def _ensure_sources_table_on_engine() -> None:

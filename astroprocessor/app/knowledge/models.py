@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, Integer, String, Text, Index, UniqueConstraint
+from sqlalchemy import Column, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import declarative_base
 
 KnowledgeBase = declarative_base()
@@ -18,7 +18,9 @@ class KnowledgeItem(KnowledgeBase):
     priority = Column(Integer, nullable=False, default=100)
 
     __table_args__ = (
-        UniqueConstraint("key", "locale", "priority", name="uq_knowledge_key_locale_priority"),
+        UniqueConstraint(
+            "key", "locale", "priority", name="uq_knowledge_key_locale_priority"
+        ),
         Index("ix_knowledge_key_locale_priority", "key", "locale", "priority"),
         Index("ix_knowledge_topic_category", "topic_category"),
     )

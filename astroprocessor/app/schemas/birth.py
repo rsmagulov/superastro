@@ -3,9 +3,8 @@ from __future__ import annotations
 
 import datetime as dt
 
-from pydantic import BaseModel, Field, model_validator
-
 from app.astro.kerykeion_adapter import BirthData
+from pydantic import BaseModel, Field, model_validator
 
 
 class BirthInput(BaseModel):

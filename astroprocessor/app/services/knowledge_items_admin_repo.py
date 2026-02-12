@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import json
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -7,6 +8,7 @@ from fastapi import params
 from requests import session
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 def _build_where_and_params(
     *,
@@ -44,6 +46,7 @@ def _build_where_and_params(
         params["ids_json"] = json.dumps(ids)
 
     return " AND ".join(where), params
+
 
 @dataclass(frozen=True)
 class KnowledgeItemRow:
@@ -123,7 +126,9 @@ class KnowledgeItemsAdminRepo:
             )
         return items, total
 
-    async def get_item(self, session: AsyncSession, *, item_id: int) -> Optional[KnowledgeItemRow]:
+    async def get_item(
+        self, session: AsyncSession, *, item_id: int
+    ) -> Optional[KnowledgeItemRow]:
         sql = text("""
             SELECT id, key, topic_category, locale, text, priority, created_at, is_active, meta_json
             FROM knowledge_items
@@ -161,12 +166,24 @@ class KnowledgeItemsAdminRepo:
         }
         res = await session.execute(sql, params)
         # SQLite: last_insert_rowid
-        item_id = int((await session.execute(text("SELECT last_insert_rowid()"))).scalar_one())
+        item_id = int(
+            (await session.execute(text("SELECT last_insert_rowid()"))).scalar_one()
+        )
         return item_id
 
-    async def patch_item(self, session: AsyncSession, *, item_id: int, patch: dict[str, Any]) -> bool:
+    async def patch_item(
+        self, session: AsyncSession, *, item_id: int, patch: dict[str, Any]
+    ) -> bool:
         # динамический UPDATE
-        allowed = {"key", "topic_category", "locale", "text", "priority", "is_active", "meta_json"}
+        allowed = {
+            "key",
+            "topic_category",
+            "locale",
+            "text",
+            "priority",
+            "is_active",
+            "meta_json",
+        }
         sets = []
         params: dict[str, Any] = {"id": item_id}
 
@@ -186,7 +203,9 @@ class KnowledgeItemsAdminRepo:
         return res.rowcount > 0
 
     async def delete_item(self, session: AsyncSession, *, item_id: int) -> bool:
-        res = await session.execute(text("DELETE FROM knowledge_items WHERE id = :id"), {"id": item_id})
+        res = await session.execute(
+            text("DELETE FROM knowledge_items WHERE id = :id"), {"id": item_id}
+        )
         return res.rowcount > 0
 
     async def bulk_fill_default_meta(
@@ -210,7 +229,7 @@ class KnowledgeItemsAdminRepo:
         sql = text(f"UPDATE knowledge_items SET meta_json = :meta WHERE {where_sql}")
         res = await session.execute(sql, params)
         return int(res.rowcount or 0)
-    
+
     async def find_id_by_unique(
         self,
         session: AsyncSession,
@@ -228,7 +247,11 @@ class KnowledgeItemsAdminRepo:
             ORDER BY id DESC
             LIMIT 1
     """)
-        row = (await session.execute(sql, {"key": key, "locale": locale, "topic_category": topic_category})).first()
+        row = (
+            await session.execute(
+                sql, {"key": key, "locale": locale, "topic_category": topic_category}
+            )
+        ).first()
         return int(row[0]) if row else None
 
     async def bulk_set_tone(
@@ -243,7 +266,11 @@ class KnowledgeItemsAdminRepo:
         tone: str,
     ) -> int:
         where_sql, params = _build_where_and_params(
-            q=q, locale=locale, topic_category=topic_category, is_active=is_active, ids=ids
+            q=q,
+            locale=locale,
+            topic_category=topic_category,
+            is_active=is_active,
+            ids=ids,
         )
         params["tone"] = tone
 
@@ -261,7 +288,7 @@ class KnowledgeItemsAdminRepo:
 
         res = await session.execute(sql, params)
         return int(res.rowcount or 0)
-    
+
     async def bulk_set_abstraction(
         self,
         session: AsyncSession,
@@ -274,7 +301,11 @@ class KnowledgeItemsAdminRepo:
         abstraction_level: str,
     ) -> int:
         where_sql, params = _build_where_and_params(
-            q=q, locale=locale, topic_category=topic_category, is_active=is_active, ids=ids
+            q=q,
+            locale=locale,
+            topic_category=topic_category,
+            is_active=is_active,
+            ids=ids,
         )
         params["abstraction_level"] = abstraction_level
 
@@ -292,7 +323,7 @@ class KnowledgeItemsAdminRepo:
 
         res = await session.execute(sql, params)
         return int(res.rowcount or 0)
-    
+
     async def bulk_add_tag(
         self,
         session: AsyncSession,
@@ -305,7 +336,11 @@ class KnowledgeItemsAdminRepo:
         tag: str,
     ) -> int:
         where_sql, params = _build_where_and_params(
-            q=q, locale=locale, topic_category=topic_category, is_active=is_active, ids=ids
+            q=q,
+            locale=locale,
+            topic_category=topic_category,
+            is_active=is_active,
+            ids=ids,
         )
         params["tag"] = tag
 
@@ -336,7 +371,7 @@ class KnowledgeItemsAdminRepo:
 
         res = await session.execute(sql, params)
         return int(res.rowcount or 0)
-    
+
     async def bulk_remove_tag(
         self,
         session: AsyncSession,
@@ -349,7 +384,11 @@ class KnowledgeItemsAdminRepo:
         tag: str,
     ) -> int:
         where_sql, params = _build_where_and_params(
-            q=q, locale=locale, topic_category=topic_category, is_active=is_active, ids=ids
+            q=q,
+            locale=locale,
+            topic_category=topic_category,
+            is_active=is_active,
+            ids=ids,
         )
         params["tag"] = tag
 
@@ -402,6 +441,7 @@ class KnowledgeItemsAdminRepo:
 
         # Списки allowed_* передаём как JSON и используем json_each
         import json as _json
+
         params["tones_json"] = _json.dumps(allowed_tones, ensure_ascii=False)
         params["abs_json"] = _json.dumps(allowed_abstraction, ensure_ascii=False)
 
@@ -457,5 +497,3 @@ class KnowledgeItemsAdminRepo:
         """)
         res = await session.execute(sql, params)
         return int(res.rowcount or 0)
-
-

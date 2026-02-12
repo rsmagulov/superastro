@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -47,11 +47,13 @@ class KnowledgeItemListOut(BaseModel):
     limit: int
     offset: int
 
+
 class BulkFillDefaultMetaRequest(BaseModel):
     only_active: bool = True
     only_empty_meta: bool = True
     default_tone: str = "нейтральный"
     default_abstraction_level: str = "психологический"
+
 
 class BulkFilter(BaseModel):
     q: Optional[str] = None
@@ -60,17 +62,21 @@ class BulkFilter(BaseModel):
     is_active: Optional[bool] = None
     ids: Optional[List[int]] = None  # если UI выделил строки — работаем по ним
 
+
 class BulkSetToneRequest(BaseModel):
     filter: BulkFilter = Field(default_factory=BulkFilter)
     tone: str
+
 
 class BulkSetAbstractionRequest(BaseModel):
     filter: BulkFilter = Field(default_factory=BulkFilter)
     abstraction_level: str
 
+
 class BulkTagRequest(BaseModel):
     filter: BulkFilter = Field(default_factory=BulkFilter)
     tag: str
+
 
 class BulkSetActiveRequest(BaseModel):
     filter: BulkFilter = Field(default_factory=BulkFilter)

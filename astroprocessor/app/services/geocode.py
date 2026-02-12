@@ -6,13 +6,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
-from sqlalchemy import delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from timezonefinder import TimezoneFinder
-
 from app.models import GeocodeCache
 from app.schemas.place import PlaceResolved
 from app.settings import settings
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from timezonefinder import TimezoneFinder
 
 _ws = re.compile(r"\s+")
 _TF = TimezoneFinder()
@@ -46,7 +45,9 @@ def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
-async def resolve_place(query: str, locale: str, session: AsyncSession) -> PlaceResolved:
+async def resolve_place(
+    query: str, locale: str, session: AsyncSession
+) -> PlaceResolved:
     query_raw = query
     qn = normalize_query(query)
 
