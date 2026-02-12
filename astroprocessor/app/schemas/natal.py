@@ -1,4 +1,6 @@
-# astroprocessor/app/schemas/natal.py
+# ============================================================
+# File: astroprocessor/app/schemas/natal.py
+# ============================================================
 from __future__ import annotations
 
 import datetime as dt
@@ -37,11 +39,8 @@ class BirthPayload(BaseModel):
 
     @model_validator(mode="after")
     def _validate_time(self) -> "BirthPayload":
-        # если unknown_time=true — time может быть None
         if self.unknown_time:
             return self
-
-        # если unknown_time=false — time обязателен
         if self.time is None:
             raise ValueError("birth.time is required when unknown_time=false")
         return self
@@ -54,12 +53,11 @@ class BirthPayload(BaseModel):
         )
 
 
-class NatalRequest(BaseModel):
+class InterpretRequest(BaseModel):
     name: str
     birth: BirthPayload
     topic_category: Optional[TopicCategory] = None
 
 
 # ---- backward compat ----
-# Раньше некоторые роутеры/код могли импортировать InterpretRequest из schemas.natal
-InterpretRequest = NatalRequest
+NatalRequest = InterpretRequest

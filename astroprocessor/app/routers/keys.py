@@ -1,4 +1,6 @@
-# astroprocessor/app/routers/keys.py
+# ============================================================
+# File: astroprocessor/app/routers/keys.py
+# ============================================================
 from __future__ import annotations
 
 from typing import Any
@@ -6,14 +8,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db import get_session
-from app.schemas.natal import NatalRequest
-from app.settings import settings
-
 from app.astro.kerykeion_adapter import KerykeionAdapter, PlaceResolved
 from app.astro.key_builder import build_knowledge_key_blocks
 from app.astro.natal_normalizer import normalize_for_keybuilder
+from app.db import get_session
+from app.schemas.natal import InterpretRequest
 from app.services.geocode import resolve_place
+from app.settings import settings
 
 router = APIRouter(prefix="/v1/keys", tags=["keys"])
 
@@ -21,7 +22,7 @@ router = APIRouter(prefix="/v1/keys", tags=["keys"])
 @router.post("/ev1", response_model=dict)
 async def keys_ev1(
     request: Request,
-    req: NatalRequest,
+    req: InterpretRequest,
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     # 1) resolve place
@@ -45,7 +46,7 @@ async def keys_ev1(
     )
 
     # 2) birth
-    birth = req.birth.to_birth_input().to_birth_data()
+    birth = req.birth.to_birth_input().to_domain()
 
     adapter = KerykeionAdapter(ephemeris_path=settings.se_ephe_path)
 

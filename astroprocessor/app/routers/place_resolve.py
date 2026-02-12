@@ -1,4 +1,6 @@
-# astroprocessor/app/routers/place_resolve.py
+# ============================================================
+# File: astroprocessor/app/routers/place_resolve.py
+# ============================================================
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, Request

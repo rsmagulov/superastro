@@ -1,11 +1,13 @@
-# astroprocessor/app/routers/natal.py
+# ============================================================
+# File: astroprocessor/app/routers/natal.py
+# ============================================================
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_knowledge_session, get_session
-from app.schemas.natal import NatalRequest
+from app.schemas.natal import InterpretRequest
 from app.schemas.natal_out import NatalInterpretResponse
 from app.schemas.place_out import PlaceResolvedOut
 from app.services.chart_service import ChartService
@@ -18,7 +20,7 @@ _chart_service = ChartService()
 @router.post("/interpret", response_model=NatalInterpretResponse)
 async def natal_interpret(
     request: Request,
-    req: NatalRequest,
+    req: InterpretRequest,
     locale: str = Query("ru", min_length=2, max_length=32),
     topic_category: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
@@ -28,7 +30,7 @@ async def natal_interpret(
     if req.topic_category is None and topic_category:
         req = req.model_copy(update={"topic_category": topic_category})
 
-    payload = await _chart_service.interpret_natal(
+    payload = await _chart_service.interpret_natal_api(
         request_id=getattr(request.state, "request_id", ""),
         req=req,
         locale=locale,
@@ -36,7 +38,7 @@ async def natal_interpret(
         knowledge_session=knowledge_session,
     )
 
-    # ChartService уже возвращает dict в форме NatalInterpretResponse,
+    # ChartService возвращает dict в форме NatalInterpretResponse,
     # но на всякий случай нормализуем
     place = payload.get("place")
     place_out = PlaceResolvedOut(**place) if isinstance(place, dict) else None

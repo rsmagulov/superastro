@@ -1,14 +1,20 @@
-# astroprocessor/app/services/chart_service.py
+# ============================================================
+# File: astroprocessor/app/services/chart_service.py
+# ============================================================
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.astro.kerykeion_adapter import BirthData, KerykeionAdapter
 from app.astro.key_builder import build_knowledge_key_blocks
+from app.schemas.natal import InterpretRequest
 from app.schemas.place import PlaceResolved
+from app.services.geocode import resolve_place
 from app.services.knowledge_repo import KnowledgeHit, KnowledgeRepo
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.settings import settings
 
 
 @dataclass(frozen=True)
@@ -25,16 +31,15 @@ class RawBlock:
 
 
 class ChartService:
-    def __init__(self, *, ephemeris_path: str | None) -> None:
-        self.k = KerykeionAdapter(ephemeris_path=ephemeris_path)
+    def __init__(self, *, ephemeris_path: str | None = None) -> None:
+        ephe = ephemeris_path if ephemeris_path is not None else settings.se_ephe_path
+        self.k = KerykeionAdapter(ephemeris_path=ephe)
         self.repo = KnowledgeRepo()
 
-    async def build_natal(
-        self, *, user_name: str, birth: BirthData, place: PlaceResolved
-    ) -> dict:
+    async def build_natal(self, *, user_name: str, birth: BirthData, place: PlaceResolved) -> dict:
         place.require_ready()
 
-        houses_id = "P"  # default
+        houses_id = "A" if birth.time_unknown else "P"
 
         if birth.time_unknown:
             h, m = self.k.pick_time_for_unknown_birthtime(
@@ -61,7 +66,7 @@ class ChartService:
         )
         return self.k.natal_chart_data(subject)
 
-    async def interpret_natal(
+    async def interpret_natal_core(
         self,
         *,
         session: AsyncSession,
@@ -74,14 +79,9 @@ class ChartService:
         max_blocks: int = 50,
         max_chars: int = 30_000,
     ) -> Dict[str, Any]:
-        natal_data = await self.build_natal(
-            user_name=user_name, birth=birth, place=place
-        )
+        natal_data = await self.build_natal(user_name=user_name, birth=birth, place=place)
 
-        knowledge_blocks = build_knowledge_key_blocks(
-            natal_data,
-            tone_namespace=tone_namespace,
-        )
+        knowledge_blocks = build_knowledge_key_blocks(natal_data, tone_namespace=tone_namespace)
 
         raw_blocks: List[RawBlock] = []
         selection_trace: List[dict] = []
@@ -89,11 +89,7 @@ class ChartService:
 
         for kb in knowledge_blocks:
             selection_trace.append(
-                {
-                    "block_id": kb.id,
-                    "candidate_keys": list(kb.candidate_keys),
-                    "meta": kb.meta,
-                }
+                {"block_id": kb.id, "candidate_keys": list(kb.candidate_keys), "meta": kb.meta}
             )
 
             hit: KnowledgeHit | None = await self.repo.pick_first_match(
@@ -153,23 +149,104 @@ class ChartService:
                 "key": b.key,
                 "priority": b.priority,
                 "created_at": b.created_at,
-                "is_active": b.is_active,
                 "text": b.text,
-                "tags": b.tags,
-                "weight": b.weight,
             }
             for b in used
-        ]
-        knowledge_blocks_dump = [
-            {"id": kb.id, "candidate_keys": kb.candidate_keys, "meta": kb.meta}
-            for kb in knowledge_blocks
         ]
 
         return {
             "natal_data": natal_data,
-            "knowledge_blocks": knowledge_blocks_dump,
             "final_text": final_text,
             "raw_blocks": raw_blocks_dicts,
             "final_meta": final_meta,
             "trace": {"selection": selection_trace, "hits": hits_trace},
+        }
+
+    async def interpret_natal_api(
+        self,
+        *,
+        request_id: str,
+        req: InterpretRequest,
+        locale: str,
+        session: AsyncSession,
+        knowledge_session: AsyncSession,
+    ) -> Dict[str, Any]:
+        """
+        Тонкая API-обвязка над бизнес-логикой.
+        Возвращает dict в форме NatalInterpretResponse (как ожидают текущие роутеры/тесты).
+        """
+        # 1) resolve place (используем app DB session, как и в других роутерах)
+        place_raw = await resolve_place(req.birth.place_query, locale, session)
+
+        place_payload = {
+            "ok": bool(place_raw.ok),
+            "query": req.birth.place_query,
+            "display_name": getattr(place_raw, "display_name", None),
+            "lat": getattr(place_raw, "lat", None),
+            "lon": getattr(place_raw, "lon", None),
+            "country_code": getattr(place_raw, "country_code", None),
+            "timezone": getattr(place_raw, "timezone", None),
+            "source": getattr(place_raw, "source", None),
+            "error": getattr(place_raw, "error", None),
+        }
+
+        if not place_raw.ok or not getattr(place_raw, "timezone", None):
+            return {
+                "request_id": request_id,
+                "ok": False,
+                "topic_category": req.topic_category,
+                "coverage": "empty",
+                "text": "",
+                "place": place_payload,
+                "raw_blocks": [],
+                "meta": {"reason": "place_not_resolved"},
+                "error": place_raw.error or "place_not_resolved",
+            }
+
+        # 2) birth
+        birth: BirthData = req.birth.to_birth_input().to_domain()
+
+        # 3) domain place for calculations
+        place_domain = PlaceResolved(
+            ok=True,
+            query_raw=req.birth.place_query,
+            query_norm=req.birth.place_query,
+            locale=locale,
+            display_name=getattr(place_raw, "display_name", None),
+            lat=float(place_raw.lat) if getattr(place_raw, "lat", None) is not None else None,
+            lon=float(place_raw.lon) if getattr(place_raw, "lon", None) is not None else None,
+            country_code=getattr(place_raw, "country_code", None),
+            tz_str=str(getattr(place_raw, "timezone", "")) if getattr(place_raw, "timezone", None) else None,
+            source=getattr(place_raw, "source", None),
+            error=getattr(place_raw, "error", None),
+        )
+
+        effective_topic = req.topic_category or "personality_core"
+
+        # 4) interpret using knowledge DB session
+        core = await self.interpret_natal_core(
+            session=knowledge_session,
+            user_name=req.name,
+            birth=birth,
+            place=place_domain,
+            topic_category=str(effective_topic),
+            locale=locale,
+        )
+
+        used_blocks = core.get("raw_blocks") or []
+        coverage = "ok" if len(used_blocks) > 0 else "empty"
+
+        meta = dict(core.get("final_meta") or {})
+        meta["trace"] = core.get("trace") or {}
+
+        return {
+            "request_id": request_id,
+            "ok": True,
+            "topic_category": effective_topic,
+            "coverage": coverage,
+            "text": core.get("final_text") or "",
+            "place": place_payload,
+            "raw_blocks": used_blocks,
+            "meta": meta,
+            "error": None,
         }

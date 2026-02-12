@@ -1,10 +1,13 @@
-# astroprocessor/app/schemas/birth.py
+# ============================================================
+# File: astroprocessor/app/schemas/birth.py
+# ============================================================
 from __future__ import annotations
 
 import datetime as dt
 
-from app.astro.kerykeion_adapter import BirthData
 from pydantic import BaseModel, Field, model_validator
+
+from app.astro.kerykeion_adapter import BirthData
 
 
 class BirthInput(BaseModel):
@@ -38,7 +41,6 @@ class BirthInput(BaseModel):
                 time_unknown=True,
             )
 
-        # time гарантированно не None из validator
         t = self.time
         return BirthData(
             year=self.date.year,

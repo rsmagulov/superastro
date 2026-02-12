@@ -1,4 +1,6 @@
-# astroprocessor/app/schemas/natal_out.py
+# ============================================================
+# File: astroprocessor/app/schemas/natal_out.py
+# ============================================================
 from __future__ import annotations
 
 from typing import Any, Literal, Optional
@@ -26,7 +28,6 @@ class NatalInterpretResponse(BaseModel):
     coverage: Literal["ok", "low_coverage", "empty"] = "empty"
     text: str = ""
 
-    # удобно для дебага/админки
     place: Optional[PlaceResolvedOut] = None
     raw_blocks: list[RawBlockOut] = Field(default_factory=list)
     meta: dict[str, Any] = Field(default_factory=dict)
