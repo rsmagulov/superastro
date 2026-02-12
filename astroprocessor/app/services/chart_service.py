@@ -1,11 +1,11 @@
 # ============================================================
-# File: astroprocessor/app/services/chart_service.py
-# (только те места, которые зависят от timezone/tz_str — полный файл)
+# File: astroprocessor/app/services/chart_service.py  (REPLACE)
+# (всё совместимо с v1 и v2; v2 сможет использовать multi-topic batch)
 # ============================================================
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,8 +13,11 @@ from app.astro.kerykeion_adapter import BirthData, KerykeionAdapter
 from app.astro.key_builder import build_knowledge_key_blocks
 from app.schemas.natal import InterpretRequest
 from app.schemas.place import PlaceResolved
+from app.schemas.place_out import PlaceResolvedOut
 from app.services.geocode import resolve_place
 from app.services.knowledge_repo import KnowledgeHit, KnowledgeRepo
+from app.services.meta_codec import build_response_meta
+from app.services.natal_data_codec import to_plain_natal_data
 from app.settings import settings
 
 
@@ -47,7 +50,7 @@ class ChartService:
                 name=user_name,
                 year=birth.year,
                 month=birth.month,
-                day=birth.day,
+               day=birth.day,
                 place=place,
             )
             birth = BirthData(
@@ -65,103 +68,149 @@ class ChartService:
             place=place,
             houses_system_identifier=houses_id,
         )
-        return self.k.natal_chart_data(subject)
 
-    async def interpret_natal_core(
+        natal_data_raw = self.k.natal_chart_data(subject)
+        return to_plain_natal_data(natal_data_raw)
+
+    def build_knowledge_blocks(self, *, natal_data: dict, tone_namespace: str = "natal") -> list[Any]:
+        return list(build_knowledge_key_blocks(natal_data, tone_namespace=tone_namespace))
+
+    def _build_selection_trace(self, knowledge_blocks: Sequence[Any]) -> list[dict]:
+        return [
+            {"block_id": kb.id, "candidate_keys": list(kb.candidate_keys), "meta": kb.meta}
+            for kb in knowledge_blocks
+        ]
+
+    async def interpret_topics_with_blocks_batch(
         self,
         *,
         session: AsyncSession,
-        user_name: str,
-        birth: BirthData,
-        place: PlaceResolved,
+        knowledge_blocks: Sequence[Any],
+        topic_categories: Sequence[str],
+        locale: str,
+        max_blocks: int = 50,
+        max_chars: int = 30_000,
+    ) -> dict[str, Dict[str, Any]]:
+        """
+        1 SQL for ALL topics in this request.
+
+        Returns mapping: topic_category -> core dict like interpret_topic_with_blocks().
+        """
+        selection_trace = self._build_selection_trace(knowledge_blocks)
+
+        block_specs: list[tuple[str, Sequence[str]]] = [
+            (kb.id, list(kb.candidate_keys)) for kb in knowledge_blocks
+        ]
+
+        hits_by_topic_block = await self.repo.pick_first_matches_for_blocks_multi_topic(
+            session,
+            blocks=block_specs,
+            topic_categories=[str(t) for t in topic_categories],
+            locale=locale,
+        )
+
+        knowledge_blocks_dump = [
+            {"id": kb.id, "candidate_keys": list(kb.candidate_keys), "meta": kb.meta}
+            for kb in knowledge_blocks
+        ]
+
+        out: dict[str, Dict[str, Any]] = {}
+        for topic in [str(t) for t in topic_categories]:
+            per_block = hits_by_topic_block.get(topic, {})
+
+            hits_trace: List[dict] = []
+            raw_blocks: List[RawBlock] = []
+
+            for kb in knowledge_blocks:
+                hit: KnowledgeHit | None = per_block.get(kb.id)
+                if not hit:
+                    continue
+
+                raw_blocks.append(
+                    RawBlock(
+                        block_id=kb.id,
+                        knowledge_item_id=hit.id,
+                        key=hit.key,
+                        priority=hit.priority,
+                        created_at=hit.created_at,
+                        is_active=hit.is_active,
+                        text=hit.text,
+                        tags=[],
+                        weight=1.0,
+                    )
+                )
+                hits_trace.append(
+                    {
+                        "block_id": kb.id,
+                        "key": hit.key,
+                        "knowledge_item_id": hit.id,
+                        "priority": hit.priority,
+                        "created_at": hit.created_at,
+                    }
+                )
+
+            used: List[RawBlock] = []
+            total_chars = 0
+            for b in raw_blocks:
+                if len(used) >= max_blocks:
+                    break
+                if total_chars + len(b.text) > max_chars:
+                    break
+                used.append(b)
+                total_chars += len(b.text)
+
+            final_text = "\n\n".join(b.text for b in used)
+            final_meta = {
+                "source": "raw.blocks",
+                "mode": "concat_v0",
+                "blocks_used": len(used),
+                "budget": {"max_blocks": max_blocks, "max_chars": max_chars},
+            }
+
+            raw_blocks_dicts = [
+                {
+                    "block_id": b.block_id,
+                    "knowledge_item_id": b.knowledge_item_id,
+                    "key": b.key,
+                    "priority": b.priority,
+                    "created_at": b.created_at,
+                    "text": b.text,
+                }
+                for b in used
+            ]
+
+            out[topic] = {
+                "knowledge_blocks": knowledge_blocks_dump,
+                "final_text": final_text,
+                "raw_blocks": raw_blocks_dicts,
+                "final_meta": final_meta,
+                "trace": {"selection": selection_trace, "hits": hits_trace},
+            }
+
+        return out
+
+    async def interpret_topic_with_blocks(
+        self,
+        *,
+        session: AsyncSession,
+        knowledge_blocks: Sequence[Any],
         topic_category: str,
         locale: str,
-        tone_namespace: str = "natal",
         max_blocks: int = 50,
         max_chars: int = 30_000,
     ) -> Dict[str, Any]:
-        natal_data = await self.build_natal(user_name=user_name, birth=birth, place=place)
-
-        knowledge_blocks = build_knowledge_key_blocks(natal_data, tone_namespace=tone_namespace)
-
-        raw_blocks: List[RawBlock] = []
-        selection_trace: List[dict] = []
-        hits_trace: List[dict] = []
-
-        for kb in knowledge_blocks:
-            selection_trace.append(
-                {"block_id": kb.id, "candidate_keys": list(kb.candidate_keys), "meta": kb.meta}
-            )
-
-            hit: KnowledgeHit | None = await self.repo.pick_first_match(
-                session,
-                candidate_keys=kb.candidate_keys,
-                topic_category=topic_category,
-                locale=locale,
-            )
-            if not hit:
-                continue
-
-            raw_blocks.append(
-                RawBlock(
-                    block_id=kb.id,
-                    knowledge_item_id=hit.id,
-                    key=hit.key,
-                    priority=hit.priority,
-                    created_at=hit.created_at,
-                    is_active=hit.is_active,
-                    text=hit.text,
-                    tags=[],
-                    weight=1.0,
-                )
-            )
-            hits_trace.append(
-                {
-                    "block_id": kb.id,
-                    "key": hit.key,
-                    "knowledge_item_id": hit.id,
-                    "priority": hit.priority,
-                    "created_at": hit.created_at,
-                }
-            )
-
-        used: List[RawBlock] = []
-        total_chars = 0
-        for b in raw_blocks:
-            if len(used) >= max_blocks:
-                break
-            if total_chars + len(b.text) > max_chars:
-                break
-            used.append(b)
-            total_chars += len(b.text)
-
-        final_text = "\n\n".join(b.text for b in used)
-        final_meta = {
-            "source": "raw.blocks",
-            "mode": "concat_v0",
-            "blocks_used": len(used),
-            "budget": {"max_blocks": max_blocks, "max_chars": max_chars},
-        }
-
-        raw_blocks_dicts = [
-            {
-                "block_id": b.block_id,
-                "knowledge_item_id": b.knowledge_item_id,
-                "key": b.key,
-                "priority": b.priority,
-                "created_at": b.created_at,
-                "text": b.text,
-            }
-            for b in used
-        ]
-
-        return {
-            "natal_data": natal_data,
-            "final_text": final_text,
-            "raw_blocks": raw_blocks_dicts,
-            "final_meta": final_meta,
-            "trace": {"selection": selection_trace, "hits": hits_trace},
-        }
+        """
+        Compatibility wrapper for single topic.
+        """
+        result = await self.interpret_topics_with_blocks_batch(
+            session=session,
+            knowledge_blocks=knowledge_blocks,
+            topic_categories=[topic_category],
+            locale=locale,
+            max_blocks=max_blocks,
+            max_chars=max_chars,
+        )
+        return result.get(str(topic_category), {"final_text": "", "raw_blocks": [], "trace": {"selection": [], "hits": []}})
 
     async def interpret_natal_api(
         self,
@@ -172,20 +221,8 @@ class ChartService:
         session: AsyncSession,
         knowledge_session: AsyncSession,
     ) -> Dict[str, Any]:
-        # 1) resolve place
         place = await resolve_place(req.birth.place_query, locale, session)
-
-        place_payload = {
-            "ok": bool(place.ok),
-            "query": req.birth.place_query,
-            "display_name": place.display_name,
-            "lat": place.lat,
-            "lon": place.lon,
-            "country_code": place.country_code,
-            "timezone": place.tz_str,  # наружный контракт
-            "source": place.source,
-            "error": place.error,
-        }
+        place_payload = PlaceResolvedOut.dump_from_domain(place=place, query=req.birth.place_query)
 
         if not place.ok or not place.tz_str:
             return {
@@ -194,32 +231,30 @@ class ChartService:
                 "topic_category": req.topic_category,
                 "coverage": "empty",
                 "text": "",
+                "natal_data": {},
+                "knowledge_blocks": [],
                 "place": place_payload,
                 "raw_blocks": [],
                 "meta": {"reason": "place_not_resolved"},
                 "error": place.error or "place_not_resolved",
             }
 
-        # 2) birth
         birth: BirthData = req.birth.to_birth_input().to_domain()
-
-        # 3) interpret
         effective_topic = req.topic_category or "personality_core"
 
-        core = await self.interpret_natal_core(
+        natal_data = await self.build_natal(user_name=req.name, birth=birth, place=place)
+        blocks = self.build_knowledge_blocks(natal_data=natal_data, tone_namespace="natal")
+
+        core = await self.interpret_topic_with_blocks(
             session=knowledge_session,
-            user_name=req.name,
-            birth=birth,
-            place=place,
+            knowledge_blocks=blocks,
             topic_category=str(effective_topic),
             locale=locale,
         )
 
         used_blocks = core.get("raw_blocks") or []
         coverage = "ok" if len(used_blocks) > 0 else "empty"
-
-        meta = dict(core.get("final_meta") or {})
-        meta["trace"] = core.get("trace") or {}
+        meta = build_response_meta(final_meta=core.get("final_meta"), trace=core.get("trace"))
 
         return {
             "request_id": request_id,
@@ -227,6 +262,8 @@ class ChartService:
             "topic_category": effective_topic,
             "coverage": coverage,
             "text": core.get("final_text") or "",
+            "natal_data": natal_data,
+            "knowledge_blocks": core.get("knowledge_blocks") or [],
             "place": place_payload,
             "raw_blocks": used_blocks,
             "meta": meta,

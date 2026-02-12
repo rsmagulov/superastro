@@ -28,6 +28,10 @@ class NatalInterpretResponse(BaseModel):
     coverage: Literal["ok", "low_coverage", "empty"] = "empty"
     text: str = ""
 
+    # важно для тестов и дебага
+    natal_data: dict[str, Any] = Field(default_factory=dict)
+    knowledge_blocks: list[dict[str, Any]] = Field(default_factory=list)
+
     place: Optional[PlaceResolvedOut] = None
     raw_blocks: list[RawBlockOut] = Field(default_factory=list)
     meta: dict[str, Any] = Field(default_factory=dict)

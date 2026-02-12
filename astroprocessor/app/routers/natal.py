@@ -38,8 +38,6 @@ async def natal_interpret(
         knowledge_session=knowledge_session,
     )
 
-    # ChartService возвращает dict в форме NatalInterpretResponse,
-    # но на всякий случай нормализуем
     place = payload.get("place")
     place_out = PlaceResolvedOut(**place) if isinstance(place, dict) else None
 
@@ -49,6 +47,9 @@ async def natal_interpret(
         topic_category=payload.get("topic_category"),
         coverage=payload.get("coverage", "empty"),
         text=payload.get("text") or "",
+        # ✅ критично для smoke-тестов
+        natal_data=payload.get("natal_data") or {},
+        knowledge_blocks=payload.get("knowledge_blocks") or [],
         place=place_out,
         raw_blocks=payload.get("raw_blocks") or [],
         meta=payload.get("meta") or {},

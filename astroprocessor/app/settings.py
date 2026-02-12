@@ -1,7 +1,9 @@
 # astroprocessor/app/settings.py
 from __future__ import annotations
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict, Field
+
+from typing import Any
 
 
 class Settings(BaseSettings):
@@ -13,6 +15,14 @@ class Settings(BaseSettings):
       - префикс ASTRO_
       - лишние переменные игнорируем (extra="ignore")
     """
+
+    button_topic_map: dict[str, list[str]] = Field(
+        default_factory=lambda: {
+            "btn_core_pack": ["personality_core", "career"],
+            "btn_career": ["career"],
+            "btn_psychology": ["psychology"],
+        }
+    )
 
     model_config = SettingsConfigDict(
         env_prefix="ASTRO_",

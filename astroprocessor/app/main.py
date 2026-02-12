@@ -17,6 +17,7 @@ from app.routers.keys import router as keys_router
 from app.routers.natal import router as natal_router
 from app.routers.place_resolve import router as place_router
 from app.settings import settings
+from app.routers.public_v2 import router as public_v2_router
 
 
 
@@ -36,6 +37,10 @@ app = FastAPI(
     default_response_class=UTF8JSONResponse,
     lifespan=lifespan,
 )
+
+# Public API v2
+app.include_router(public_v2_router)
+
 # middleware
 app.add_middleware(RequestIDMiddleware)
 

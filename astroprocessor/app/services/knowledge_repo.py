@@ -1,10 +1,12 @@
+# ============================================================
+# File: astroprocessor/app/services/knowledge_repo.py  (REPLACE)
+# ============================================================
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Optional, Sequence, Union
+from typing import Mapping, Sequence
 
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -12,76 +14,161 @@ from sqlalchemy.ext.asyncio import AsyncSession
 class KnowledgeHit:
     id: int
     key: str
-    text: str
     priority: int
-    created_at: Optional[Union[str, datetime]]
+    created_at: str | None
     is_active: bool
+    text: str
+    topic_category: str
 
 
 class KnowledgeRepo:
+    """
+    Read-only knowledge access layer.
+
+    Batch strategies:
+    - single topic + many blocks (1 query per topic)
+    - many topics + many blocks (1 query per request)  <-- NEW
+    """
+
     async def pick_first_match(
         self,
         session: AsyncSession,
         *,
         candidate_keys: Sequence[str],
-        topic_category: Optional[str],
+        topic_category: str,
         locale: str,
-    ) -> Optional[KnowledgeHit]:
-        if not candidate_keys:
-            return None
-
-        order_cases = " ".join(
-            [f"WHEN :k{i} THEN {i}" for i in range(len(candidate_keys))]
+    ) -> KnowledgeHit | None:
+        hits = await self.pick_first_matches_for_blocks(
+            session,
+            blocks=[("single", candidate_keys)],
+            topic_category=topic_category,
+            locale=locale,
         )
-        keys_in = ",".join([f":k{i}" for i in range(len(candidate_keys))])
+        return hits.get("single")
 
-        params: dict[str, object] = {"locale": locale}
-        for i, k in enumerate(candidate_keys):
-            params[f"k{i}"] = k
+    async def pick_first_matches_for_blocks(
+        self,
+        session: AsyncSession,
+        *,
+        blocks: Sequence[tuple[str, Sequence[str]]],
+        topic_category: str,
+        locale: str,
+    ) -> dict[str, KnowledgeHit | None]:
+        """
+        1 query per topic.
+        Returns mapping: block_id -> hit
+        """
+        out = await self.pick_first_matches_for_blocks_multi_topic(
+            session,
+            blocks=blocks,
+            topic_categories=[topic_category],
+            locale=locale,
+        )
+        return out.get(topic_category, {block_id: None for block_id, _ in blocks})
 
-        if topic_category is None:
-            topic_where = "topic_category IS NULL"
-            topic_rank_order = ""  # важно: нет :topic_category
-        else:
-            topic_where = "(topic_category = :topic_category OR topic_category IS NULL)"
-            params["topic_category"] = topic_category
-            topic_rank_order = (
-                "CASE WHEN topic_category = :topic_category THEN 0 ELSE 1 END ASC,"
-            )
+    async def pick_first_matches_for_blocks_multi_topic(
+        self,
+        session: AsyncSession,
+        *,
+        blocks: Sequence[tuple[str, Sequence[str]]],
+        topic_categories: Sequence[str],
+        locale: str,
+    ) -> dict[str, dict[str, KnowledgeHit | None]]:
+        """
+        1 query for all topics + all keys.
 
-        order_topic = ""
-        if topic_category is not None:
-            order_topic = (
-                "CASE WHEN topic_category = :topic_category THEN 0 ELSE 1 END ASC,"
-            )
+        Returns:
+            {
+              "<topic_category>": {"<block_id>": KnowledgeHit|None, ...},
+              ...
+            }
+        """
+        # Normalize topics
+        topics: list[str] = []
+        seen_topics: set[str] = set()
+        for t in topic_categories:
+            if not t or t in seen_topics:
+                continue
+            seen_topics.add(t)
+            topics.append(str(t))
 
-        sql = text(f"""
-            SELECT id, key, text, priority, created_at, is_active
+        # Normalize keys
+        all_keys: list[str] = []
+        seen_keys: set[str] = set()
+        for _, keys in blocks:
+            for k in keys:
+                if not k or k in seen_keys:
+                    continue
+                seen_keys.add(k)
+                all_keys.append(str(k))
+
+        # Fast paths
+        if not topics:
+            return {}
+        if not all_keys:
+            return {t: {block_id: None for block_id, _ in blocks} for t in topics}
+
+        stmt = text(
+            """
+            SELECT
+                id,
+                key,
+                topic_category,
+                priority,
+                created_at,
+                is_active,
+                text
             FROM knowledge_items
             WHERE
                 locale = :locale
-                AND {topic_where}
                 AND is_active = 1
-                AND key IN ({keys_in})
-            ORDER BY
-                CASE key {order_cases} ELSE 999 END ASC,
-                {order_topic}
-                priority DESC,
-                COALESCE(created_at, '') DESC,
-                id DESC
-            LIMIT 1
-        """)
-
-        res = await session.execute(sql, params)
-        row = res.first()
-        if not row:
-            return None
-
-        return KnowledgeHit(
-            id=int(row[0]),
-            key=str(row[1]),
-            text=str(row[2]),
-            priority=int(row[3] if row[3] is not None else 0),
-            created_at=row[4] if row[4] is not None else None,
-            is_active=bool(row[5]),
+                AND topic_category IN :topics
+                AND key IN :keys
+            ORDER BY topic_category ASC, key ASC, priority DESC, id DESC
+            """
+        ).bindparams(
+            bindparam("topics", expanding=True),
+            bindparam("keys", expanding=True),
         )
+
+        res = await session.execute(
+            stmt,
+            {"locale": locale, "topics": topics, "keys": all_keys},
+        )
+        rows = res.fetchall()
+
+        # Best hit per (topic, key). Because ORDER BY has priority/id desc,
+        # the first encountered per pair is the best.
+        best_by_topic_key: dict[tuple[str, str], KnowledgeHit] = {}
+        for r in rows:
+            t = str(r.topic_category)
+            k = str(r.key)
+            pair = (t, k)
+            if pair in best_by_topic_key:
+                continue
+            best_by_topic_key[pair] = KnowledgeHit(
+                id=int(r.id),
+                key=k,
+                topic_category=t,
+                priority=int(r.priority) if r.priority is not None else 0,
+                created_at=str(r.created_at) if r.created_at is not None else None,
+                is_active=bool(r.is_active),
+                text=str(r.text or ""),
+            )
+
+        # Resolve per topic + block by candidate_keys order
+        out: dict[str, dict[str, KnowledgeHit | None]] = {
+            t: {block_id: None for block_id, _ in blocks} for t in topics
+        }
+
+        for t in topics:
+            per_block = out[t]
+            for block_id, candidate_keys in blocks:
+                hit = None
+                for k in candidate_keys:
+                    hit = best_by_topic_key.get((t, str(k)))
+                    if hit is not None:
+                        break
+                per_block[block_id] = hit
+
+        return out
