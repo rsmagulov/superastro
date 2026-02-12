@@ -69,7 +69,7 @@ async def items_page(request: Request) -> HTMLResponse:
         "topic_categories": TOPIC_CATEGORIES,
         "pagination": {"limit": 50, "offset": 0, "total": 0},
     }
-    return templates.TemplateResponse("admin/items.html", ctx)
+    return templates.TemplateResponse(request, "admin/items.html", ctx)
 
 
 @router.get("/items/table", response_class=HTMLResponse)
@@ -187,7 +187,7 @@ async def items_table(
         },
     }
 
-    return templates.TemplateResponse("admin/_items_table_block.html", ctx)
+    return templates.TemplateResponse(request, "admin/_items_table_block.html", ctx)
 
 
 @router.get("/items/select/{item_id}")
