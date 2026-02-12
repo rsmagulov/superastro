@@ -1,15 +1,20 @@
 # ============================================================
-# File: astroprocessor/app/routers/public_v2.py  (PATCH)
+# File: astroprocessor/app/routers/public_v2.py  (REPLACE ENTIRE FILE)
 # ============================================================
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_knowledge_session, get_session
-from app.schemas.public_v2 import InterpretV2Request, InterpretV2Response, TopicResultV2
+from app.schemas.public_v2 import (
+    ButtonsV2Response,
+    InterpretV2Request,
+    InterpretV2Response,
+    TopicResultV2,
+)
 from app.services.chart_service import ChartService
 from app.services.coverage_rules import aggregate_coverage_v2, topic_coverage_v2
 from app.services.geocode import resolve_place
@@ -18,31 +23,39 @@ from app.settings import settings
 router = APIRouter(prefix="/v2", tags=["public_v2"])
 
 _chart_service = ChartService()
+
 SAFE_LIMIT = 3500
 
-# MVP mapping (позже можно вынести в settings/DB)
-BUTTON_TOPIC_MAP: dict[str, list[str]] = {
-    # пример: “стартовый пакет”
-    "btn_core_pack": ["personality_core", "career"],
-    # пример: “только карьера”
-    "btn_career": ["career"],
-    # пример: “психология”
-    "btn_psychology": ["psychology"],
-}
+
+def _button_topic_map() -> dict[str, list[str]]:
+    """
+    Source of truth: settings.button_topic_map (mutable in tests via monkeypatch).
+    """
+    m = getattr(settings, "button_topic_map", None)
+    if not isinstance(m, dict):
+        return {}
+
+    out: dict[str, list[str]] = {}
+    for k, v in m.items():
+        if not isinstance(k, str):
+            continue
+        if isinstance(v, (list, tuple)):
+            out[k] = [str(x) for x in v]
+    return out
 
 
 def _resolve_topics(req: InterpretV2Request) -> list[str]:
     """
     Priority:
     1) explicit topic_categories
-    2) button_id mapping
+    2) button_id mapping from settings
     3) default
     """
     if req.topic_categories:
         return [str(t) for t in req.topic_categories]
 
     if req.button_id:
-        mapped = BUTTON_TOPIC_MAP.get(req.button_id)
+        mapped = _button_topic_map().get(req.button_id)
         if mapped:
             return list(mapped)
 
@@ -94,11 +107,14 @@ def _build_meta(*, place: dict[str, Any], locale: str, topics: list[str], button
         "locale": locale,
         "button_id": button_id,
         "topics": topics,
-        "geocode": {
-            "source": place.get("source"),
-            "timezone": place.get("timezone"),
-        },
+        "geocode": {"source": place.get("source"), "timezone": place.get("timezone")},
     }
+
+
+@router.get("/buttons", response_model=ButtonsV2Response)
+async def buttons_v2() -> ButtonsV2Response:
+    # ButtonsV2Response expects TopicCategory values; we return strings that must be valid TopicCategory.
+    return ButtonsV2Response(ok=True, buttons=cast(Any, _button_topic_map()))
 
 
 @router.post("/interpret", response_model=InterpretV2Response)
@@ -115,7 +131,6 @@ async def interpret_v2(
     request_id = getattr(request.state, "request_id", "")
     topics = _resolve_topics(req)
 
-    # 1) resolve place once
     place = await resolve_place(req.birth.place_query, locale, session)
     place_payload = {
         "ok": bool(place.ok),
@@ -142,16 +157,10 @@ async def interpret_v2(
             error=place.error or "place_not_resolved",
         )
 
-    # 2) birth -> domain
     birth = req.birth.to_birth_input().to_domain()
-
-    # 3) build natal once
     natal_data = await _chart_service.build_natal(user_name=req.name, birth=birth, place=place)
-
-    # 4) blocks once
     blocks = _chart_service.build_knowledge_blocks(natal_data=natal_data, tone_namespace="natal")
 
-    # 5) ONE DB query for ALL topics
     cores_by_topic = await _chart_service.interpret_topics_with_blocks_batch(
         session=knowledge_session,
         knowledge_blocks=blocks,
@@ -178,13 +187,7 @@ async def interpret_v2(
         else:
             all_messages.append("Пока недостаточно материалов по этой теме в базе знаний.")
 
-        topic_results.append(
-            TopicResultV2(
-                topic_category=t,
-                coverage=cov,
-                messages=messages,
-            )
-        )
+        topic_results.append(TopicResultV2(topic_category=t, coverage=cov, messages=messages))
 
     overall = aggregate_coverage_v2(coverages)
 
