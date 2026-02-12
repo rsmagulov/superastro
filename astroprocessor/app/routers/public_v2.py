@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -146,23 +146,201 @@ def _build_meta(*, place: dict[str, Any], locale: str, topics: list[str], button
         "geocode": {"source": place.get("source"), "timezone": place.get("timezone")},
     }
 
+def _sorted_button_ids(buttons: dict[str, ButtonDefV2]) -> list[str]:
+    return sorted(buttons.keys(), key=lambda bid: (buttons[bid].order, bid))
+
+def _parse_ids_param(ids: list[str] | None) -> list[str]:
+    """
+    Supports both:
+      - ?ids=btn_a&ids=btn_b  -> ["btn_a","btn_b"]
+      - ?ids=btn_a,btn_b      -> ["btn_a","btn_b"]
+      - mixed                -> flattened
+    Keeps order, strips whitespace, drops empties.
+    """
+    if not ids:
+        return []
+    out: list[str] = []
+    for item in ids:
+        for part in str(item).split(","):
+            p = part.strip()
+            if p:
+                out.append(p)
+    return out
+
+def _error_etag(
+    *,
+    error_code: str,
+    ids_list: list[str],
+    unknown_ids: list[str],
+    enabled_only: bool,
+    strict: bool,
+) -> str:
+    payload = json.dumps(
+        {
+            "error": error_code,
+            "ids": ids_list,
+            "unknown_ids": unknown_ids,
+            "enabled_only": enabled_only,
+            "strict": strict,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+def _error_etag_unknown_ids(*, ids_list: list[str], unknown_ids: list[str], enabled_only: bool, strict: bool) -> str:
+    payload = json.dumps(
+        {"ids": ids_list, "unknown_ids": unknown_ids, "enabled_only": enabled_only, "strict": strict},
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+def _dedupe_keep_order(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for x in items:
+        if x in seen:
+            continue
+        seen.add(x)
+        out.append(x)
+    return out
+
+
+def _parse_ids_sources(ids: list[str] | None, ids_csv: str | None) -> list[str]:
+    """
+    Supports:
+      - ?ids=btn_a&ids=btn_b (repeatable)
+      - ?ids_csv=btn_a,btn_b (separate CSV)
+      - both at once -> merged, then deduped, order preserved (ids first, then ids_csv)
+    Returns a deduped list.
+    """
+    raw: list[str] = []
+
+    if ids:
+        for item in ids:
+            s = str(item)
+            for part in s.split(","):  # still tolerate accidental commas in ids=
+                p = part.strip()
+                if p:
+                    raw.append(p)
+
+    if ids_csv:
+        for part in str(ids_csv).split(","):
+            p = part.strip()
+            if p:
+                raw.append(p)
+
+    return _dedupe_keep_order(raw)
 
 @router.get("/buttons", response_model=ButtonsV2Response)
-async def buttons_v2(request: Request, response: Response) -> Any:
-    buttons = _button_defs()              # dict[str, ButtonDefV2]
+async def buttons_v2(
+    request: Request,
+    response: Response,
+    enabled_only: int = Query(0, ge=0, le=1),
+    ids: list[str] | None = Query(None),  # repeatable
+    ids_csv: str | None = Query(None, min_length=1, max_length=2000),
+    strict: int = Query(1, ge=0, le=1),
+) -> Any:
+    all_buttons = _button_defs()
+
+    # NEW: deduped ids list (source of truth for meta.ids)
+    ids_list = _parse_ids_sources(ids, ids_csv)
+
+    unknown: list[str] = []
+    buttons: dict[str, ButtonDefV2]
+
+    if ids_list:
+        wanted = set(ids_list)
+        unknown = sorted(wanted - set(all_buttons.keys()))
+
+        if unknown and strict == 1:
+            etag = _error_etag(
+                error_code="unknown_button_id",
+                ids_list=ids_list,
+                unknown_ids=unknown,
+                enabled_only=bool(enabled_only),
+                strict=True,
+            )
+            response.headers["ETag"] = etag
+
+            inm = request.headers.get("if-none-match")
+            if inm and inm.strip() == etag:
+                return Response(status_code=304, headers={"ETag": etag})
+
+            return ButtonsV2Response(
+                ok=False,
+                buttons={},
+                meta={
+                    "build_version": _effective_build_version(),
+                    "etag": etag,
+                    "enabled_only": bool(enabled_only),
+                    "sorted_ids": [],
+                    "ids": ids_list,
+                    "unknown_ids": unknown,
+                    "strict": True,
+                },
+                error="unknown_button_id",
+            )
+
+        buttons = {k: v for k, v in all_buttons.items() if k in wanted}
+
+        if not buttons:
+            etag = _error_etag(
+                error_code="no_known_button_ids",
+                ids_list=ids_list,
+                unknown_ids=unknown or sorted(wanted),
+                enabled_only=bool(enabled_only),
+                strict=False,
+            )
+            response.headers["ETag"] = etag
+
+            inm = request.headers.get("if-none-match")
+            if inm and inm.strip() == etag:
+                return Response(status_code=304, headers={"ETag": etag})
+
+            return ButtonsV2Response(
+                ok=False,
+                buttons={},
+                meta={
+                    "build_version": _effective_build_version(),
+                    "etag": etag,
+                    "enabled_only": bool(enabled_only),
+                    "sorted_ids": [],
+                    "ids": ids_list,
+                    "unknown_ids": unknown or sorted(wanted),
+                    "strict": False,
+                },
+                error="no_known_button_ids",
+            )
+    else:
+        buttons = dict(all_buttons)
+
+    if enabled_only == 1:
+        buttons = {k: v for k, v in buttons.items() if v.is_enabled}
+
+    sorted_ids = _sorted_button_ids(buttons)
     etag = _buttons_etag(buttons)
 
     inm = request.headers.get("if-none-match")
     response.headers["ETag"] = etag
-
     if inm and inm.strip() == etag:
         return Response(status_code=304, headers={"ETag": etag})
 
-    return ButtonsV2Response(
-        ok=True,
-        buttons=buttons,
-        meta={"build_version": _effective_build_version(), "etag": etag},
-    )
+    meta: dict[str, Any] = {
+        "build_version": _effective_build_version(),
+        "etag": etag,
+        "enabled_only": bool(enabled_only),
+        "sorted_ids": sorted_ids,
+        "ids": ids_list,          # ✅ always deduped
+        "strict": bool(strict),
+    }
+    if ids_list and unknown:
+        meta["unknown_ids"] = unknown
+
+    return ButtonsV2Response(ok=True, buttons=buttons, meta=meta, error=None)
 
 
 @router.post("/interpret", response_model=InterpretV2Response)

@@ -50,3 +50,4 @@ class ButtonsV2Response(BaseModel):
     ok: bool = True
     buttons: dict[str, ButtonDefV2] = Field(default_factory=dict)
     meta: dict[str, Any] = Field(default_factory=dict)
+    error: Optional[str] = None
