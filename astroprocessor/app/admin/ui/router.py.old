@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import sqlite3
 import time
 from datetime import datetime
@@ -10,7 +9,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse, Response
+from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from starlette.templating import Jinja2Templates
 
 from app.settings import settings
@@ -20,7 +19,7 @@ router = APIRouter()
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
-# include existing sub-routers if present
+# Try to include existing UI routers (if present)
 try:
     from app.admin.ui.sources_router import router as sources_router  # type: ignore
 
@@ -28,28 +27,10 @@ try:
 except Exception:
     pass
 
-# constants for validation
-try:
-    from app.admin.ui.constants import (  # type: ignore
-        ALLOWED_TONES,
-        ALLOWED_ABSTRACTION_LEVELS,
-        ALLOWED_TOPIC_CATEGORIES,
-    )
-except Exception:
-    # fallback (should not happen in your repo)
-    ALLOWED_TONES = []
-    ALLOWED_ABSTRACTION_LEVELS = []
-    ALLOWED_TOPIC_CATEGORIES = []
-
 
 # ============================================================
-# Generic helpers
+# Helpers
 # ============================================================
-
-def _astro_root() -> Path:
-    # .../astroprocessor/app/admin/ui/router.py -> parents[3] = .../astroprocessor
-    return Path(__file__).resolve().parents[3]
-
 
 def _qp(request: Request, name: str, default: str = "") -> str:
     v = (request.query_params.get(name) or "").strip()
@@ -75,35 +56,36 @@ def _flash_from_query(request: Request) -> dict[str, str] | None:
     return {"kind": kind or "info", "text": text}
 
 
-def _db_path() -> Path:
-    p = Path(str(settings.knowledge_db_path))
-    if not p.is_absolute():
-        p = _astro_root() / p
-    return p
+def _astro_root() -> Path:
+    # .../astroprocessor/app/admin/ui/router.py -> parents[3] = .../astroprocessor
+    return Path(__file__).resolve().parents[3]
 
 
-def _connect_db() -> sqlite3.Connection:
-    p = _db_path()
-    p.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(p))
-    conn.row_factory = sqlite3.Row
-    return conn
+def _repo_root() -> Path:
+    return _astro_root().parent
 
 
 def _kb_defaults() -> dict[str, str]:
     root = _astro_root()
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = root / db_path
     return {
         "inbox_dir": str(root / "data" / "knowledge_sources" / "inbox"),
         "docs_dir": str(root / "knowledge" / "docs"),
         "processed_dir": str(root / "data" / "knowledge_sources" / "processed" / "inbox"),
         "failed_dir": str(root / "data" / "knowledge_sources" / "failed" / "inbox"),
-        "db_path": str(_db_path()),
+        "db_path": str(db_path),
         "knowledge_build_version": "kb-0.1",
     }
 
 
 def _default_ev1_keys_file() -> str:
-    rr = _astro_root().parent
+    """
+    String default for the form.
+    We keep old-looking relative values, but builder will resolve deterministically anyway.
+    """
+    rr = _repo_root()
     ar = _astro_root()
 
     if (rr / "ev1_keys_unique.txt").exists():
@@ -115,17 +97,15 @@ def _default_ev1_keys_file() -> str:
     return "../ev1_keys_unique.txt"
 
 
-# ============================================================
-# kb_meta read
-# ============================================================
-
 async def _read_kb_meta_rows() -> list[tuple[str, str]]:
-    p = _db_path()
-    if not p.exists():
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+    if not db_path.exists():
         return []
 
     def _read() -> list[tuple[str, str]]:
-        c = sqlite3.connect(str(p))
+        c = sqlite3.connect(str(db_path))
         try:
             c.execute("CREATE TABLE IF NOT EXISTS kb_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             rows = c.execute("SELECT key, value FROM kb_meta ORDER BY key").fetchall()
@@ -136,11 +116,10 @@ async def _read_kb_meta_rows() -> list[tuple[str, str]]:
     return await asyncio.to_thread(_read)
 
 
-# ============================================================
-# EV1 helpers (using builder resolver)
-# ============================================================
-
 def _resolve_keys_file_via_builder(keys_file: str) -> Path:
+    """
+    Uses builder.resolve_ev1_keys_file for stable resolution.
+    """
     from app.knowledge import builder as kb
 
     p, ok = kb.resolve_ev1_keys_file(keys_file)
@@ -150,6 +129,9 @@ def _resolve_keys_file_via_builder(keys_file: str) -> Path:
 
 
 def _load_ev1_keys_or_error(keys_file: str) -> tuple[list[str], Optional[str], str]:
+    """
+    Returns: (keys, error, resolved_path_str)
+    """
     from app.knowledge import builder as kb
 
     try:
@@ -175,6 +157,10 @@ def _ev1_live_compute(
     topic_category: str,
     top_missing: int = 50,
 ) -> dict[str, Any]:
+    """
+    Live EV1 coverage from DB (active items), no seed.
+    Produces ev1_breakdown + ev1_missing_keys for template.
+    """
     from app.knowledge import builder as kb
 
     keys, err, keys_path_str = _load_ev1_keys_or_error(keys_file)
@@ -191,9 +177,20 @@ def _ev1_live_compute(
             "ev1_issues_null_topic_category_sample": [],
         }
 
-    conn = _connect_db()
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
+    conn = sqlite3.connect(str(db_path))
     try:
-        cov = kb.coverage_ev1(conn, keys, locale=locale, topic_category=topic_category, top_missing=top_missing)
+        cov = kb.coverage_ev1(
+            conn,
+            keys,
+            locale=locale,
+            topic_category=topic_category,
+            top_missing=top_missing,
+        )
+
         breakdown_rows = kb.coverage_breakdown_ev1(conn, keys)
 
         breakdown: list[dict[str, Any]] = []
@@ -230,236 +227,7 @@ def _ev1_live_compute(
 
 
 # ============================================================
-# ITEMS UI (added back to satisfy existing tests)
-# ============================================================
-
-def _parse_ids(ids: str) -> list[int]:
-    raw = (ids or "").strip()
-    if not raw:
-        return []
-    out: list[int] = []
-    for part in raw.split(","):
-        s = part.strip()
-        if not s:
-            continue
-        out.append(int(s))
-    return out
-
-
-def _load_meta_json(row: sqlite3.Row) -> dict[str, Any]:
-    v = row["meta_json"] if "meta_json" in row.keys() else None
-    if not v:
-        return {}
-    try:
-        return json.loads(v)
-    except Exception:
-        return {}
-
-
-def _save_meta_json(conn: sqlite3.Connection, item_id: int, meta: dict[str, Any]) -> None:
-    now = int(time.time())
-    conn.execute(
-        "UPDATE knowledge_items SET meta_json=?, updated_at=? WHERE id=?",
-        (json.dumps(meta, ensure_ascii=False), now, item_id),
-    )
-
-
-@router.get("/items", response_class=HTMLResponse, name="items_page")
-async def items_page(request: Request):
-    # Minimal page; tests only require 200.
-    return templates.TemplateResponse(
-        "admin/items.html",
-        {
-            "request": request,
-            "nav_active": "items",
-            "flash": _flash_from_query(request),
-        },
-    )
-
-
-@router.get("/items/table", response_class=HTMLResponse, name="items_table")
-async def items_table(
-    request: Request,
-    q: str = "",
-    locale: str = "",
-    topic_category: str = "",
-    is_active: str = "",
-    selected: str = "",
-):
-    # Minimal table fragment; tests only require 200.
-    # If your templates expect more, you can enrich later.
-    return templates.TemplateResponse(
-        "admin/_items_table.html",
-        {
-            "request": request,
-            "items": [],
-            "q": q,
-            "locale": locale,
-            "topic_category": topic_category,
-            "is_active": is_active,
-            "selected": selected,
-        },
-    )
-
-
-@router.get("/items/select/{item_id}", response_class=HTMLResponse, name="items_select")
-async def items_select(
-    request: Request,
-    item_id: int,
-    q: str = "",
-    locale: str = "",
-    topic_category: str = "",
-    is_active: str = "",
-    selected: str = "",
-):
-    # Minimal safe response; tests require 200 and no 500.
-    return templates.TemplateResponse(
-        "admin/_select_response.html",
-        {
-            "request": request,
-            "item_id": item_id,
-            "q": q,
-            "locale": locale,
-            "topic_category": topic_category,
-            "is_active": is_active,
-            "selected": selected,
-        },
-    )
-
-
-@router.post("/items/bulk/set-tone", name="bulk_set_tone")
-async def bulk_set_tone(
-    request: Request,
-    tone: str = Form(""),
-    ids: str = Form(""),
-):
-    tone = (tone or "").strip()
-    id_list = _parse_ids(ids)
-
-    if not id_list:
-        return PlainTextResponse("ids required", status_code=400)
-    if ALLOWED_TONES and tone not in ALLOWED_TONES:
-        return PlainTextResponse("invalid tone", status_code=400)
-
-    conn = _connect_db()
-    try:
-        for item_id in id_list:
-            row = conn.execute("SELECT id, meta_json FROM knowledge_items WHERE id=?", (item_id,)).fetchone()
-            if not row:
-                continue
-            meta = _load_meta_json(row)
-            meta["tone"] = tone
-            _save_meta_json(conn, item_id, meta)
-        conn.commit()
-    finally:
-        conn.close()
-
-    return PlainTextResponse("ok", status_code=200)
-
-
-@router.post("/items/bulk/set-abstraction", name="bulk_set_abstraction")
-async def bulk_set_abstraction(
-    request: Request,
-    abstraction_level: str = Form(""),
-    ids: str = Form(""),
-):
-    abstraction_level = (abstraction_level or "").strip()
-    id_list = _parse_ids(ids)
-
-    if not id_list:
-        return PlainTextResponse("ids required", status_code=400)
-    if ALLOWED_ABSTRACTION_LEVELS and abstraction_level not in ALLOWED_ABSTRACTION_LEVELS:
-        return PlainTextResponse("invalid abstraction_level", status_code=400)
-
-    conn = _connect_db()
-    try:
-        for item_id in id_list:
-            row = conn.execute("SELECT id, meta_json FROM knowledge_items WHERE id=?", (item_id,)).fetchone()
-            if not row:
-                continue
-            meta = _load_meta_json(row)
-            meta["abstraction_level"] = abstraction_level
-            _save_meta_json(conn, item_id, meta)
-        conn.commit()
-    finally:
-        conn.close()
-
-    return PlainTextResponse("ok", status_code=200)
-
-
-@router.post("/items/bulk/set-active", name="bulk_set_active")
-async def bulk_set_active(
-    request: Request,
-    active: str = Form(""),
-    ids: str = Form(""),
-):
-    id_list = _parse_ids(ids)
-    if not id_list:
-        return PlainTextResponse("ids required", status_code=400)
-
-    active_val = 1 if str(active).strip() in {"1", "true", "True", "on"} else 0
-
-    conn = _connect_db()
-    try:
-        if active_val == 1:
-            # validation: must have abstraction_level present
-            bad: list[int] = []
-            rows = conn.execute(
-                f"SELECT id, meta_json FROM knowledge_items WHERE id IN ({','.join(['?']*len(id_list))})",
-                tuple(id_list),
-            ).fetchall()
-            for row in rows:
-                meta = _load_meta_json(row)
-                lvl = str(meta.get("abstraction_level", "")).strip()
-                if not lvl:
-                    bad.append(int(row["id"]))
-            if bad:
-                return PlainTextResponse(f"cannot activate, bad meta ids={bad}", status_code=400)
-
-        now = int(time.time())
-        conn.execute(
-            f"UPDATE knowledge_items SET is_active=?, updated_at=? WHERE id IN ({','.join(['?']*len(id_list))})",
-            (active_val, now, *id_list),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-    return PlainTextResponse("ok", status_code=200)
-
-
-@router.post("/items/bulk/set-topic-category", name="bulk_set_topic_category")
-async def bulk_set_topic_category(
-    request: Request,
-    topic_category: str = Form(""),
-    ids: str = Form(""),
-):
-    id_list = _parse_ids(ids)
-    if not id_list:
-        return PlainTextResponse("ids required", status_code=400)
-
-    tc = (topic_category or "").strip()
-    if tc and ALLOWED_TOPIC_CATEGORIES and tc not in ALLOWED_TOPIC_CATEGORIES:
-        return PlainTextResponse("invalid topic_category", status_code=400)
-
-    now = int(time.time())
-    tc_db = tc if tc else None
-
-    conn = _connect_db()
-    try:
-        conn.execute(
-            f"UPDATE knowledge_items SET topic_category=?, updated_at=? WHERE id IN ({','.join(['?']*len(id_list))})",
-            (tc_db, now, *id_list),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
-    return PlainTextResponse("ok", status_code=200)
-
-
-# ============================================================
-# BUILDS UI
+# Pages / Exports
 # ============================================================
 
 @router.get("/builds", name="builds_page")
@@ -532,7 +300,11 @@ async def builds_ev1_missing_txt(
     if err:
         return PlainTextResponse(f"❌ {err}\n(keys_file={keys_path_str})\n", status_code=404)
 
-    conn = _connect_db()
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
+    conn = sqlite3.connect(str(db_path))
     try:
         cov = kb.coverage_ev1(conn, keys, locale=ev1_locale, topic_category=ev1_topic_category, top_missing=100_000)
         return PlainTextResponse(kb.export_missing_txt(cov.missing_keys), media_type="text/plain; charset=utf-8")
@@ -554,7 +326,11 @@ async def builds_ev1_missing_jsonl(
     if err:
         return PlainTextResponse(f"❌ {err}\n(keys_file={keys_path_str})\n", status_code=404)
 
-    conn = _connect_db()
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
+    conn = sqlite3.connect(str(db_path))
     try:
         cov = kb.coverage_ev1(conn, keys, locale=ev1_locale, topic_category=ev1_topic_category, top_missing=100_000)
         body = kb.export_missing_jsonl(
@@ -569,6 +345,10 @@ async def builds_ev1_missing_jsonl(
         conn.close()
 
 
+# ============================================================
+# Actions (buttons)
+# ============================================================
+
 @router.post("/builds/import_build", name="builds_import_build")
 async def builds_import_build(
     request: Request,
@@ -577,12 +357,21 @@ async def builds_import_build(
     inbox_dir: str = Form(...),
     docs_dir: str = Form(...),
 ):
+    """
+    One button: import-books + build-chunks (FTS5).
+    """
     from app.knowledge import builder as kb
 
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
     def _run() -> str:
+        # import
         st_import = kb.import_books(inbox_dir=inbox_dir)
 
-        conn = _connect_db()
+        # build chunks
+        conn = sqlite3.connect(str(db_path))
         try:
             kb.ensure_schema_meta(conn)
             res = kb.build_chunks(conn)
@@ -618,10 +407,17 @@ async def builds_seed(
     build_version: str = Form(...),
     knowledge_build_version: str = Form(...),
 ):
+    """
+    Seed default JSONL from astroprocessor/data/knowledge_items_*_ETALON.jsonl
+    """
     from app.knowledge import builder as kb
 
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
     def _run_seed() -> str:
-        conn = _connect_db()
+        conn = sqlite3.connect(str(db_path))
         try:
             kb.ensure_schema_items_and_meta(conn)
             inserted, skipped = kb.seed_default(conn)
@@ -658,10 +454,17 @@ async def builds_seed_ev1(
     topic_category: str = Form("personality_core"),
     priority: int = Form(200),
 ):
+    """
+    EV1 seed (idempotent) + write coverage to kb_meta.
+    """
     from app.knowledge import builder as kb
 
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
     def _run() -> str:
-        conn = _connect_db()
+        conn = sqlite3.connect(str(db_path))
         try:
             res = kb.seed_ev1(
                 conn,

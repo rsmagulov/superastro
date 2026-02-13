@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.admin.ui.router import router as admin_ui_router
-from app.db import init_db
+from .db import ASTRO_DB_PATH, KNOWLEDGE_DB_PATH, get_knowledge_session, get_session, init_db
 from app.middleware.request_id import RequestIDMiddleware
 from app.routers.admin_knowledge import router as admin_knowledge_router
 from app.routers.admin_knowledge_items import router as admin_knowledge_items_router
@@ -31,8 +31,8 @@ class UTF8JSONResponse(JSONResponse):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    if not os.path.exists(settings.knowledge_db_path):
-        print(f"[WARN] Knowledge DB file not found: {settings.knowledge_db_path}")
+    if not os.path.exists(KNOWLEDGE_DB_PATH):
+        print(f"[WARN] Knowledge DB file not found: {KNOWLEDGE_DB_PATH}")
     yield
 
 
@@ -185,11 +185,8 @@ app.include_router(admin_ui_router, prefix="/admin/ui")
 BASE_DIR = Path(__file__).resolve().parent  # .../astroprocessor/app
 static_dir = BASE_DIR / "admin" / "ui" / "static"
 if static_dir.exists():
-    app.mount(
-        "/admin/static",
-        StaticFiles(directory=str(static_dir)),
-        name="admin_static",
-    )
+    _STATIC_DIR = Path(__file__).resolve().parent / "admin" / "ui" / "static"
+    app.mount("/admin/static", StaticFiles(directory=str(_STATIC_DIR)), name="admin_static")
 else:
     print(f"[WARN] Admin static dir not found, skipping mount: {static_dir}")
 

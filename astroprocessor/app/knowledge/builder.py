@@ -1,738 +1,902 @@
-# app/knowledge/builder.py
+# astroprocessor/app/knowledge/builder.py
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
+import shutil
 import sqlite3
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
-
-# Optional: use project settings if available
-try:
-    from app.settings import settings  # type: ignore
-except Exception:
-    settings = None  # fallback
+from typing import Any, Iterable, Optional
 
 
-# ----------------------------
-# Data model
-# ----------------------------
-@dataclass(frozen=True)
-class SeedItem:
-    key: str
-    topic_category: str
-    locale: str
-    text: str
-    priority: int = 200
+# ============================================================
+# Paths (CWD-independent)
+# ============================================================
+
+def _astro_root() -> Path:
+    """
+    Absolute path to astroprocessor/ directory (project root inside repo),
+    independent of process CWD.
+    """
+    # builder.py is at: astroprocessor/app/knowledge/builder.py
+    return Path(__file__).resolve().parents[2]
 
 
-# ----------------------------
-# Seeds (edit freely)
-# ----------------------------
-def default_seed_ru() -> List[SeedItem]:
-    loc = "ru-RU"
-    topic = "personality_core"
-
-    return [
-        # --- Any-level fallbacks ---
-        SeedItem(
-            key="natal.planet.sun.sign.any",
-            topic_category=topic,
-            locale=loc,
-            priority=100,
-            text=(
-                "Солнце — ядро личности: воля, самоощущение, желание проявляться и брать ответственность. "
-                "Это то, где человек стремится быть заметным и определять правила игры."
-            ),
-        ),
-        SeedItem(
-            key="natal.planet.moon.sign.any",
-            topic_category=topic,
-            locale=loc,
-            priority=100,
-            text=(
-                "Луна — эмоциональная система: базовые потребности, привычные реакции, чувство безопасности. "
-                "Показывает, как человек переживает стресс и восстанавливается."
-            ),
-        ),
-        SeedItem(
-            key="natal.angle.asc.sign.any",
-            topic_category=topic,
-            locale=loc,
-            priority=100,
-            text=(
-                "Асцендент — стиль входа в мир: первое впечатление, поведенческие привычки, телесная реактивность. "
-                "Это настройка по умолчанию в новых ситуациях."
-            ),
-        ),
-        SeedItem(
-            key="natal.angle.mc.sign.any",
-            topic_category=topic,
-            locale=loc,
-            priority=100,
-            text=(
-                "MC (Середина Неба) — направление реализации: общественная роль, профессиональный вектор, репутация. "
-                "Показывает стиль достижения целей и качества, которые дают рост статуса."
-            ),
-        ),
-        # --- Planet any (coverage) ---
-        SeedItem(
-            key="natal.planet.mercury.sign.any",
-            topic_category=topic,
-            locale=loc,
-            priority=100,
-            text=(
-                "Меркурий описывает мышление и коммуникацию: как ты воспринимаешь информацию, формулируешь мысли "
-                "и принимаешь решения. В плюсе — ясность и гибкость ума; в минусе — суета и застревание в деталях."
-            ),
-        ),
-        SeedItem(
-            key="natal.planet.venus.sign.any",
-            topic_category=topic,
-            locale=loc,
-            priority=100,
-            text=(
-                "Венера показывает ценности и чувство гармонии: что тебе приятно, что ты считаешь красивым, "
-                "как проявляешь симпатию и выстраиваешь близость. В плюсе — дипломатичность; в минусе — зависимость от одобрения."
-            ),
-        ),
-        SeedItem(
-            key="natal.planet.mars.sign.any",
-            topic_category=topic,
-            locale=loc,
-            priority=100,
-            text=(
-                "Марс описывает энергию действия: как ты стартуешь, добиваешься своего и реагируешь на конфликт. "
-                "В плюсе — решительность; в минусе — раздражительность или выгорание."
-            ),
-        ),
-    ]
+def _data_dir() -> Path:
+    return _astro_root() / "data"
 
 
-# ----------------------------
-# DB path + schema
-# ----------------------------
-def _default_db_path() -> Path:
-    if settings and getattr(settings, "knowledge_db_path", None):
-        return Path(str(settings.knowledge_db_path))
-    return Path("data") / "knowledge.db"
+def _docs_dir() -> Path:
+    # matches your structure: astroprocessor/knowledge/docs
+    return _astro_root() / "knowledge" / "docs"
 
 
-def ensure_schema(conn: sqlite3.Connection) -> None:
-    cur = conn.cursor()
+def _sources_dir() -> Path:
+    return _data_dir() / "knowledge_sources"
 
-    cur.execute("""
+
+def _inbox_dir() -> Path:
+    return _sources_dir() / "inbox"
+
+
+def _processed_inbox_dir() -> Path:
+    return _sources_dir() / "processed" / "inbox"
+
+
+def _failed_inbox_dir() -> Path:
+    return _sources_dir() / "failed" / "inbox"
+
+
+def _manifest_path() -> Path:
+    return _docs_dir() / "_import_manifest.json"
+
+
+def _knowledge_db_path() -> Path:
+    """
+    Use settings.knowledge_db_path if available; else fall back to astroprocessor/data/knowledge.db.
+    """
+    try:
+        from app.settings import settings  # type: ignore
+        p = Path(str(settings.knowledge_db_path))
+        if not p.is_absolute():
+            p = _astro_root() / p
+        return p
+    except Exception:
+        return _data_dir() / "knowledge.db"
+
+
+# ============================================================
+# EV1 keys resolving
+# ============================================================
+
+def resolve_ev1_keys_file(keys_file: Optional[str]) -> tuple[Path, bool]:
+    """
+    Resolve EV1 keys file path deterministically from astroprocessor/.
+    Returns (resolved_path, exists).
+    """
+    root = _astro_root()
+
+    candidates: list[Path] = []
+    if keys_file and keys_file.strip():
+        p = Path(keys_file.strip())
+        candidates.append(p if p.is_absolute() else (root / p))
+    else:
+        candidates.extend(
+            [
+                root / "tools" / "knowledge" / "seed_keys_core_v1.txt",
+                root / "ev1_keys_unique.txt",          # repo root has this too, but we prefer astroprocessor root
+                root / "data" / "ev1_keys_unique.txt",
+                root.parent / "ev1_keys_unique.txt",   # repo root fallback
+            ]
+        )
+
+    for c in candidates:
+        if c.exists() and c.is_file():
+            return c, True
+
+    return candidates[0], False
+
+
+def load_keys_txt(path: Path) -> list[str]:
+    """
+    Load keys from a txt file (one key per line). Ignores empty lines and comments.
+    """
+    text = path.read_text(encoding="utf-8", errors="replace")
+    keys: list[str] = []
+    for line in text.splitlines():
+        s = line.strip()
+        if not s or s.startswith("#"):
+            continue
+        keys.append(s)
+
+    seen: set[str] = set()
+    out: list[str] = []
+    for k in keys:
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(k)
+    return out
+
+
+# ============================================================
+# SQLite schema (minimal, idempotent)
+# ============================================================
+
+def ensure_schema_items(conn: sqlite3.Connection) -> None:
+    """
+    Minimal schema for knowledge_items used by UI, seed and coverage.
+    Non-destructive: IF NOT EXISTS only.
+    """
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS knowledge_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             key TEXT NOT NULL,
-            topic_category TEXT,
             locale TEXT NOT NULL,
-            text TEXT NOT NULL,
-            priority INTEGER NOT NULL DEFAULT 100,
-            created_at TEXT DEFAULT (datetime('now')),
-            is_active INTEGER NOT NULL DEFAULT 1
-            meta_json TEXT NOT NULL DEFAULT '{}',
-            updated_at TEXT
-        );
-        """)
-
-    # Add missing columns for older DBs
-    cols = {
-        row[1] for row in cur.execute("PRAGMA table_info(knowledge_items)").fetchall()
-    }
-
-    if "priority" not in cols:
-        cur.execute(
-            "ALTER TABLE knowledge_items ADD COLUMN priority INTEGER NOT NULL DEFAULT 100"
+            topic_category TEXT,
+            text TEXT,
+            priority INTEGER NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            meta_json TEXT,
+            created_at INTEGER,
+            updated_at INTEGER
         )
+        """.strip()
+    )
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_knowledge_items_key_locale_topic
+        ON knowledge_items(key, locale, topic_category)
+        """.strip()
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS ix_knowledge_items_active_key
+        ON knowledge_items(is_active, key)
+        """.strip()
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS ix_knowledge_items_active_locale_topic
+        ON knowledge_items(is_active, locale, topic_category)
+        """.strip()
+    )
 
-    if "created_at" not in cols:
-        cur.execute("ALTER TABLE knowledge_items ADD COLUMN created_at TEXT")
-        cur.execute(
-            "UPDATE knowledge_items SET created_at = COALESCE(created_at, datetime('now'))"
+
+def ensure_schema_meta(conn: sqlite3.Connection) -> None:
+    """
+    kb_meta for build info and EV1 metrics.
+    """
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS kb_meta (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
         )
+        """.strip()
+    )
 
-    if "is_active" not in cols:
-        cur.execute(
-            "ALTER TABLE knowledge_items ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1"
+
+def ensure_schema_docs_chunks(conn: sqlite3.Connection) -> None:
+    """
+    Minimal schema for docs/chunks + FTS5.
+    """
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS knowledge_docs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doc_id TEXT NOT NULL UNIQUE,
+            source_path TEXT,
+            title TEXT,
+            created_at INTEGER,
+            updated_at INTEGER,
+            sha256 TEXT
         )
+        """.strip()
+    )
 
-    conn.commit()
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS knowledge_chunks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doc_id TEXT NOT NULL,
+            chunk_index INTEGER NOT NULL,
+            chunk_text TEXT NOT NULL,
+            created_at INTEGER,
+            FOREIGN KEY(doc_id) REFERENCES knowledge_docs(doc_id)
+        )
+        """.strip()
+    )
 
-
-# ----------------------------
-# Helpers: text inputs + filters
-# ----------------------------
-def _parse_only_keys(s: Optional[str]) -> Optional[List[str]]:
-    if not s:
-        return None
-    keys = [k.strip() for k in s.split(",") if k.strip()]
-    return keys or None
-
-
-def _read_text_from_args(
-    text: Optional[str], text_file: Optional[str]
-) -> Optional[str]:
-    if text is not None and text_file is not None:
-        raise SystemExit("ERROR: use only one of --text or --text-file")
-
-    if text is not None:
-        t = text.strip()
-        return t if t else ""
-
-    if text_file is not None:
-        p = Path(text_file)
-        if not p.exists():
-            raise SystemExit(f"ERROR: --text-file not found: {p.as_posix()}")
-        t = p.read_text(encoding="utf-8").strip()
-        return t if t else ""
-
-    return None
+    # FTS5 virtual table (contentless is simplest)
+    conn.execute(
+        """
+        CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_chunks_fts
+        USING fts5(doc_id, chunk_index, chunk_text)
+        """.strip()
+    )
 
 
-def _topic_norm(topic: Optional[str]) -> str:
-    # Treat None as empty filter ONLY when building WHERE clauses intentionally.
-    return "" if topic is None else str(topic)
+def ensure_schema_items_and_meta(conn: sqlite3.Connection) -> None:
+    """
+    Backward-compatible entrypoint expected by UI seed.
+    """
+    ensure_schema_items(conn)
+    ensure_schema_meta(conn)
 
 
-# ----------------------------
-# Core operations: SEED
-# ----------------------------
-def apply_seed(
+def _set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
+    conn.execute(
+        """
+        INSERT INTO kb_meta(key, value) VALUES(?, ?)
+        ON CONFLICT(key) DO UPDATE SET value=excluded.value
+        """.strip(),
+        (key, value),
+    )
+
+
+# ============================================================
+# EV1 coverage / breakdown / issues (with robust normalization)
+# ============================================================
+
+def _sql_in_placeholders(n: int) -> str:
+    return ",".join(["?"] * n)
+
+
+def _sql_norm(col: str) -> str:
+    """
+    Normalize text column for comparisons/grouping in SQLite:
+    - replace NBSP (char(160)) with regular space
+    - replace tabs with space
+    - trim
+    """
+    return f"TRIM(REPLACE(REPLACE(COALESCE({col}, ''), char(160), ' '), char(9), ' '))"
+
+
+@dataclass(frozen=True)
+class Ev1Coverage:
+    total: int
+    present_active: int
+    missing: int
+    missing_keys: list[str]
+
+
+@dataclass(frozen=True)
+class Ev1BreakdownRow:
+    locale: str
+    topic_category: str
+    total: int
+    present_active: int
+    missing: int
+
+
+@dataclass(frozen=True)
+class Ev1DataIssues:
+    null_topic_category_count: int
+    sample_keys: list[str]
+
+
+def coverage_ev1(
     conn: sqlite3.Connection,
-    items: Sequence[SeedItem],
+    keys: list[str],
+    locale: Optional[str] = None,
+    topic_category: Optional[str] = None,
     *,
-    dry_run: bool,
-    only_keys: Optional[set[str]] = None,
-    set_priority: Optional[int] = None,
-    priority_offset: int = 0,
-) -> Tuple[int, int]:
-    """
-    Returns: (inserted, skipped)
+    top_missing: int = 50,
+) -> Ev1Coverage:
+    if not keys:
+        return Ev1Coverage(total=0, present_active=0, missing=0, missing_keys=[])
 
-    seed: insert only if no active row exists for (key, locale, topic_category, priority)
+    where = ["is_active = 1", f"key IN ({_sql_in_placeholders(len(keys))})"]
+    params: list[object] = list(keys)
+
+    if locale:
+        where.append(f"{_sql_norm('locale')} = ?")
+        params.append(locale.strip())
+
+    if topic_category:
+        where.append(f"{_sql_norm('topic_category')} = ?")
+        params.append(topic_category.strip())
+
+    sql = f"""
+        SELECT DISTINCT key
+        FROM knowledge_items
+        WHERE {" AND ".join(where)}
+    """.strip()
+
+    present = {row[0] for row in conn.execute(sql, params).fetchall()}
+    missing_keys = [k for k in keys if k not in present]
+    if top_missing > 0:
+        missing_keys = missing_keys[:top_missing]
+
+    total = len(keys)
+    present_active = len(present)
+    return Ev1Coverage(
+        total=total,
+        present_active=present_active,
+        missing=total - present_active,
+        missing_keys=missing_keys,
+    )
+
+
+def coverage_breakdown_ev1(conn: sqlite3.Connection, keys: list[str]) -> list[Ev1BreakdownRow]:
     """
-    cur = conn.cursor()
+    Breakdown only among EV1 keys (active), grouped by normalized locale/topic_category.
+    """
+    if not keys:
+        return []
+
+    sql = f"""
+        SELECT
+            {_sql_norm('locale')} AS locale_n,
+            {_sql_norm('topic_category')} AS topic_n,
+            COUNT(DISTINCT key) AS present_active
+        FROM knowledge_items
+        WHERE is_active = 1
+          AND key IN ({_sql_in_placeholders(len(keys))})
+        GROUP BY locale_n, topic_n
+        ORDER BY present_active DESC, locale_n, topic_n
+    """.strip()
+
+    rows = conn.execute(sql, list(keys)).fetchall()
+    total = len(keys)
+
+    out: list[Ev1BreakdownRow] = []
+    for locale_n, topic_n, present_active in rows:
+        present_i = int(present_active)
+        out.append(
+            Ev1BreakdownRow(
+                locale=str(locale_n or ""),
+                topic_category=str(topic_n or ""),
+                total=total,
+                present_active=present_i,
+                missing=total - present_i,
+            )
+        )
+    return out
+
+
+def ev1_data_issues(conn: sqlite3.Connection, keys: list[str], *, locale: str = "ru-RU", sample_limit: int = 20) -> Ev1DataIssues:
+    """
+    EV1 keys that exist as active items but have empty/NULL topic_category (after normalization).
+    """
+    if not keys:
+        return Ev1DataIssues(null_topic_category_count=0, sample_keys=[])
+
+    sql = f"""
+        SELECT DISTINCT key
+        FROM knowledge_items
+        WHERE is_active = 1
+          AND {_sql_norm('locale')} = ?
+          AND key IN ({_sql_in_placeholders(len(keys))})
+          AND {_sql_norm('topic_category')} = ''
+        ORDER BY key
+        LIMIT ?
+    """.strip()
+    params = [locale.strip(), *keys, sample_limit]
+    sample_keys = [r[0] for r in conn.execute(sql, params).fetchall()]
+
+    count_sql = f"""
+        SELECT COUNT(DISTINCT key)
+        FROM knowledge_items
+        WHERE is_active = 1
+          AND {_sql_norm('locale')} = ?
+          AND key IN ({_sql_in_placeholders(len(keys))})
+          AND {_sql_norm('topic_category')} = ''
+    """.strip()
+    count_params = [locale.strip(), *keys]
+    null_count = int(conn.execute(count_sql, count_params).fetchone()[0])
+
+    return Ev1DataIssues(null_topic_category_count=null_count, sample_keys=sample_keys)
+
+
+def export_missing_txt(missing_keys: Iterable[str]) -> str:
+    keys_list = list(missing_keys)
+    return "\n".join(keys_list) + ("\n" if keys_list else "")
+
+
+def export_missing_jsonl(
+    missing_keys: Iterable[str],
+    *,
+    locale: Optional[str] = None,
+    topic_category: Optional[str] = None,
+    priority: int = 50,
+    stub_text: str = "",
+) -> str:
+    import json as _json
+
+    lines: list[str] = []
+    for k in missing_keys:
+        obj = {
+            "key": k,
+            "locale": locale or "",
+            "topic_category": topic_category or "",
+            "priority": int(priority),
+            "text": stub_text,
+        }
+        lines.append(_json.dumps(obj, ensure_ascii=False))
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
+# ============================================================
+# Seed helpers
+# ============================================================
+
+def apply_seed_ignore_unique(
+    conn: sqlite3.Connection,
+    items: list[dict[str, Any]],
+) -> tuple[int, int]:
+    """
+    Insert items into knowledge_items ignoring UNIQUE conflicts.
+    Returns (inserted, skipped).
+    """
+    ensure_schema_items_and_meta(conn)
+
     inserted = 0
     skipped = 0
+    now = int(time.time())
+
+    sql = """
+        INSERT INTO knowledge_items(key, locale, topic_category, text, priority, is_active, meta_json, created_at, updated_at)
+        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """.strip()
 
     for it in items:
-        if only_keys and it.key not in only_keys:
-            continue
-
-        pr = set_priority if set_priority is not None else it.priority
-        pr = int(pr) + int(priority_offset)
-
-        row = cur.execute(
-            """
-            SELECT 1 FROM knowledge_items
-            WHERE key = ?
-              AND locale = ?
-              AND COALESCE(topic_category,'') = COALESCE(?, '')
-              AND priority = ?
-              AND is_active = 1
-            LIMIT 1
-            """,
-            (it.key, it.locale, it.topic_category, pr),
-        ).fetchone()
-        if row:
-            skipped += 1
-            continue
-
-        if dry_run:
+        try:
+            conn.execute(
+                sql,
+                (
+                    it["key"],
+                    it.get("locale") or "ru-RU",
+                    it.get("topic_category"),
+                    it.get("text") or "",
+                    int(it.get("priority", 0)),
+                    int(it.get("is_active", 1)),
+                    json.dumps(it.get("meta", {}), ensure_ascii=False) if isinstance(it.get("meta"), dict) else it.get("meta_json"),
+                    it.get("created_at", now),
+                    it.get("updated_at", now),
+                ),
+            )
             inserted += 1
-            continue
-
-        cur.execute(
-            """
-            INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active)
-            VALUES (?, ?, ?, ?, ?, datetime('now'), 1)
-            """,
-            (it.key, it.topic_category, it.locale, it.text, pr),
-        )
-        inserted += 1
-
-    if not dry_run:
-        conn.commit()
+        except sqlite3.IntegrityError:
+            skipped += 1
 
     return inserted, skipped
 
 
-# ----------------------------
-# Core operations: VERSION (the important fix)
-# ----------------------------
-def _pick_source_row_for_version(
-    conn: sqlite3.Connection,
-    *,
-    key: str,
-    locale: str,
-    topic: str,
-    include_inactive: bool,
-) -> Optional[sqlite3.Row]:
-    """
-    Pick the best existing row to clone.
-    Policy:
-      - same key + locale + topic (exact, with COALESCE)
-      - if include_inactive=False -> only active
-      - order: priority DESC, created_at DESC, id DESC
-    """
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        s = line.strip()
+        if not s:
+            continue
+        out.append(json.loads(s))
+    return out
 
-    where = [
-        "key = ?",
-        "locale = ?",
-        "COALESCE(topic_category,'') = COALESCE(?, '')",
+
+def seed_default(conn: sqlite3.Connection, *, glob_pattern: str = "knowledge_items_*_ETALON.jsonl") -> tuple[int, int]:
+    """
+    Loads default seed JSONL files from astroprocessor/data/.
+    """
+    data_dir = _data_dir()
+    files = sorted(data_dir.glob(glob_pattern))
+    total_inserted = 0
+    total_skipped = 0
+
+    for f in files:
+        items = _read_jsonl(f)
+        ins, sk = apply_seed_ignore_unique(conn, items)
+        total_inserted += ins
+        total_skipped += sk
+
+    return total_inserted, total_skipped
+
+
+def make_ev1_seed_items(
+    keys: list[str],
+    *,
+    locale: str,
+    topic_category: str,
+    priority: int,
+    stub_text: str = "",
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "key": k,
+            "locale": locale,
+            "topic_category": topic_category,
+            "priority": int(priority),
+            "text": stub_text,
+            "is_active": 1,
+        }
+        for k in keys
     ]
-    params: List[object] = [key, locale, topic]
-
-    if not include_inactive:
-        where.append("is_active = 1")
-
-    sql = f"""
-        SELECT id, key, topic_category, locale, priority, is_active, created_at, text
-        FROM knowledge_items
-        WHERE {' AND '.join(where)}
-        ORDER BY priority DESC, created_at DESC, id DESC
-        LIMIT 1
-    """
-    row = cur.execute(sql, params).fetchone()
-    return row
 
 
-def apply_version(
+def seed_ev1(
     conn: sqlite3.Connection,
     *,
-    only_keys: Sequence[str],
+    keys_file: Optional[str],
     locale: str,
-    topic: str,
-    dry_run: bool,
-    set_priority: Optional[int] = None,
-    priority_offset: int = 0,
-    text_override: Optional[str] = None,
-    include_inactive_source: bool = True,
-) -> Tuple[int, List[str]]:
+    topic_category: str,
+    priority: int,
+    build_version: Optional[str] = None,
+    knowledge_build_version: Optional[str] = None,
+) -> dict[str, Any]:
     """
-    Returns: (inserted, errors)
-
-    Versioning behavior:
-      - Always insert a new row per key (new version).
-      - Text comes from:
-          1) --text / --text-file if provided
-          2) else clone the best existing row for this key+locale+topic
-      - If no source row and no text override -> error for that key.
+    Idempotent EV1 seed + writes coverage to kb_meta.
     """
-    cur = conn.cursor()
-    inserted = 0
-    errors: List[str] = []
+    ensure_schema_items_and_meta(conn)
 
-    for key in only_keys:
-        src = (
-            None
-            if text_override is not None
-            else _pick_source_row_for_version(
-                conn,
-                key=key,
-                locale=locale,
-                topic=topic,
-                include_inactive=include_inactive_source,
+    keys_path, ok = resolve_ev1_keys_file(keys_file)
+    if not ok:
+        raise FileNotFoundError(f"keys_file пустой или не найден: {keys_path}")
+
+    keys = load_keys_txt(keys_path)
+    if not keys:
+        raise ValueError(f"keys_file пустой: {keys_path}")
+
+    items = make_ev1_seed_items(
+        keys,
+        locale=locale,
+        topic_category=topic_category,
+        priority=priority,
+    )
+    inserted, skipped = apply_seed_ignore_unique(conn, items)
+
+    cov = coverage_ev1(conn, keys, locale=locale, topic_category=topic_category, top_missing=10_000)
+
+    _set_meta(conn, "ev1_total", str(cov.total))
+    _set_meta(conn, "ev1_present_active", str(cov.present_active))
+    _set_meta(conn, "ev1_missing", str(cov.missing))
+    _set_meta(conn, "updated_at", str(int(time.time())))
+
+    if build_version:
+        _set_meta(conn, "build_version", build_version)
+    if knowledge_build_version:
+        _set_meta(conn, "knowledge_build_version", knowledge_build_version)
+
+    return {
+        "inserted": inserted,
+        "skipped": skipped,
+        "coverage_total": cov.total,
+        "coverage_present_active": cov.present_active,
+        "coverage_missing": cov.missing,
+        "keys_file_resolved": str(keys_path),
+    }
+
+
+# ============================================================
+# Import books -> markdown docs (best-effort)
+# ============================================================
+
+def _sha256_bytes(data: bytes) -> str:
+    h = hashlib.sha256()
+    h.update(data)
+    return h.hexdigest()
+
+
+def _doc_id_from_file_bytes(data: bytes) -> str:
+    return _sha256_bytes(data)[:16]
+
+
+def _convert_to_markdown(src: Path) -> tuple[str, str]:
+    """
+    Best-effort conversion to markdown.
+    Returns (title, markdown_text).
+    """
+    ext = src.suffix.lower()
+    title = src.stem
+
+    if ext == ".md":
+        return title, src.read_text(encoding="utf-8", errors="replace")
+    if ext == ".txt":
+        return title, src.read_text(encoding="utf-8", errors="replace")
+
+    if ext == ".docx":
+        try:
+            import docx  # python-docx
+            d = docx.Document(str(src))
+            lines = [p.text for p in d.paragraphs if p.text.strip()]
+            return title, "\n\n".join(lines) + "\n"
+        except Exception as e:
+            raise RuntimeError(f"docx conversion failed: {e}") from e
+
+    if ext == ".pdf":
+        # optional dependency path
+        try:
+            from pypdf import PdfReader  # type: ignore
+            reader = PdfReader(str(src))
+            chunks: list[str] = []
+            for page in reader.pages:
+                txt = page.extract_text() or ""
+                txt = txt.strip()
+                if txt:
+                    chunks.append(txt)
+            return title, "\n\n".join(chunks) + "\n"
+        except Exception as e:
+            raise RuntimeError(f"pdf conversion failed (install pypdf): {e}") from e
+
+    raise RuntimeError(f"unsupported extension: {ext}")
+
+
+def import_books(*, inbox_dir: Optional[str] = None) -> dict[str, Any]:
+    """
+    Reads files from astroprocessor/data/knowledge_sources/inbox,
+    converts to markdown and writes into astroprocessor/knowledge/docs.
+    Moves processed/failed originals and updates _import_manifest.json.
+    """
+    src_dir = Path(inbox_dir) if inbox_dir else _inbox_dir()
+    if not src_dir.is_absolute():
+        src_dir = _astro_root() / src_dir
+
+    docs_dir = _docs_dir()
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    _processed_inbox_dir().mkdir(parents=True, exist_ok=True)
+    _failed_inbox_dir().mkdir(parents=True, exist_ok=True)
+
+    manifest: dict[str, Any] = {"entries": []}
+    if _manifest_path().exists():
+        try:
+            manifest = json.loads(_manifest_path().read_text(encoding="utf-8", errors="replace"))
+            if not isinstance(manifest, dict) or "entries" not in manifest:
+                manifest = {"entries": []}
+        except Exception:
+            manifest = {"entries": []}
+
+    imported = 0
+    failed = 0
+
+    for src in sorted(src_dir.glob("*")):
+        if not src.is_file():
+            continue
+
+        entry: dict[str, Any] = {
+            "filename": src.name,
+            "src": str(src),
+            "ts": int(time.time()),
+            "status": "unknown",
+        }
+
+        try:
+            data = src.read_bytes()
+            doc_id = _doc_id_from_file_bytes(data)
+            title, md = _convert_to_markdown(src)
+
+            out_path = docs_dir / f"{doc_id}.md"
+            out_path.write_text(md, encoding="utf-8")
+
+            entry.update(
+                {
+                    "status": "ok",
+                    "doc_id": doc_id,
+                    "title": title,
+                    "md_path": str(out_path),
+                }
             )
-        )
 
-        if text_override is not None:
-            text = text_override
-        elif src is not None:
-            text = (src["text"] or "").strip()
+            shutil.move(str(src), str(_processed_inbox_dir() / src.name))
+            imported += 1
+
+        except Exception as e:
+            entry.update({"status": "failed", "error": f"{type(e).__name__}: {e}"})
+            shutil.move(str(src), str(_failed_inbox_dir() / src.name))
+            failed += 1
+
+        manifest["entries"].append(entry)
+
+    _manifest_path().write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    return {"imported": imported, "failed": failed, "manifest": str(_manifest_path())}
+
+
+# ============================================================
+# Build chunks + FTS
+# ============================================================
+
+def _chunk_markdown(md: str, *, max_chars: int = 1200) -> list[str]:
+    parts = [p.strip() for p in md.split("\n\n") if p.strip()]
+    chunks: list[str] = []
+    buf: list[str] = []
+    size = 0
+
+    for p in parts:
+        if size + len(p) + 2 > max_chars and buf:
+            chunks.append("\n\n".join(buf).strip())
+            buf = [p]
+            size = len(p)
         else:
-            errors.append(
-                f"{key}: no existing rows to clone for locale={locale}, topic={topic}; provide --text/--text-file"
-            )
-            continue
+            buf.append(p)
+            size += len(p) + 2
 
-        pr = (
-            set_priority
-            if set_priority is not None
-            else (int(src["priority"]) if src is not None else 200)
-        )
-        pr = int(pr) + int(priority_offset)
+    if buf:
+        chunks.append("\n\n".join(buf).strip())
 
-        if dry_run:
-            inserted += 1
-            continue
-
-        cur.execute(
-            """
-            INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active)
-            VALUES (?, ?, ?, ?, ?, datetime('now'), 1)
-            """,
-            (key, topic if topic != "" else None, locale, text, pr),
-        )
-        inserted += 1
-
-    if not dry_run:
-        conn.commit()
-
-    return inserted, errors
+    return [c for c in chunks if c]
 
 
-# ----------------------------
-# List + activate/deactivate
-# ----------------------------
-def list_versions(
-    conn: sqlite3.Connection,
-    *,
-    key: str,
-    locale: Optional[str],
-    topic: Optional[str],
-    include_inactive: bool,
-    limit: int,
-) -> List[sqlite3.Row]:
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-
-    where = ["key = ?"]
-    params: List[object] = [key]
-
-    if locale:
-        where.append("locale = ?")
-        params.append(locale)
-
-    if topic is not None:
-        where.append("COALESCE(topic_category,'') = COALESCE(?, '')")
-        params.append(topic)
-
-    if not include_inactive:
-        where.append("is_active = 1")
-
-    sql = f"""
-        SELECT id, key, topic_category, locale, priority, is_active, created_at, text
-        FROM knowledge_items
-        WHERE {' AND '.join(where)}
-        ORDER BY priority DESC, created_at DESC, id DESC
-        LIMIT ?
+def build_chunks(conn: sqlite3.Connection) -> dict[str, Any]:
     """
-    params.append(int(limit))
-    rows = cur.execute(sql, params).fetchall()
-    return rows
+    Reads markdown docs from astroprocessor/knowledge/docs and rebuilds knowledge_docs,
+    knowledge_chunks, knowledge_chunks_fts.
+    """
+    ensure_schema_docs_chunks(conn)
+    ensure_schema_meta(conn)
 
+    docs_dir = _docs_dir()
+    docs_dir.mkdir(parents=True, exist_ok=True)
 
-def set_active(
-    conn: sqlite3.Connection,
-    *,
-    row_id: int,
-    active: bool,
-    dry_run: bool,
-) -> int:
-    cur = conn.cursor()
-    if dry_run:
-        row = cur.execute(
-            "SELECT 1 FROM knowledge_items WHERE id = ? LIMIT 1", (int(row_id),)
-        ).fetchone()
-        return 1 if row else 0
+    conn.execute("DELETE FROM knowledge_chunks_fts")
+    conn.execute("DELETE FROM knowledge_chunks")
+    conn.execute("DELETE FROM knowledge_docs")
 
-    cur.execute(
-        "UPDATE knowledge_items SET is_active = ? WHERE id = ?",
-        (1 if active else 0, int(row_id)),
-    )
-    conn.commit()
-    return cur.rowcount
+    doc_count = 0
+    chunk_count = 0
+    now = int(time.time())
 
+    for md_path in sorted(docs_dir.glob("*.md")):
+        data = md_path.read_bytes()
+        doc_id = md_path.stem
+        sha = _sha256_bytes(data)
 
-# ----------------------------
-# CLI
-# ----------------------------
-def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(
-        prog="python -m app.knowledge.builder",
-        description="Knowledge DB builder with versioning tools (seed/version/list/activate/deactivate).",
-    )
-    p.add_argument(
-        "--db-path",
-        type=str,
-        default=None,
-        help="Path to knowledge.db (default: settings.knowledge_db_path or data/knowledge.db)",
-    )
-    p.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Don't write to DB; only show what would happen.",
-    )
-
-    sub = p.add_subparsers(dest="command", required=True)
-
-    # seed
-    p_seed = sub.add_parser(
-        "seed", help="Idempotent: insert default seeds if not exists (active)."
-    )
-    p_seed.add_argument(
-        "--only-keys",
-        type=str,
-        default=None,
-        help="Comma-separated list of keys to apply (optional).",
-    )
-    p_seed.add_argument(
-        "--set-priority",
-        type=int,
-        default=None,
-        help="Override priority for inserted items.",
-    )
-    p_seed.add_argument(
-        "--priority-offset",
-        type=int,
-        default=0,
-        help="Add offset to each item's priority.",
-    )
-
-    # version (fixed)
-    p_ver = sub.add_parser(
-        "version",
-        help=(
-            "Insert NEW versions. By default clones the best existing row per key+locale+topic. "
-            "If you pass --text/--text-file, uses that text instead."
-        ),
-    )
-    p_ver.add_argument(
-        "--only-keys",
-        type=str,
-        required=True,
-        help="Comma-separated list of keys to version, e.g. natal.planet.sun.sign.leo",
-    )
-    p_ver.add_argument(
-        "--locale",
-        type=str,
-        default="ru-RU",
-        help="Locale for cloning/inserting (default ru-RU).",
-    )
-    p_ver.add_argument(
-        "--topic",
-        type=str,
-        default="personality_core",
-        help="Topic category for cloning/inserting (default personality_core).",
-    )
-    p_ver.add_argument(
-        "--set-priority",
-        type=int,
-        default=None,
-        help="Force priority for inserted versions.",
-    )
-    p_ver.add_argument(
-        "--priority-offset",
-        type=int,
-        default=0,
-        help="Add offset to computed priority.",
-    )
-    p_ver.add_argument(
-        "--text",
-        type=str,
-        default=None,
-        help="Inline text for ALL keys in --only-keys.",
-    )
-    p_ver.add_argument(
-        "--text-file",
-        type=str,
-        default=None,
-        help="Read text from file (utf-8) for ALL keys.",
-    )
-    p_ver.add_argument(
-        "--include-inactive-source",
-        action="store_true",
-        help="Allow cloning from inactive rows if no active found (default: True behavior).",
-    )
-    p_ver.add_argument(
-        "--active-only-source",
-        action="store_true",
-        help="Strict: clone only from active rows (overrides --include-inactive-source).",
-    )
-
-    # list
-    p_list = sub.add_parser("list", help="List versions for a given key.")
-    p_list.add_argument(
-        "--key",
-        required=True,
-        type=str,
-        help="Knowledge key, e.g. natal.planet.sun.sign.leo",
-    )
-    p_list.add_argument(
-        "--locale", default=None, type=str, help="Locale filter, e.g. ru-RU (optional)"
-    )
-    p_list.add_argument(
-        "--topic",
-        default=None,
-        type=str,
-        help="Topic filter, e.g. personality_core (optional)",
-    )
-    p_list.add_argument(
-        "--include-inactive", action="store_true", help="Include inactive versions too."
-    )
-    p_list.add_argument(
-        "--limit", default=20, type=int, help="Max rows to show (default 20)."
-    )
-
-    # activate/deactivate
-    p_act = sub.add_parser("activate", help="Set is_active=1 for row by id.")
-    p_act.add_argument("--id", required=True, type=int, help="Row id")
-
-    p_deact = sub.add_parser("deactivate", help="Set is_active=0 for row by id.")
-    p_deact.add_argument("--id", required=True, type=int, help="Row id")
-
-    return p.parse_args(argv)
-
-
-def _print_rows(rows: List[sqlite3.Row]) -> None:
-    if not rows:
-        print("No rows found.")
-        return
-
-    print(
-        "id | pr | act | created_at           | locale | topic_category         | text"
-    )
-    print("-" * 110)
-    for r in rows:
-        txt = (r["text"] or "").replace("\n", " ").strip()
-        if len(txt) > 120:
-            txt = txt[:117] + "..."
-        created = (r["created_at"] or "")[:19].ljust(19)
-        topic = (r["topic_category"] or "").ljust(22)[:22]
-        loc = (r["locale"] or "").ljust(6)[:6]
-        print(
-            f"{r['id']:>3} | {r['priority']:>3} |  {r['is_active']}  | {created} | {loc} | {topic} | {txt}"
+        conn.execute(
+            """
+            INSERT INTO knowledge_docs(doc_id, source_path, title, created_at, updated_at, sha256)
+            VALUES(?, ?, ?, ?, ?, ?)
+            """.strip(),
+            (doc_id, str(md_path), md_path.name, now, now, sha),
         )
 
+        md = data.decode("utf-8", errors="replace")
+        chunks = _chunk_markdown(md)
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = parse_args(argv)
+        for i, ch in enumerate(chunks):
+            conn.execute(
+                """
+                INSERT INTO knowledge_chunks(doc_id, chunk_index, chunk_text, created_at)
+                VALUES(?, ?, ?, ?)
+                """.strip(),
+                (doc_id, i, ch, now),
+            )
+            conn.execute(
+                """
+                INSERT INTO knowledge_chunks_fts(doc_id, chunk_index, chunk_text)
+                VALUES(?, ?, ?)
+                """.strip(),
+                (doc_id, i, ch),
+            )
+            chunk_count += 1
 
-    db_path = Path(args.db_path) if args.db_path else _default_db_path()
+        doc_count += 1
+
+    _set_meta(conn, "kb_docs", str(doc_count))
+    _set_meta(conn, "kb_chunks", str(chunk_count))
+    _set_meta(conn, "updated_at", str(now))
+
+    return {"docs": doc_count, "chunks": chunk_count}
+
+
+# ============================================================
+# DB helpers
+# ============================================================
+
+def _connect_db() -> sqlite3.Connection:
+    db_path = _knowledge_db_path()
     db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    return conn
 
-    conn = sqlite3.connect(db_path)
+
+# ============================================================
+# CLI
+# ============================================================
+
+def _cmd_import_books(args: argparse.Namespace) -> None:
+    res = import_books(inbox_dir=args.inbox_dir)
+    print(f"✅ import-books OK: imported={res['imported']} failed={res['failed']} manifest={res['manifest']}")
+
+
+def _cmd_build_chunks(args: argparse.Namespace) -> None:
+    conn = _connect_db()
     try:
-        ensure_schema(conn)
-
-        if args.command == "seed":
-            items = default_seed_ru()
-            only_keys = _parse_only_keys(getattr(args, "only_keys", None))
-            only_keys_set = set(only_keys) if only_keys else None
-
-            inserted, skipped = apply_seed(
-                conn,
-                items,
-                dry_run=bool(args.dry_run),
-                only_keys=only_keys_set,
-                set_priority=getattr(args, "set_priority", None),
-                priority_offset=int(getattr(args, "priority_offset", 0)),
-            )
-
-            print(f"[SEED] DB: {db_path.as_posix()}")
-            if args.dry_run:
-                print("[DRY RUN] No changes were written.")
-            if only_keys_set:
-                print(f"[FILTER] only_keys: {sorted(list(only_keys_set))}")
-            if getattr(args, "set_priority", None) is not None:
-                print(f"[OVERRIDE] set_priority: {args.set_priority}")
-            if int(getattr(args, "priority_offset", 0)) != 0:
-                print(f"[OFFSET] priority_offset: {args.priority_offset}")
-
-            print(f"Inserted: {inserted}")
-            print(f"Skipped:  {skipped}")
-            return 0
-
-        if args.command == "version":
-            keys = _parse_only_keys(args.only_keys) or []
-            if not keys:
-                raise SystemExit("ERROR: --only-keys must contain at least 1 key")
-
-            text_override = _read_text_from_args(
-                getattr(args, "text", None), getattr(args, "text_file", None)
-            )
-            locale = str(getattr(args, "locale", "ru-RU"))
-            topic = str(getattr(args, "topic", "personality_core"))
-
-            # source policy
-            include_inactive_source = True
-            if getattr(args, "active_only_source", False):
-                include_inactive_source = False
-            elif getattr(args, "include_inactive_source", False):
-                include_inactive_source = True
-            # default behavior: include inactive allowed (True)
-
-            inserted, errors = apply_version(
-                conn,
-                only_keys=keys,
-                locale=locale,
-                topic=topic,
-                dry_run=bool(args.dry_run),
-                set_priority=getattr(args, "set_priority", None),
-                priority_offset=int(getattr(args, "priority_offset", 0)),
-                text_override=text_override,
-                include_inactive_source=include_inactive_source,
-            )
-
-            print(f"[VERSION] DB: {db_path.as_posix()}")
-            if args.dry_run:
-                print("[DRY RUN] No changes were written.")
-            print(f"[FILTER] only_keys: {keys}")
-            print(f"[CTX] locale={locale} topic={topic}")
-            if getattr(args, "set_priority", None) is not None:
-                print(f"[OVERRIDE] set_priority: {args.set_priority}")
-            if int(getattr(args, "priority_offset", 0)) != 0:
-                print(f"[OFFSET] priority_offset: {args.priority_offset}")
-            if text_override is not None:
-                print("[TEXT] Using text override for inserted versions.")
-            print(f"Inserted: {inserted}")
-
-            if errors:
-                print("Errors:")
-                for e in errors:
-                    print(f"  - {e}")
-                return 2
-
-            return 0
-
-        if args.command == "list":
-            rows = list_versions(
-                conn,
-                key=args.key,
-                locale=args.locale,
-                topic=args.topic,
-                include_inactive=bool(args.include_inactive),
-                limit=int(args.limit),
-            )
-            print(f"[LIST] DB: {db_path.as_posix()}")
-            print(f"Key: {args.key}")
-            if args.locale:
-                print(f"Locale: {args.locale}")
-            if args.topic is not None:
-                print(f"Topic: {args.topic}")
-            print(f"Include inactive: {bool(args.include_inactive)}")
-            print()
-            _print_rows(rows)
-            return 0
-
-        if args.command in ("activate", "deactivate"):
-            row_id = int(args.id)
-            active = args.command == "activate"
-            affected = set_active(
-                conn, row_id=row_id, active=active, dry_run=bool(args.dry_run)
-            )
-
-            label = "ACTIVATE" if active else "DEACTIVATE"
-            print(f"[{label}] DB: {db_path.as_posix()}")
-            if args.dry_run:
-                print("[DRY RUN] No changes were written.")
-            if affected == 0:
-                print(f"Row id={row_id} not found.")
-                return 2
-
-            print(f"Row id={row_id} -> is_active={1 if active else 0}")
-            return 0
-
-        print("Unknown command.")
-        return 2
-
+        res = build_chunks(conn)
+        conn.commit()
+        print(f"✅ build-chunks OK: docs={res['docs']} chunks={res['chunks']}")
     finally:
         conn.close()
 
 
+def _cmd_seed(args: argparse.Namespace) -> None:
+    conn = _connect_db()
+    try:
+        ins, sk = seed_default(conn)
+        conn.commit()
+        print(f"✅ seed OK: inserted={ins} skipped={sk}")
+    finally:
+        conn.close()
+
+
+def _cmd_seed_ev1(args: argparse.Namespace) -> None:
+    conn = _connect_db()
+    try:
+        res = seed_ev1(
+            conn,
+            keys_file=args.keys_file,
+            locale=args.locale,
+            topic_category=args.topic_category,
+            priority=args.priority,
+            build_version=args.build_version,
+            knowledge_build_version=args.knowledge_build_version,
+        )
+        conn.commit()
+        print(
+            "✅ EV1 Seed OK. "
+            f"inserted={res['inserted']} skipped={res['skipped']}; "
+            f"coverage={res['coverage_present_active']}/{res['coverage_total']} missing={res['coverage_missing']}; "
+            f"keys_file={res['keys_file_resolved']}"
+        )
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ EV1 Seed FAILED: {type(e).__name__}: {e}")
+        raise
+    finally:
+        conn.close()
+
+
+def _cmd_import_build(args: argparse.Namespace) -> None:
+    res = import_books(inbox_dir=args.inbox_dir)
+    print(f"✅ import-books OK: imported={res['imported']} failed={res['failed']}")
+
+    conn = _connect_db()
+    try:
+        out = build_chunks(conn)
+        conn.commit()
+        print(f"✅ build-chunks OK: docs={out['docs']} chunks={out['chunks']}")
+    finally:
+        conn.close()
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(prog="python -m app.knowledge.builder")
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    sp = sub.add_parser("import-books")
+    sp.add_argument("--inbox-dir", default=str(_inbox_dir()))
+    sp.set_defaults(func=_cmd_import_books)
+
+    sp = sub.add_parser("build-chunks")
+    sp.set_defaults(func=_cmd_build_chunks)
+
+    sp = sub.add_parser("import-build")
+    sp.add_argument("--inbox-dir", default=str(_inbox_dir()))
+    sp.set_defaults(func=_cmd_import_build)
+
+    sp = sub.add_parser("seed")
+    sp.set_defaults(func=_cmd_seed)
+
+    sp = sub.add_parser("seed-ev1")
+    sp.add_argument("--keys-file", default=None)
+    sp.add_argument("--locale", default="ru-RU")
+    sp.add_argument("--topic-category", default="personality_core")
+    sp.add_argument("--priority", type=int, default=200)
+    sp.add_argument("--build-version", default=None)
+    sp.add_argument("--knowledge-build-version", default=None)
+    sp.set_defaults(func=_cmd_seed_ev1)
+
+    return p
+
+
+def main(argv: Optional[list[str]] = None) -> None:
+    parser = build_arg_parser()
+    args = parser.parse_args(argv)
+    args.func(args)
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

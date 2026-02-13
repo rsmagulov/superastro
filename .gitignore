@@ -21,3 +21,7 @@ astroprocessor/se/   # или astroprocessor/se, если это файл
 # OS
 .DS_Store
 Thumbs.db
+
+*.db-wal
+*.db-shm
+.db

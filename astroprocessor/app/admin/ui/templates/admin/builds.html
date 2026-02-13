@@ -1,5 +1,244 @@
-{% extends "admin/base.html" %}
-{% block body %}
-<h1>Сборки</h1>
-<p>Заглушка.</p>
+{% extends "admin/_layout.html" %}
+
+{% block content %}
+<h1>Builds</h1>
+<p class="muted">Импорт книг из inbox → сборка chunks/FTS в knowledge.db</p>
+
+{% include "admin/_flash.html" %}
+
+{# --- kb_meta helpers --- #}
+{% set ev1_total = (kb_meta_dict.get('ev1_total', '0') | int) %}
+{% set ev1_present_active = (kb_meta_dict.get('ev1_present_active', '0') | int) %}
+{% set ev1_missing = (kb_meta_dict.get('ev1_missing', '0') | int) %}
+{% if ev1_total > 0 %}
+  {% set ev1_pct = ((ev1_present_active * 100) // ev1_total) %}
+{% else %}
+  {% set ev1_pct = 0 %}
+{% endif %}
+
+<div class="card">
+  <h2>Import + Build chunks</h2>
+  <form method="post" action="{{ url_for('builds_import_build') }}">
+    <div class="row">
+      <label>build_version</label>
+      <input name="build_version" value="{{ build_version }}" placeholder="например 2026.02.13.1405">
+    </div>
+
+    <div class="row">
+      <label>knowledge_build_version</label>
+      <input name="knowledge_build_version" value="{{ knowledge_build_version }}" placeholder="например kb-0.1">
+    </div>
+
+    <div class="row">
+      <label>inbox</label>
+      <input name="inbox_dir" value="{{ inbox_dir }}" placeholder="./data/knowledge_sources/inbox">
+    </div>
+
+    <div class="row">
+      <label>docs_dir</label>
+      <input name="docs_dir" value="{{ docs_dir }}" placeholder="./knowledge/docs">
+    </div>
+
+    <div class="row">
+      <button type="submit">Import + Build</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Seed (default knowledge_items)</h2>
+  <form method="post" action="{{ url_for('builds_seed') }}">
+    <div class="row">
+      <label>build_version</label>
+      <input name="build_version" value="{{ build_version }}">
+    </div>
+
+    <div class="row">
+      <label>knowledge_build_version</label>
+      <input name="knowledge_build_version" value="{{ knowledge_build_version }}">
+    </div>
+
+    <div class="row">
+      <button type="submit">Seed default items</button>
+    </div>
+  </form>
+</div>
+
+<section class="card">
+  <h2>EV1 Coverage</h2>
+  <div class="muted" style="margin-bottom: 10px;">
+    Покрытие EV1 ключей активными knowledge_items (по locale + topic_category).
+  </div>
+
+  <div style="display:flex; gap:12px; flex-wrap:wrap; margin: 8px 0;">
+    <div><b>present:</b> {{ ev1_present_active }}</div>
+    <div><b>total:</b> {{ ev1_total }}</div>
+    <div><b>missing:</b> {{ ev1_missing }}</div>
+    <div><b>%:</b> {{ ev1_pct }}</div>
+  </div>
+
+  {# progressbar без Jinja в CSS-значении, чтобы линтер не ругался #}
+  <div class="progress" style="margin-top: 6px;">
+    <div class="progress__bar" data-pct="{{ ev1_pct }}"></div>
+  </div>
+
+  <hr class="hr"/>
+
+  <h3 style="margin-top: 0;">EV1: Seed items</h3>
+  <p class="muted" style="margin-top: 0;">
+    Автогенерация knowledge_items для EV1 ключей (layer A) + пересчёт покрытия.
+  </p>
+
+  <form method="post" action="{{ url_for('builds_seed_ev1') }}" style="margin-top: 10px;">
+    <div class="row">
+      <label>build_version</label>
+      <input type="text" name="build_version" value="{{ build_version }}" required>
+    </div>
+
+    <div class="row">
+      <label>knowledge_build_version</label>
+      <input type="text" name="knowledge_build_version" value="{{ knowledge_build_version }}" required>
+    </div>
+
+    <div class="row">
+      <label>keys_file</label>
+      <input type="text" name="keys_file" value="{{ ev1_keys_file }}">
+      <div class="hint">Путь к файлу EV1 ключей (по умолчанию — корень репо)</div>
+    </div>
+
+    <div class="row">
+      <label>locale</label>
+      <input type="text" name="locale" value="ru-RU">
+    </div>
+
+    <div class="row">
+      <label>topic_category</label>
+      <input type="text" name="topic_category" value="personality_core">
+    </div>
+
+    <div class="row">
+      <label>priority</label>
+      <input type="number" name="priority" value="200">
+    </div>
+
+    <div class="row">
+      <button class="btn btn-primary" type="submit">Seed EV1</button>
+    </div>
+  </form>
+
+  <hr class="hr"/>
+
+  {% if ev1_live_error %}
+  <div class="muted" style="margin-top:8px;">
+    ❌ EV1 live: {{ ev1_live_error }}<br>
+    <span class="muted">resolved keys_file: <code>{{ ev1_keys_file_resolved }}</code></span>
+  </div>
+{% else %}
+  <div class="muted" style="margin-top:8px;">
+    EV1 live: resolved keys_file: <code>{{ ev1_keys_file_resolved }}</code><br>
+    live coverage: <b>{{ ev1_present_active_live }}</b>/<b>{{ ev1_total_live }}</b>
+    (missing={{ ev1_missing_live }})
+  </div>
+{% endif %}
+  {% if ev1_issues_null_topic_category_count and ev1_issues_null_topic_category_count > 0 %}
+  <div class="alert alert-warn" style="margin-top:10px;">
+    <b>Data issue:</b> EV1 active items with <code>topic_category = NULL/empty</code>:
+    <b>{{ ev1_issues_null_topic_category_count }}</b>
+    <div class="muted" style="margin-top:6px;">Sample keys:</div>
+    <ul class="mono">
+      {% for k in ev1_issues_null_topic_category_sample %}
+        <li><code>{{ k }}</code></li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+  <h3>EV1 Breakdown (active items)</h3>
+
+    {% if ev1_breakdown and ev1_breakdown|length > 0 %}
+    <table class="table" style="margin-top:10px;">
+        <thead>
+        <tr>
+            <th>locale</th>
+            <th>topic_category</th>
+            <th>present</th>
+            <th>missing</th>
+            <th>total</th>
+            <th>%</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for r in ev1_breakdown %}
+            <tr>
+            <td>{{ r.locale }}</td>
+            <td>{{ r.topic_category }}</td>
+            <td>{{ r.present_active }}</td>
+            <td>{{ r.missing }}</td>
+            <td>{{ r.total }}</td>
+            <td>{{ r.pct }}%</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="muted">Нет данных для breakdown (либо keys_file пустой, либо в БД нет active items по этим ключам).</div>
+    {% endif %}
+
+    <hr class="hr"/>
+
+    <h3>Missing EV1 keys (top 50)</h3>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0;">
+    <a class="btn" href="/admin/ui/builds/ev1/missing.txt?ev1_keys_file={{ ev1_keys_file|urlencode }}&ev1_locale={{ ev1_locale|urlencode }}&ev1_topic_category={{ ev1_topic_category|urlencode }}">
+        Export missing .txt
+    </a>
+
+    <a class="btn" href="/admin/ui/builds/ev1/missing.jsonl?ev1_keys_file={{ ev1_keys_file|urlencode }}&ev1_locale={{ ev1_locale|urlencode }}&ev1_topic_category={{ ev1_topic_category|urlencode }}&priority={{ ev1_priority }}">
+        Export missing .jsonl
+    </a>
+    </div>
+
+    {% if ev1_missing_keys and ev1_missing_keys|length > 0 %}
+    <pre style="white-space:pre-wrap; max-height:280px; overflow:auto; padding:10px; border:1px solid #2a2a2a; border-radius:10px;">
+    {% for k in ev1_missing_keys -%}
+    {{ k }}
+    {% endfor -%}
+    </pre>
+    {% else %}
+    <div class="muted">Missing keys: пусто (похоже, покрытие 100%).</div>
+    {% endif %}
+
+  <h3>EV1 Coverage (из kb_meta)</h3>
+  <div class="kv">
+    <div><b>ev1_total:</b> {{ kb_meta_dict.get('ev1_total', '') }}</div>
+    <div><b>ev1_present_active:</b> {{ kb_meta_dict.get('ev1_present_active', '') }}</div>
+    <div><b>ev1_missing:</b> {{ kb_meta_dict.get('ev1_missing', '') }}</div>
+  </div>
+</section>
+
+{% if kb_meta %}
+<div class="card">
+  <h2>KB meta</h2>
+  <table class="table">
+    <thead><tr><th>key</th><th>value</th></tr></thead>
+    <tbody>
+    {% for k,v in kb_meta %}
+      <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<script>
+  // выставляем ширину прогресс-бара по data-pct
+  (function () {
+    const bar = document.querySelector(".progress__bar[data-pct]");
+    if (!bar) return;
+    const pctRaw = bar.getAttribute("data-pct");
+    const pct = Math.max(0, Math.min(100, parseInt(pctRaw || "0", 10) || 0));
+    bar.style.width = pct + "%";
+  })();
+</script>
+
 {% endblock %}

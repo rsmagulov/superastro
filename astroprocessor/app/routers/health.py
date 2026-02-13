@@ -1,6 +1,7 @@
 # app/routers/health.py
 from __future__ import annotations
 
+from astroprocessor.app.db import ASTRO_DB_PATH, KNOWLEDGE_DB_PATH
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -21,6 +22,6 @@ class HealthResponse(BaseModel):
 async def health() -> HealthResponse:
     return HealthResponse(
         se_ephe_path=settings.se_ephe_path,
-        knowledge_db_path=settings.knowledge_db_path,
-        astro_db_path=settings.astro_db_path,
+        knowledge_db_path=str(KNOWLEDGE_DB_PATH),
+        astro_db_path=str(ASTRO_DB_PATH),
     )
