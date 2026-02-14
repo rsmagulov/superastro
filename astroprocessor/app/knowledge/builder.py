@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional
-
+from app.knowledge.sql import sql_norm
 
 # ============================================================
 # Paths (CWD-independent)
@@ -247,16 +247,6 @@ def _sql_in_placeholders(n: int) -> str:
     return ",".join(["?"] * n)
 
 
-def _sql_norm(col: str) -> str:
-    """
-    Normalize text column for comparisons/grouping in SQLite:
-    - replace NBSP (char(160)) with regular space
-    - replace tabs with space
-    - trim
-    """
-    return f"TRIM(REPLACE(REPLACE(COALESCE({col}, ''), char(160), ' '), char(9), ' '))"
-
-
 @dataclass(frozen=True)
 class Ev1Coverage:
     total: int
@@ -295,11 +285,11 @@ def coverage_ev1(
     params: list[object] = list(keys)
 
     if locale:
-        where.append(f"{_sql_norm('locale')} = ?")
+        where.append(f"{sql_norm('locale')} = ?")
         params.append(locale.strip())
 
     if topic_category:
-        where.append(f"{_sql_norm('topic_category')} = ?")
+        where.append(f"{sql_norm('locale')} = ?")
         params.append(topic_category.strip())
 
     sql = f"""
@@ -332,8 +322,8 @@ def coverage_breakdown_ev1(conn: sqlite3.Connection, keys: list[str]) -> list[Ev
 
     sql = f"""
         SELECT
-            {_sql_norm('locale')} AS locale_n,
-            {_sql_norm('topic_category')} AS topic_n,
+            {sql_norm('locale')} AS locale_n,
+            {sql_norm('topic_category')} AS topic_n,
             COUNT(DISTINCT key) AS present_active
         FROM knowledge_items
         WHERE is_active = 1
@@ -371,9 +361,9 @@ def ev1_data_issues(conn: sqlite3.Connection, keys: list[str], *, locale: str = 
         SELECT DISTINCT key
         FROM knowledge_items
         WHERE is_active = 1
-          AND {_sql_norm('locale')} = ?
+          AND {sql_norm('locale')} = ?
           AND key IN ({_sql_in_placeholders(len(keys))})
-          AND {_sql_norm('topic_category')} = ''
+          AND {sql_norm('topic_category')} = ''
         ORDER BY key
         LIMIT ?
     """.strip()
@@ -384,9 +374,9 @@ def ev1_data_issues(conn: sqlite3.Connection, keys: list[str], *, locale: str = 
         SELECT COUNT(DISTINCT key)
         FROM knowledge_items
         WHERE is_active = 1
-          AND {_sql_norm('locale')} = ?
+          AND {sql_norm('locale')} = ?
           AND key IN ({_sql_in_placeholders(len(keys))})
-          AND {_sql_norm('topic_category')} = ''
+          AND {sql_norm('topic_category')} = ''
     """.strip()
     count_params = [locale.strip(), *keys]
     null_count = int(conn.execute(count_sql, count_params).fetchone()[0])
