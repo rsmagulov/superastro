@@ -1,0 +1,240 @@
+diff --git a/astroprocessor/app/knowledge/builder.py b/astroprocessor/app/knowledge/builder.py
+--- a/astroprocessor/app/knowledge/builder.py
++++ b/astroprocessor/app/knowledge/builder.py
+@@ -1,16 +1,19 @@
+ # astroprocessor/app/knowledge/builder.py
+ from __future__ import annotations
+ 
+ import argparse
+ import hashlib
+ import json
++import re
+ import shutil
+ import sqlite3
++import subprocess
+ import time
++import xml.etree.ElementTree as ET
+ from dataclasses import dataclass
+ from pathlib import Path
+ from typing import Any, Iterable, Optional
+ from app.knowledge.sql import sql_norm
+ 
+@@
+ def _set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
+     conn.execute(
+         """
+         INSERT INTO kb_meta(key, value) VALUES(?, ?)
+         ON CONFLICT(key) DO UPDATE SET value=excluded.value
+         """.strip(),
+         (key, value),
+     )
+ 
++def _normalize_items_locale(locale: str) -> str:
++    """Normalize locale for knowledge_items.
++
++    MVP contract:
++    - knowledge_items.locale is ru-only.
++    - Any ru-* becomes ru.
++    """
++    loc = (locale or "").strip()
++    if not loc:
++        return "ru"
++    if loc.lower().startswith("ru"):
++        return "ru"
++    return loc
++
+ 
+ # ============================================================
+ # EV1 coverage / breakdown / issues (with robust normalization)
+ # ============================================================
+@@
+-def ev1_data_issues(conn: sqlite3.Connection, keys: list[str], *, locale: str = "ru-RU", sample_limit: int = 20) -> Ev1DataIssues:
++def ev1_data_issues(conn: sqlite3.Connection, keys: list[str], *, locale: str = "ru", sample_limit: int = 20) -> Ev1DataIssues:
+     """
+     EV1 keys that exist as active items but have empty/NULL topic_category (after normalization).
+     """
+     if not keys:
+         return Ev1DataIssues(null_topic_category_count=0, sample_keys=[])
+ 
++    locale = _normalize_items_locale(locale)
++
+     sql = f"""
+         SELECT DISTINCT key
+         FROM knowledge_items
+         WHERE is_active = 1
+           AND {sql_norm('locale')} = ?
+@@
+ def apply_seed_ignore_unique(
+     conn: sqlite3.Connection,
+     items: list[dict[str, Any]],
+ ) -> tuple[int, int]:
+@@
+     sql = """
+         INSERT INTO knowledge_items(key, locale, topic_category, text, priority, is_active, meta_json, created_at, updated_at)
+         VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+     """.strip()
+ 
+     for it in items:
+         try:
++            locale = _normalize_items_locale(str(it.get("locale") or "ru"))
+             conn.execute(
+                 sql,
+                 (
+                     it["key"],
+-                    it.get("locale") or "ru-RU",
++                    locale,
+                     it.get("topic_category"),
+                     it.get("text") or "",
+                     int(it.get("priority", 0)),
+                     int(it.get("is_active", 1)),
+                     json.dumps(it.get("meta", {}), ensure_ascii=False) if isinstance(it.get("meta"), dict) else it.get("meta_json"),
+                     it.get("created_at", now),
+                     it.get("updated_at", now),
+                 ),
+             )
+             inserted += 1
+         except sqlite3.IntegrityError:
+             skipped += 1
+ 
+     return inserted, skipped
+ 
+@@
+ def seed_ev1(
+     conn: sqlite3.Connection,
+     *,
+     keys_file: Optional[str],
+     locale: str,
+@@
+ ) -> dict[str, Any]:
+     """
+     Idempotent EV1 seed + writes coverage to kb_meta.
+     """
+     ensure_schema_items_and_meta(conn)
+ 
++    locale = _normalize_items_locale(locale)
++
+     keys_path, ok = resolve_ev1_keys_file(keys_file)
+     if not ok:
+         raise FileNotFoundError(f"keys_file пустой или не найден: {keys_path}")
+@@
+ def _convert_to_markdown(src: Path) -> tuple[str, str]:
+     """
+     Best-effort conversion to markdown.
+     Returns (title, markdown_text).
+     """
+     ext = src.suffix.lower()
+     title = src.stem
+@@
+     if ext == ".pdf":
+         # optional dependency path
+         try:
+             from pypdf import PdfReader  # type: ignore
+             reader = PdfReader(str(src))
+             chunks: list[str] = []
+             for page in reader.pages:
+                 txt = page.extract_text() or ""
+                 txt = txt.strip()
+                 if txt:
+                     chunks.append(txt)
+             return title, "\n\n".join(chunks) + "\n"
+         except Exception as e:
+             raise RuntimeError(f"pdf conversion failed (install pypdf): {e}") from e
+ 
++    if ext == ".rtf":
++        try:
++            from striprtf.striprtf import rtf_to_text  # type: ignore
++        except Exception as e:
++            raise RuntimeError("rtf conversion failed (install striprtf)") from e
++        raw = src.read_text(encoding="utf-8", errors="replace")
++        return title, rtf_to_text(raw).strip() + "\n"
++
++    if ext == ".fb2":
++        data = src.read_bytes()
++        try:
++            root = ET.fromstring(data)
++        except Exception as e:
++            raise RuntimeError(f"fb2 conversion failed: {e}") from e
++
++        def _tag(name: str) -> str:
++            return name.split("}", 1)[-1]
++
++        parts: list[str] = []
++        for el in root.iter():
++            if _tag(el.tag) == "binary":
++                continue
++            if el.text and el.text.strip():
++                parts.append(el.text.strip())
++        return title, "\n\n".join(parts) + "\n"
++
++    if ext == ".epub":
++        try:
++            from ebooklib import epub  # type: ignore
++        except Exception as e:
++            raise RuntimeError("epub conversion failed (install ebooklib)") from e
++        book = epub.read_epub(str(src))
++        out: list[str] = []
++        for item in book.get_items():
++            # ebooklib.ITEM_DOCUMENT == 9
++            if getattr(item, "get_type", None) and item.get_type() == 9:
++                html = item.get_content().decode("utf-8", errors="replace")
++                text_ = re.sub(r"<[^>]+>", " ", html)
++                text_ = re.sub(r"\s+", " ", text_).strip()
++                if text_:
++                    out.append(text_)
++        return title, "\n\n".join(out) + "\n"
++
++    if ext == ".doc":
++        out_docx = src.with_suffix(".docx")
++        converted = False
++
++        # LibreOffice
++        try:
++            subprocess.run(
++                ["soffice", "--headless", "--convert-to", "docx", str(src), "--outdir", str(src.parent)],
++                check=True,
++                stdout=subprocess.DEVNULL,
++                stderr=subprocess.DEVNULL,
++            )
++            converted = out_docx.exists()
++        except Exception:
++            converted = False
++
++        if not converted:
++            # pandoc
++            try:
++                subprocess.run(
++                    ["pandoc", str(src), "-o", str(out_docx)],
++                    check=True,
++                    stdout=subprocess.DEVNULL,
++                    stderr=subprocess.DEVNULL,
++                )
++                converted = out_docx.exists()
++            except Exception as e:
++                raise RuntimeError("doc conversion failed (requires soffice or pandoc)") from e
++
++        if not converted:
++            raise RuntimeError("doc conversion failed (requires soffice or pandoc)")
++
++        try:
++            import docx  # python-docx
++            d = docx.Document(str(out_docx))
++            lines = [p.text for p in d.paragraphs if p.text.strip()]
++            return title, "\n\n".join(lines) + "\n"
++        except Exception as e:
++            raise RuntimeError(f"doc conversion failed: {e}") from e
++
+     raise RuntimeError(f"unsupported extension: {ext}")
+@@
+ def build_arg_parser() -> argparse.ArgumentParser:
+     p = argparse.ArgumentParser(prog="python -m app.knowledge.builder")
+     sub = p.add_subparsers(dest="cmd", required=True)
+@@
+     sp = sub.add_parser("seed-ev1")
+     sp.add_argument("--keys-file", default=None)
+-    sp.add_argument("--locale", default="ru-RU")
++    sp.add_argument("--locale", default="ru")
+     sp.add_argument("--topic-category", default="personality_core")
+     sp.add_argument("--priority", type=int, default=200)
+     sp.add_argument("--build-version", default=None)
+     sp.add_argument("--knowledge-build-version", default=None)
+     sp.set_defaults(func=_cmd_seed_ev1)
