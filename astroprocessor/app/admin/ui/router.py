@@ -1,6 +1,7 @@
 # astroprocessor/app/admin/ui/router.py
 from __future__ import annotations
 
+from collections import Counter
 import asyncio
 import json
 import sqlite3
@@ -627,6 +628,188 @@ async def bulk_set_topic_category(
 def _astro_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
+def _safe_int(x: object, default: int = 0) -> int:
+    try:
+        return int(x)  # type: ignore[arg-type]
+    except Exception:
+        return default
+
+
+def _sqlite_table_exists(conn: sqlite3.Connection, name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type IN ('table','view') AND name=? LIMIT 1",
+        (name,),
+    ).fetchone()
+    return bool(row)
+
+
+def _sqlite_count(conn: sqlite3.Connection, table: str) -> int:
+    if not _sqlite_table_exists(conn, table):
+        return 0
+    return _safe_int(conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0], 0)
+
+
+def _sqlite_fts_ok(conn: sqlite3.Connection) -> tuple[bool, str]:
+    """
+    Проверяем что FTS5 таблица существует и по ней можно выполнить простой запрос.
+    """
+    if not _sqlite_table_exists(conn, "knowledge_chunks_fts"):
+        return False, "knowledge_chunks_fts: not found"
+    try:
+        # безопасный микрозапрос (не зависит от контента)
+        conn.execute("SELECT rowid FROM knowledge_chunks_fts LIMIT 1").fetchall()
+        return True, "ok"
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}"
+
+
+def _read_kb_meta_dict_sqlite(db_path: Path) -> dict[str, str]:
+    if not db_path.exists():
+        return {}
+    c = sqlite3.connect(str(db_path))
+    try:
+        c.execute("CREATE TABLE IF NOT EXISTS kb_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+        rows = c.execute("SELECT key, value FROM kb_meta ORDER BY key").fetchall()
+        return {str(k): str(v) for (k, v) in rows}
+    finally:
+        c.close()
+
+
+def _manifest_path() -> Path:
+    # astroprocessor/knowledge/docs/_import_manifest.json
+    return _astro_root() / "knowledge" / "docs" / "_import_manifest.json"
+
+
+def _read_import_manifest() -> dict[str, Any] | None:
+    p = _manifest_path()
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return None
+
+
+def _pick_last_import_entry(manifest: dict[str, Any] | None) -> dict[str, Any] | None:
+    """
+    Поддерживаем разные формы манифеста:
+    - {"items":[...]} или {"files":[...]} или {"entries":[...]} или просто список
+    """
+    if not manifest:
+        return None
+
+    if isinstance(manifest, list):
+        return manifest[-1] if manifest else None
+
+    for key in ("items", "files", "entries", "imports"):
+        arr = manifest.get(key)
+        if isinstance(arr, list) and arr:
+            return arr[-1]
+
+    # fallback: если словарь сам похож на entry
+    if "status" in manifest or "src" in manifest or "dst" in manifest:
+        return manifest
+
+    return None
+
+
+def _read_text_preview(path: Path, limit_chars: int = 4000) -> str:
+    if not path.exists() or not path.is_file():
+        return ""
+    txt = path.read_text(encoding="utf-8", errors="replace")
+    if len(txt) <= limit_chars:
+        return txt
+    return txt[:limit_chars] + "\n\n…(truncated)…\n"
+
+
+def _kb_health_snapshot() -> dict[str, Any]:
+    """
+    Снимок состояния БЗ для Health/Status страницы.
+    """
+    d = _kb_defaults()
+    db_path = Path(d["db_path"])
+
+    inbox_dir = Path(d["inbox_dir"])
+    failed_dir = Path(d["failed_dir"])
+    processed_dir = Path(d["processed_dir"])
+    docs_dir = Path(d["docs_dir"])
+
+    def _count_files(p: Path) -> int:
+        try:
+            if not p.exists():
+                return 0
+            return sum(1 for x in p.iterdir() if x.is_file())
+        except Exception:
+            return 0
+
+    snap: dict[str, Any] = {
+        "db_path": str(db_path),
+        "db_exists": db_path.exists(),
+        "inbox_dir": str(inbox_dir),
+        "failed_dir": str(failed_dir),
+        "processed_dir": str(processed_dir),
+        "docs_dir": str(docs_dir),
+        "inbox_files": _count_files(inbox_dir),
+        "failed_files": _count_files(failed_dir),
+        "processed_files": _count_files(processed_dir),
+        "docs_files": _count_files(docs_dir),
+        "tables": {},
+        "fts_ok": False,
+        "fts_status": "",
+        "kb_meta": _read_kb_meta_dict_sqlite(db_path),
+        "last_import": None,
+        "last_import_preview": "",
+    }
+
+    if db_path.exists():
+        conn = sqlite3.connect(str(db_path))
+        try:
+            # основные таблицы (мягко: если нет — будет 0)
+            snap["tables"] = {
+                "knowledge_docs": _sqlite_count(conn, "knowledge_docs"),
+                "knowledge_chunks": _sqlite_count(conn, "knowledge_chunks"),
+                "knowledge_items": _sqlite_count(conn, "knowledge_items"),
+            }
+            ok, msg = _sqlite_fts_ok(conn)
+            snap["fts_ok"] = ok
+            snap["fts_status"] = msg
+        finally:
+            conn.close()
+
+    manifest = _read_import_manifest()
+    entry = _pick_last_import_entry(manifest)
+    snap["last_import"] = entry
+
+    # Быстрый просмотр последнего импортированного: пытаемся найти md в knowledge/docs
+    # В манифесте могут быть разные поля — пробуем несколько.
+    md_rel = None
+    if isinstance(entry, dict):
+        for k in ("md_path", "dst_md", "dst", "output", "doc_path", "md"):
+            v = entry.get(k)
+            if isinstance(v, str) and v.strip().endswith(".md"):
+                md_rel = v.strip()
+                break
+
+    # Если путь относительный — делаем относительно astroprocessor/
+    if md_rel:
+        p = Path(md_rel)
+        md_path = p if p.is_absolute() else (_astro_root() / p).resolve()
+    else:
+        # fallback: берем самый новый md из docs_dir
+        md_path = None
+        try:
+            mds = sorted(docs_dir.glob("*.md"), key=lambda x: x.stat().st_mtime, reverse=True)
+            md_path = mds[0] if mds else None
+        except Exception:
+            md_path = None
+
+    if md_path and md_path.exists():
+        snap["last_import_md_path"] = str(md_path)
+        snap["last_import_preview"] = _read_text_preview(md_path, limit_chars=4000)
+    else:
+        snap["last_import_md_path"] = ""
+
+    return snap
 
 def _repo_root() -> Path:
     return _astro_root().parent
@@ -642,6 +825,161 @@ def _kb_defaults() -> dict[str, str]:
         "db_path": str(Path(str(settings.knowledge_db_path))),
         "knowledge_build_version": "kb-0.1",
     }
+
+def _safe_int(x: Any, default: int = 0) -> int:
+    try:
+        return int(x)
+    except Exception:
+        return default
+
+def _count_files(dir_path: str) -> int:
+    p = Path(dir_path)
+    if not p.exists() or not p.is_dir():
+        return 0
+    try:
+        return sum(1 for _ in p.rglob("*") if _.is_file())
+    except Exception:
+        return 0
+
+def _read_json(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return None
+
+def _manifest_path() -> Path:
+    # astroprocessor/knowledge/docs/_import_manifest.json
+    return _astro_root() / "knowledge" / "docs" / "_import_manifest.json"
+
+def _manifest_last_errors(limit: int = 10) -> list[dict[str, Any]]:
+    """
+    Пытаемся извлечь последние ошибки импорта из _import_manifest.json.
+    Формат манифеста может быть разный, поэтому парсим "мягко":
+    - если list: элементы считаем entries
+    - если dict: ищем keys типа entries/items/files/results
+    """
+    mp = _manifest_path()
+    if not mp.exists():
+        return []
+
+    data = _read_json(mp)
+    if data is None:
+        return []
+
+    entries: list[Any] = []
+    if isinstance(data, list):
+        entries = data
+    elif isinstance(data, dict):
+        for k in ("entries", "items", "files", "results"):
+            v = data.get(k)
+            if isinstance(v, list):
+                entries = v
+                break
+        if not entries and isinstance(data.get("manifest"), list):
+            entries = data["manifest"]
+
+    # Собираем ошибки
+    out: list[dict[str, Any]] = []
+    for e in entries:
+        if not isinstance(e, dict):
+            continue
+        status = str(e.get("status") or e.get("state") or "").lower()
+        err = e.get("error") or e.get("err") or e.get("exception") or e.get("message")
+        has_error = bool(err) or status in {"failed", "error", "exception"}
+        if not has_error:
+            continue
+        out.append(
+            {
+                "source": e.get("source") or e.get("input") or e.get("path") or e.get("file") or "",
+                "status": status or "",
+                "error": str(err) if err else "",
+                "ts": e.get("ts") or e.get("time") or e.get("created_at") or e.get("updated_at") or "",
+            }
+        )
+
+    # Сортировка: пытаемся по ts, иначе просто последние
+    out = out[-limit:]
+    return out[::-1]
+
+def _last_imported_doc_path() -> Optional[Path]:
+    """
+    Берём "последний импортированный файл" как самый свежий .md в knowledge/docs.
+    Если папка пуста — None.
+    """
+    docs_dir = _astro_root() / "knowledge" / "docs"
+    if not docs_dir.exists():
+        return None
+    candidates = [p for p in docs_dir.glob("*.md") if p.is_file()]
+    if not candidates:
+        return None
+    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return candidates[0]
+
+def _db_health_snapshot() -> dict[str, Any]:
+    """
+    Быстрый health-check knowledge.db:
+    - таблицы docs/chunks
+    - FTS: пробный запрос (если таблица FTS существует)
+    """
+    db_path = Path(str(settings.knowledge_db_path))
+    snap: dict[str, Any] = {
+        "db_path": str(db_path),
+        "db_exists": db_path.exists(),
+        "docs_total": 0,
+        "chunks_total": 0,
+        "fts_ok": False,
+        "fts_error": "",
+    }
+    if not db_path.exists():
+        return snap
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        # docs_total
+        for t in ("knowledge_docs", "kb_docs"):
+            try:
+                snap["docs_total"] = _safe_int(conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0], 0)
+                break
+            except Exception:
+                pass
+        # chunks_total
+        for t in ("knowledge_chunks", "kb_chunks"):
+            try:
+                snap["chunks_total"] = _safe_int(conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0], 0)
+                break
+            except Exception:
+                pass
+
+        # FTS health (если есть таблица *_fts)
+        fts_tables = []
+        try:
+            rows = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%fts%'"
+            ).fetchall()
+            fts_tables = [r[0] for r in rows if r and r[0]]
+        except Exception:
+            fts_tables = []
+
+        # пробуем самый вероятный FTS
+        fts_candidate = None
+        for name in ("knowledge_chunks_fts", "kb_chunks_fts", "chunks_fts"):
+            if name in fts_tables:
+                fts_candidate = name
+                break
+        if fts_candidate:
+            try:
+                conn.execute(f"SELECT rowid FROM {fts_candidate} WHERE {fts_candidate} MATCH 'test' LIMIT 1").fetchall()
+                snap["fts_ok"] = True
+            except Exception as e:
+                snap["fts_ok"] = False
+                snap["fts_error"] = f"{type(e).__name__}: {e}"
+        else:
+            snap["fts_ok"] = False
+            snap["fts_error"] = "FTS table not found"
+    finally:
+        conn.close()
+    return snap
+
 
 def _connect_db() -> sqlite3.Connection:
     """
@@ -963,6 +1301,18 @@ async def builds_page(request: Request):
         top_missing=50,
     )
 
+    try:
+        from app.admin.ui.router import _ev1_empty_text_active  # type: ignore
+        empty_live = await asyncio.to_thread(
+            _ev1_empty_text_active,
+            keys_file=ev1_keys_file,
+            locale=ev1_locale,
+            topic_category=ev1_topic_category,
+            sample_limit=20,
+        )
+    except Exception:
+        empty_live = None
+
     empty_live = await asyncio.to_thread(
             _ev1_empty_text_active,
             keys_file=ev1_keys_file,
@@ -993,10 +1343,95 @@ async def builds_page(request: Request):
             "ev1_missing": ev1_missing,
             "ev1_pct": ev1_pct,
             **live,
-            **empty_live,
+            **(empty_live or {}),
         },
     )
 
+# =============================
+# Health / Status UI
+# =============================
+@router.get("/health", name="health_page")
+async def health_page(request: Request):
+    d = _kb_defaults()
+    kb_rows = await _read_kb_meta_rows()
+    kb_dict = {k: v for (k, v) in kb_rows}
+
+    inbox_count = _count_files(d["inbox_dir"])
+    processed_count = _count_files(d["processed_dir"])
+    failed_count = _count_files(d["failed_dir"])
+
+    db_snap = await asyncio.to_thread(_db_health_snapshot)
+    last_doc = _last_imported_doc_path()
+
+    last_doc_preview = ""
+    last_doc_name = ""
+    if last_doc and last_doc.exists():
+        last_doc_name = last_doc.name
+        try:
+            txt = last_doc.read_text(encoding="utf-8", errors="replace")
+            last_doc_preview = "\n".join(txt.splitlines()[:60])
+        except Exception:
+            last_doc_preview = ""
+
+    errors = _manifest_last_errors(limit=10)
+
+    return templates.TemplateResponse(
+        "admin/health.html",
+        {
+            "request": request,
+            "flash": _flash_from_query(request),
+            "nav_active": "health",
+            "kb_meta": kb_rows,
+            "kb_meta_dict": kb_dict,
+            "inbox_dir": d["inbox_dir"],
+            "processed_dir": d["processed_dir"],
+            "failed_dir": d["failed_dir"],
+            "inbox_count": inbox_count,
+            "processed_count": processed_count,
+            "failed_count": failed_count,
+            "db_snap": db_snap,
+            "last_doc_name": last_doc_name,
+            "last_doc_preview": last_doc_preview,
+            "manifest_errors": errors,
+        },
+    )
+
+
+@router.get("/health/last_import", name="health_last_import_full")
+async def health_last_import_full(request: Request):
+    """
+    Показать последний импортированный .md полностью (text/plain).
+    """
+    p = _last_imported_doc_path()
+    if not p or not p.exists():
+        return PlainTextResponse("Нет импортированных .md в knowledge/docs\n", status_code=404)
+    try:
+        body = p.read_text(encoding="utf-8", errors="replace")
+    except Exception as e:
+        return PlainTextResponse(f"Ошибка чтения файла: {type(e).__name__}: {e}\n", status_code=500)
+    return PlainTextResponse(body, media_type="text/plain; charset=utf-8")
+
+
+@router.get("/", name="admin_ui_home")
+async def admin_ui_home(request: Request):
+    # Главная админки -> Health/Status
+    return RedirectResponse(url=str(request.url_for("health_page")), status_code=303)
+
+
+@router.get("/health", response_class=HTMLResponse, name="health_page")
+async def health_page(request: Request):
+    snap = await asyncio.to_thread(_kb_health_snapshot)
+
+    return templates.TemplateResponse(
+        request,
+        "admin/health.html",
+        {
+            "request": request,
+            "flash": _flash_from_query(request),
+            "nav_active": "health",
+            "health": snap,
+        },
+    )
 
 @router.get("/builds/ev1/missing.txt", name="builds_ev1_missing_txt")
 async def builds_ev1_missing_txt(

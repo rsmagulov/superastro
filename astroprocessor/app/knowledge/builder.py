@@ -4,13 +4,90 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import sqlite3
 import time
+import zipfile
+import html
+import xml.etree.ElementTree as ET
+from html.parser import HTMLParser
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional
 from app.knowledge.sql import sql_norm
+
+class _HTMLText(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._chunks: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        if data:
+            self._chunks.append(data)
+
+    def text(self) -> str:
+        return " ".join(" ".join(self._chunks).split())
+
+
+def _html_to_text(s: str) -> str:
+    p = _HTMLText()
+    p.feed(s)
+    return html.unescape(p.text())
+
+
+def _read_fb2_to_text(path: Path) -> str:
+    raw = path.read_text(encoding="utf-8", errors="replace")
+    # fb2 may include namespaces; ElementTree needs care
+    root = ET.fromstring(raw)
+
+    # Extract <body> text; ignore binaries etc.
+    texts: list[str] = []
+    for elem in root.iter():
+        tag = elem.tag
+        if "binary" in tag:
+            continue
+        if elem.text and elem.text.strip():
+            texts.append(elem.text.strip())
+    return "\n".join(texts)
+
+
+def _read_epub_to_text(path: Path) -> str:
+    texts: list[str] = []
+    with zipfile.ZipFile(path, "r") as z:
+        # take xhtml/html files in a stable order
+        html_names = sorted(
+            [n for n in z.namelist() if n.lower().endswith((".xhtml", ".html", ".htm"))]
+        )
+        for name in html_names:
+            try:
+                b = z.read(name)
+            except Exception:
+                continue
+            s = b.decode("utf-8", errors="replace")
+            t = _html_to_text(s)
+            if t.strip():
+                texts.append(t.strip())
+    return "\n\n".join(texts)
+
+
+def _read_rtf_to_text(path: Path) -> str:
+    # best-effort RTF -> text (simple)
+    s = path.read_text(encoding="utf-8", errors="replace")
+
+    # Remove rtf groups and control words crudely; keep plain text.
+    # 1) drop escaped hex \'hh
+    s = re.sub(r"\\'[0-9a-fA-F]{2}", " ", s)
+    # 2) replace paragraph marks
+    s = s.replace("\\par", "\n")
+    # 3) remove control words like \b0, \fs20, \u1234?
+    s = re.sub(r"\\[a-zA-Z]+\d* ?"," ", s)
+    # 4) remove braces
+    s = s.replace("{", " ").replace("}", " ")
+    # 5) cleanup
+    s = re.sub(r"[ \t]+", " ", s)
+    s = re.sub(r"\n\s+\n", "\n\n", s)
+    return s.strip()
 
 # ============================================================
 # Paths (CWD-independent)
@@ -610,6 +687,25 @@ def _convert_to_markdown(src: Path) -> tuple[str, str]:
             return title, "\n\n".join(chunks) + "\n"
         except Exception as e:
             raise RuntimeError(f"pdf conversion failed (install pypdf): {e}") from e
+
+    if ext == ".fb2":
+        title = src.stem
+        text = _read_fb2_to_text(src)
+        md = f"# {title}\n\n{text}\n"
+        return title, md
+
+    if ext == ".epub":
+        title = src.stem
+        text = _read_epub_to_text(src)
+        md = f"# {title}\n\n{text}\n"
+        return title, md
+
+    if ext == ".rtf":
+        title = src.stem
+        text = _read_rtf_to_text(src)
+        md = f"# {title}\n\n{text}\n"
+        return title, md
+
 
     raise RuntimeError(f"unsupported extension: {ext}")
 
