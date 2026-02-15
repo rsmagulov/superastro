@@ -10,7 +10,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
-
+VALIDATOR_PROFILE = "ru_v1"
 
 # ----------------------------
 # Paths / time
@@ -65,6 +65,50 @@ def _json_or_empty(s: str | None) -> str:
         return s
     except Exception:
         return "{}"
+
+def _json_load_dict(s: str | None) -> dict[str, Any]:
+    """Best-effort JSON dict loader. Returns {} on any problem."""
+    raw = (s or "").strip()
+    if not raw:
+        return {}
+    try:
+        obj = json.loads(raw)
+    except Exception:
+        return {}
+    return obj if isinstance(obj, dict) else {}
+
+
+def _merge_meta_json(existing: str | None, updates: dict[str, Any]) -> str:
+    """Merge updates into existing meta_json, preserving other fields."""
+    obj = _json_load_dict(existing)
+    obj.update(updates)
+    return json.dumps(obj, ensure_ascii=False)
+
+
+def _is_managed_by_build(meta_json: str | None) -> bool:
+    """Return True if prod meta_json marks the row as created by kb build."""
+    obj = _json_load_dict(meta_json)
+    v = obj.get("kb_fragment_id")
+    return isinstance(v, int) and v > 0
+
+
+def _is_managed_by_build(meta_json: str | None) -> bool:
+    """Return True if prod meta_json marks the row as created by kb build.
+
+    We treat a row as "managed" only if meta_json contains a positive integer
+    field: kb_fragment_id.
+    """
+    raw = (meta_json or "").strip()
+    if not raw:
+        return False
+    try:
+        obj = json.loads(raw)
+    except Exception:
+        return False
+    if not isinstance(obj, dict):
+        return False
+    v = obj.get("kb_fragment_id")
+    return isinstance(v, int) and v > 0
 
 
 def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
@@ -435,7 +479,7 @@ def cmd_state(args: argparse.Namespace) -> int:
         )
         conn.commit()
 
-        print(f"✅ state: key={key} locale={locale} {from_state} -> {to_state}")
+        print(f"✅ state: key={key} locale={locale} {from_state} -> {to_state}", file=sys.stderr)
         return 0
     finally:
         conn.close()
@@ -665,6 +709,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
                 print(
                     json.dumps(
                         {
+                            "validator_profile": VALIDATOR_PROFILE,
                             "checked": len(rows),
                             "ok": len(ok_items),
                             "bad": len(bad_items),
@@ -696,6 +741,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
                 print(
                     json.dumps(
                         {
+                            "validator_profile": VALIDATOR_PROFILE,
                             "checked": len(rows),
                             "ok": len(ok_items),
                             "bad": len(bad_items),
@@ -714,7 +760,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
         note = (args.note or "validated").strip()
 
         for fid in ok_ids:
-            row = conn.execute("SELECT state FROM kb_fragments WHERE id=?", (fid,)).fetchone()
+            row = conn.execute("SELECT state, meta_json FROM kb_fragments WHERE id=?", (fid,)).fetchone()
             if not row:
                 continue
 
@@ -725,8 +771,12 @@ def cmd_validate(args: argparse.Namespace) -> int:
                 continue
 
             cur = conn.execute(
-                "UPDATE kb_fragments SET state='validated', updated_at=? WHERE id=?",
-                (now, fid),
+                "UPDATE kb_fragments SET state='validated', updated_at=?, meta_json=? WHERE id=?",
+                (
+                now,
+                _merge_meta_json(row["meta_json"], {"validator_profile": VALIDATOR_PROFILE}),
+                fid,
+                )
             )
             if cur.rowcount:
                 updated += int(cur.rowcount)
@@ -793,7 +843,7 @@ def cmd_build(args: argparse.Namespace) -> int:
 
         enabled_rows = staging.execute(
             """
-            SELECT id, key, locale, topic_category, text, tone, abstraction_level, source_id, author, created_at
+            SELECT id, key, locale, topic_category, text, tone, abstraction_level, source_id, author, created_at, meta_json
             FROM kb_fragments
             WHERE state='enabled'
             ORDER BY id ASC
@@ -808,6 +858,8 @@ def cmd_build(args: argparse.Namespace) -> int:
         inserted_pairs: list[tuple[str, str]] = []
         updated_pairs: list[tuple[str, str]] = []
         deactivated_pairs: list[tuple[str, str]] = []
+        skipped_not_managed = 0
+
 
         # 1) Upsert enabled -> prod (active)
         for r in enabled_rows:
@@ -820,6 +872,7 @@ def cmd_build(args: argparse.Namespace) -> int:
             meta = {
                 "tone": str(r["tone"]),
                 "abstraction_level": str(r["abstraction_level"]),
+                "validator_profile": _json_load_dict(r["meta_json"]).get("validator_profile"),
                 "kb_fragment_id": int(r["id"]),
                 "source_id": (int(r["source_id"]) if r["source_id"] is not None else None),
                 "author": (str(r["author"]) if r["author"] is not None else None),
@@ -860,13 +913,20 @@ def cmd_build(args: argparse.Namespace) -> int:
 
         to_deactivate = sorted(managed_set - enabled_set)
         for key, locale in to_deactivate:
-            cur = prod.execute(
-                """
-                UPDATE knowledge_items
-                SET is_active=0
-                WHERE key=? AND locale=? AND is_active<>0
-                """.strip(),
+            row = prod.execute(
+                "SELECT id, is_active, meta_json FROM knowledge_items WHERE key=? AND locale=?",
                 (key, locale),
+            ).fetchone()
+            if not row:
+                continue
+
+            if not _is_managed_by_build(row["meta_json"]):
+                skipped_not_managed += 1
+                continue
+
+            cur = prod.execute(
+                "UPDATE knowledge_items SET is_active=0 WHERE id=? AND is_active<>0",
+                (int(row["id"]),),
             )
             n = int(cur.rowcount or 0)
             if n > 0:
@@ -895,6 +955,7 @@ def cmd_build(args: argparse.Namespace) -> int:
             "inserted": inserted,
             "updated": updated,
             "deactivated": deactivated,
+            "skipped_not_managed": skipped_not_managed,
             "inserted_items": [{"key": k, "locale": loc} for k, loc in inserted_pairs],
             "updated_items": [{"key": k, "locale": loc} for k, loc in updated_pairs],
             "deactivated_items": [{"key": k, "locale": loc} for k, loc in deactivated_pairs],
@@ -1216,10 +1277,25 @@ def cmd_restore(args: argparse.Namespace) -> int:
 
             from_state = str(cur_state_row["state"] or "").strip()
 
-            conn.execute(
-                "UPDATE kb_fragments SET state=?, updated_at=? WHERE id=?",
-                (to_state, now, fid),
-            )
+            if to_state == "validated":
+                meta_row = conn.execute("SELECT meta_json FROM kb_fragments WHERE id=?", (fid,)).fetchone()
+                conn.execute(
+                    "UPDATE kb_fragments SET state=?, updated_at=?, meta_json=? WHERE id=?",
+                    (
+                        to_state,
+                        now,
+                        _merge_meta_json(
+                            (meta_row["meta_json"] if meta_row else None),
+                            {"validator_profile": VALIDATOR_PROFILE},
+                        ),
+                        fid,
+                    ),
+                )
+            else:
+                conn.execute(
+                    "UPDATE kb_fragments SET state=?, updated_at=? WHERE id=?",
+                    (to_state, now, fid),
+                )
             _event(from_state, to_state, _note)
 
             # keep state machine in sync in non-dry-run too

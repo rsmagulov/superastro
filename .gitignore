@@ -13,6 +13,7 @@ __pycache__/
 # Your project specific folders (исправлены пути)
 astroprocessor/data/
 astroprocessor/se/   # или astroprocessor/se, если это файл
+astroprocessor/knowledge/docs/
 
 # IDE
 .vscode/
@@ -24,5 +25,5 @@ Thumbs.db
 
 *.db-wal
 *.db-shm
-.db
-.md
+*.db
+*.md

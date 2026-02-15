@@ -17,6 +17,96 @@
       "doc_id": "c13dd4999e439d3a",
       "title": "П. Андреев - Биоастрология",
       "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\c13dd4999e439d3a.md"
+    },
+    {
+      "filename": "1_elements_integrals.txt",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\1_elements_integrals.txt",
+      "ts": 1771172630,
+      "status": "ok",
+      "doc_id": "3e2ac29ea275024f",
+      "title": "1_elements_integrals",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\3e2ac29ea275024f.md"
+    },
+    {
+      "filename": "2_planets.txt",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\2_planets.txt",
+      "ts": 1771172630,
+      "status": "ok",
+      "doc_id": "e4f220787ed15f9b",
+      "title": "2_planets",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\e4f220787ed15f9b.md"
+    },
+    {
+      "filename": "3_signs.txt",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\3_signs.txt",
+      "ts": 1771172630,
+      "status": "ok",
+      "doc_id": "04d5ef088adfa574",
+      "title": "3_signs",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\04d5ef088adfa574.md"
+    },
+    {
+      "filename": "4_houses_and_rulers.txt",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\4_houses_and_rulers.txt",
+      "ts": 1771172630,
+      "status": "ok",
+      "doc_id": "08e5c4b32416ebb6",
+      "title": "4_houses_and_rulers",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\08e5c4b32416ebb6.md"
+    },
+    {
+      "filename": "5_house_space_and_cusps.txt",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\5_house_space_and_cusps.txt",
+      "ts": 1771172630,
+      "status": "ok",
+      "doc_id": "09f36bc44f9600de",
+      "title": "5_house_space_and_cusps",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\09f36bc44f9600de.md"
+    },
+    {
+      "filename": "6_aspects.txt",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\6_aspects.txt",
+      "ts": 1771172630,
+      "status": "ok",
+      "doc_id": "b5a69e3a8950dcbc",
+      "title": "6_aspects",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\b5a69e3a8950dcbc.md"
+    },
+    {
+      "filename": "7_aspect_configurations.txt",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\7_aspect_configurations.txt",
+      "ts": 1771172630,
+      "status": "ok",
+      "doc_id": "052b259137e36d38",
+      "title": "7_aspect_configurations",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\052b259137e36d38.md"
+    },
+    {
+      "filename": "Andreev_Pavel_Astrologia_Vse_tayny.pdf",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\Andreev_Pavel_Astrologia_Vse_tayny.pdf",
+      "ts": 1771173306,
+      "status": "ok",
+      "doc_id": "75b014ea98655932",
+      "title": "Andreev_Pavel_Astrologia_Vse_tayny",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\75b014ea98655932.md"
+    },
+    {
+      "filename": "Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.pdf",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.pdf",
+      "ts": 1771173306,
+      "status": "ok",
+      "doc_id": "94f5c1a558555fb8",
+      "title": "Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\94f5c1a558555fb8.md"
+    },
+    {
+      "filename": "Pavel_Andreev_Astrologia_dlya_zhizni.pdf",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\Pavel_Andreev_Astrologia_dlya_zhizni.pdf",
+      "ts": 1771173327,
+      "status": "ok",
+      "doc_id": "6d16e57653a7bc6c",
+      "title": "Pavel_Andreev_Astrologia_dlya_zhizni",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\6d16e57653a7bc6c.md"
     }
   ]
 }
