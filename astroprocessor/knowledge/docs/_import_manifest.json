@@ -1,12 +1,13 @@
-[
-  {
-    "source_path": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\П. Андреев - Биоастрология.pdf",
-    "status": "imported",
-    "doc_id": "c13dd4999e439d3a",
-    "output_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\c13dd4999e439d3a.md",
-    "title": "П. Андреев - Биоастрология",
-    "bytes": 19163613,
-    "ext": "pdf",
-    "moved_to": "data\\knowledge_sources\\processed\\inbox\\П. Андреев - Биоастрология.pdf"
-  }
-]
+{
+  "entries": [
+    {
+      "filename": "П. Андреев - Биоастрология.pdf",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\П. Андреев - Биоастрология.pdf",
+      "ts": 1771133419,
+      "status": "ok",
+      "doc_id": "c13dd4999e439d3a",
+      "title": "П. Андреев - Биоастрология",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\c13dd4999e439d3a.md"
+    }
+  ]
+}
