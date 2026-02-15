@@ -4,17 +4,37 @@ C:\Projects\superastro
 |   .gitattributes
 |   .gitignore
 |   ev1_keys_unique.txt
+|   kb_import_git.patch
 |   Opisanie_BZ.docx
 |   project.txt
 |   pytest.ini
 |   readme.md
 |   
++---.pytest_cache
+|   |   .gitignore
+|   |   CACHEDIR.TAG
+|   |   README.md
+|   |   
+|   \---v
+|       \---cache
+|               nodeids
+|               
 +---astroprocessor
 |   |   astro.db
 |   |   ev1_keys_unique.txt
 |   |   pytest.ini
 |   |   структура.txt
 |   |   
+|   +---.pytest_cache
+|   |   |   .gitignore
+|   |   |   CACHEDIR.TAG
+|   |   |   README.md
+|   |   |   
+|   |   \---v
+|   |       \---cache
+|   |               lastfailed
+|   |               nodeids
+|   |               
 |   +---app
 |   |   |   db.py
 |   |   |   main.py
@@ -28,6 +48,8 @@ C:\Projects\superastro
 |   |   |       |   constants.py
 |   |   |       |   forms.py
 |   |   |       |   router.py
+|   |   |       |   router.py.old
+|   |   |       |   router.zip
 |   |   |       |   sources_router.py
 |   |   |       |   viewmodels.py
 |   |   |       |   
@@ -43,6 +65,7 @@ C:\Projects\superastro
 |   |   |       |           base.html
 |   |   |       |           builds.html
 |   |   |       |           dashboard.html
+|   |   |       |           health.html
 |   |   |       |           items.html
 |   |   |       |           labeling.html
 |   |   |       |           settings.html
@@ -62,11 +85,13 @@ C:\Projects\superastro
 |   |   |       |           _sources_table.html
 |   |   |       |           
 |   |   |       \---__pycache__
+|   |   |               constants.cpython-312.pyc
 |   |   |               router.cpython-312.pyc
 |   |   |               sources_router.cpython-312.pyc
 |   |   |               
 |   |   +---astro
 |   |   |   |   kerykeion_adapter.py
+|   |   |   |   kerykeion_factories.py
 |   |   |   |   key_builder.py
 |   |   |   |   natal_normalizer.py
 |   |   |   |   __init__.py
@@ -79,13 +104,20 @@ C:\Projects\superastro
 |   |   |           
 |   |   +---knowledge
 |   |   |   |   builder.py
+|   |   |   |   cli.py
 |   |   |   |   meta_schema.py
 |   |   |   |   models.py
+|   |   |   |   schema.py
+|   |   |   |   sql.py
+|   |   |   |   staging_schema.sql
 |   |   |   |   __init__.py
 |   |   |   |   
 |   |   |   \---__pycache__
 |   |   |           builder.cpython-312.pyc
+|   |   |           cli.cpython-312.pyc
 |   |   |           meta_schema.cpython-312.pyc
+|   |   |           schema.cpython-312.pyc
+|   |   |           sql.cpython-312.pyc
 |   |   |           __init__.cpython-312.pyc
 |   |   |           
 |   |   +---middleware
@@ -170,8 +202,13 @@ C:\Projects\superastro
 |   +---data
 |   |   |   knowledge.backup.db
 |   |   |   knowledge.db
-|   |   |   knowledge.db-shm
-|   |   |   knowledge.db-wal
+|   |   |   knowledge.db-shm.BROKEN.bak
+|   |   |   knowledge.db-wal.BROKEN.bak
+|   |   |   knowledge.db.BAK.20260215-104147
+|   |   |   knowledge.db.BROKEN
+|   |   |   knowledge.db.BROKEN.bak
+|   |   |   knowledge.db.BROKEN2
+|   |   |   knowledge.zip
 |   |   |   knowledge_items_01_elements_ip__ETALON.jsonl
 |   |   |   knowledge_items_02_planets__ETALON.jsonl
 |   |   |   knowledge_items_03_signs__ETALON.jsonl
@@ -196,6 +233,9 @@ C:\Projects\superastro
 |   |   +---sources
 |   |   |   +---articles
 |   |   |   \---books
+|   |   +---staging
+|   |   |       staging.db
+|   |   |       
 |   |   \---uploads
 |   +---knowledge
 |   |   \---docs
@@ -211,37 +251,70 @@ C:\Projects\superastro
 |   |       natal_runtime_base_v1.json
 |   |       
 |   +---tests
-|   |       conftest.py
-|   |       test_admin_sources_ui.py
-|   |       test_admin_ui.py
-|   |       test_api_smoke.py
-|   |       test_contract_natal_data.py
-|   |       test_error_contract_404.py
-|   |       test_error_contract_500.py
-|   |       test_knowledge_builder_mvp.py
-|   |       test_public_v2.py
-|   |       test_public_v2_buttons_enabled_only.py
-|   |       test_public_v2_buttons_enabled_only_304.py
-|   |       test_public_v2_buttons_endpoint.py
-|   |       test_public_v2_buttons_etag_304.py
-|   |       test_public_v2_buttons_ids_csv.py
-|   |       test_public_v2_buttons_ids_dedup.py
-|   |       test_public_v2_buttons_ids_enabled_only.py
-|   |       test_public_v2_buttons_ids_filter.py
-|   |       test_public_v2_buttons_ids_repeatable.py
-|   |       test_public_v2_buttons_ids_sources_422.py
-|   |       test_public_v2_buttons_ids_unknown.py
-|   |       test_public_v2_buttons_sorted_ids.py
-|   |       test_public_v2_buttons_strict_0.py
-|   |       test_public_v2_buttons_strict_0_all_unknown.py
-|   |       test_public_v2_buttons_strict_1.py
-|   |       test_public_v2_button_id.py
-|   |       test_public_v2_button_map_settings.py
-|   |       test_public_v2_locale.py
-|   |       test_public_v2_perf.py
-|   |       test_structured_errors_flag.py
-|   |       utils.py
-|   |       
+|   |   |   conftest.py
+|   |   |   test_admin_sources_ui.py
+|   |   |   test_admin_ui.py
+|   |   |   test_api_smoke.py
+|   |   |   test_contract_natal_data.py
+|   |   |   test_error_contract_404.py
+|   |   |   test_error_contract_500.py
+|   |   |   test_project_integrity_smoke.py
+|   |   |   test_public_v2.py
+|   |   |   test_public_v2_buttons_enabled_only.py
+|   |   |   test_public_v2_buttons_enabled_only_304.py
+|   |   |   test_public_v2_buttons_endpoint.py
+|   |   |   test_public_v2_buttons_etag_304.py
+|   |   |   test_public_v2_buttons_ids_csv.py
+|   |   |   test_public_v2_buttons_ids_dedup.py
+|   |   |   test_public_v2_buttons_ids_enabled_only.py
+|   |   |   test_public_v2_buttons_ids_filter.py
+|   |   |   test_public_v2_buttons_ids_repeatable.py
+|   |   |   test_public_v2_buttons_ids_sources_422.py
+|   |   |   test_public_v2_buttons_ids_unknown.py
+|   |   |   test_public_v2_buttons_sorted_ids.py
+|   |   |   test_public_v2_buttons_strict_0.py
+|   |   |   test_public_v2_buttons_strict_0_all_unknown.py
+|   |   |   test_public_v2_buttons_strict_1.py
+|   |   |   test_public_v2_button_id.py
+|   |   |   test_public_v2_button_map_settings.py
+|   |   |   test_public_v2_locale.py
+|   |   |   test_public_v2_perf.py
+|   |   |   test_structured_errors_flag.py
+|   |   |   utils.py
+|   |   |   
+|   |   \---__pycache__
+|   |           conftest.cpython-312-pytest-9.0.2.pyc
+|   |           test_admin_sources_ui.cpython-312-pytest-9.0.2.pyc
+|   |           test_admin_ui.cpython-312-pytest-9.0.2.pyc
+|   |           test_api_smoke.cpython-312-pytest-9.0.2.pyc
+|   |           test_contract_natal_data.cpython-312-pytest-9.0.2.pyc
+|   |           test_error_contract_404.cpython-312-pytest-9.0.2.pyc
+|   |           test_error_contract_500.cpython-312-pytest-9.0.2.pyc
+|   |           test_knowledge_builder_mvp.cpython-312-pytest-9.0.2.pyc
+|   |           test_project_integrity_smoke.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_enabled_only.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_enabled_only_304.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_endpoint.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_etag_304.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_csv.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_dedup.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_enabled_only.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_filter.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_repeatable.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_sources_422.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_unknown.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_sorted_ids.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_strict_0.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_strict_0_all_unknown.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_strict_1.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_button_id.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_button_map_settings.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_locale.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_perf.cpython-312-pytest-9.0.2.pyc
+|   |           test_structured_errors_flag.cpython-312-pytest-9.0.2.pyc
+|   |           utils.cpython-312.pyc
+|   |           
 |   \---tools
 |       |   import_jsonl_items.py
 |       |   kb.ps1
@@ -260,6 +333,8 @@ C:\Projects\superastro
 |       |       validate_knowledge_coverage.py
 |       |       
 |       +---knowledge
+|       |       diagnose_knowledge_db.py
+|       |       normalize_ev1_data.py
 |       |       seed_keys_core_v1.txt
 |       |       
 |       +---migrations_local
@@ -339,6 +414,12 @@ C:\Projects\superastro
 |                       natal.py
 |                       __init__.py
 |                       
++---data
+|   |   knowledge.db
+|   |   
+|   \---staging
+|           staging.db
+|           
 +---requirements
 |       astro.txt
 |       bot.txt

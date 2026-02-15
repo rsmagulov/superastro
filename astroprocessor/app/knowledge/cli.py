@@ -5,6 +5,8 @@ import argparse
 import hashlib
 import json
 import sqlite3
+import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -440,6 +442,17 @@ def cmd_state(args: argparse.Namespace) -> int:
 
 
 def _validate_fragment_row(row: sqlite3.Row) -> list[str]:
+    """Validate a staging fragment row.
+
+    Contract:
+      - Return a list of human-readable reasons. Empty list => valid.
+      - No AI. Only deterministic sanitary rules.
+      - Keep rules conservative: avoid false positives that block real content.
+
+    Notes:
+      - Locale-sensitive heuristics are intentionally light-weight.
+      - This function is used by `kb validate` only (staging barrier before `enabled`).
+    """
     errs: list[str] = []
 
     def _g(col: str) -> Any:
@@ -458,11 +471,92 @@ def _validate_fragment_row(row: sqlite3.Row) -> list[str]:
     if not topic:
         errs.append("topic_category is empty")
 
-    text_ = str(_g("text") or "")
-    if not text_.strip():
+    locale = str(_g("locale") or "ru-RU").strip() or "ru-RU"
+
+    text_raw = str(_g("text") or "")
+    text_stripped = text_raw.strip()
+    if not text_stripped:
         errs.append("text is empty")
-    elif len(text_.strip()) < 20:
-        errs.append("text too short (<20 chars)")
+    else:
+        # --- sanitary rules (no AI) ---
+        min_len = 60
+        max_len = 2000
+        if len(text_stripped) < min_len:
+            errs.append(f"text too short (<{min_len} chars)")
+        if len(text_stripped) > max_len:
+            errs.append(f"text too long (>{max_len} chars)")
+
+        # Reject an ALL-CAPS "headline" at the very start (common copy-paste title).
+        lines = [ln.strip() for ln in text_stripped.splitlines() if ln.strip()]
+        first_line = lines[0] if lines else ""
+        first_line_alpha = re.sub(r"[^A-Za-zА-Яа-яЁё]", "", first_line)
+
+        if first_line and first_line_alpha:
+            is_all_caps = first_line_alpha.upper() == first_line_alpha
+            # If it's an ALL-CAPS first line and the text continues, treat as a headline.
+            if is_all_caps and (len(first_line_alpha) >= 8) and (len(lines) >= 2):
+                errs.append("starts with ALL-CAPS headline")
+
+        # Too many line breaks / blank lines.
+        if text_raw.count("\n") >= 8:
+            errs.append("too many newlines (>=8)")
+        if re.search(r"\n\s*\n\s*\n", text_raw):
+            errs.append("contains 3+ consecutive blank lines")
+
+        # Obvious placeholders / technical artifacts.
+        bad_markers = [
+            "lorem ipsum",
+            "placeholder",
+            "todo",
+            "tbd",
+            "qwe",
+            "asdf",
+            "test test",
+            "заглушка",
+            "мусор",
+        ]
+        low = text_stripped.lower()
+        if any(b in low for b in bad_markers):
+            errs.append("contains placeholder/garbage marker")
+
+        # Disallow common accidental payloads.
+        if "```" in text_raw:
+            errs.append("contains code fence ```")
+        if "http://" in low or "https://" in low:
+            errs.append("contains URL")
+
+        # RU interpretational form heuristic:
+        # should read like an interpretation, not just a label or a noun phrase.
+        if locale.lower().startswith("ru"):
+            address_markers = [
+                "ты",
+                "тебе",
+                "твой",
+                "твоё",
+                "твоем",
+                "у тебя",
+                "вы",
+                "вам",
+                "ваш",
+                "у вас",
+            ]
+            ru_garbage_markers = [
+                "биоастрология",
+                "банить",
+                "цеплять",
+                "карту на куски",
+                "смыть перхоть",
+                "древних заблуждений",
+                "внести свою скромную лепту",
+                "прогресс современной науки",
+            ]
+            if any(m in low for m in ru_garbage_markers):
+                errs.append("ru: contains meta/technical/garbage phrasing")
+            has_address = any(m in low for m in address_markers)
+            if not has_address:
+                errs.append("ru: missing direct address (ты/вы/вам/у тебя/у вас)")
+            if not re.search(r"[.!?…]", text_stripped):
+                errs.append("ru: missing sentence punctuation")
 
     tone = str(_g("tone") or "").strip()
     if tone not in ("supportive", "neutral", "warning"):
@@ -490,16 +584,39 @@ def cmd_validate(args: argparse.Namespace) -> int:
         _ensure_staging_schema(conn)
 
         key = (args.key or "").strip()
-        locale = (args.locale or "ru-RU").strip()
-        state = (args.state or "draft").strip()
+        locale_arg = args.locale  # may be None
+        state_arg = args.state    # may be None
+        recheck = bool(getattr(args, "recheck", False))
+        as_json = bool(getattr(args, "json", False))
+        verbose = bool(getattr(args, "verbose", False))
+        silent = recheck and as_json and not verbose
 
-        params: dict[str, Any] = {"loc": locale}
-        where = ["locale = :loc"]
+        def log(msg: str) -> None:
+            if not silent:
+                print(msg, file=sys.stderr)
 
+        params: dict[str, Any] = {}
+        where: list[str] = []
+
+        # Selection logic:
+        # - With --key: default is "any state/locale" unless user restricts.
+        # - Without --key: keep old defaults: locale=ru-RU, state=draft (unless overridden).
         if key:
             where.append("key = :key")
             params["key"] = key
-        if state:
+
+            if locale_arg:
+                where.append("locale = :loc")
+                params["loc"] = str(locale_arg).strip()
+
+            if state_arg:
+                where.append("state = :state")
+                params["state"] = str(state_arg).strip()
+        else:
+            locale = str(locale_arg or "ru-RU").strip()
+            state = str(state_arg or "draft").strip()
+            where.append("locale = :loc")
+            params["loc"] = locale
             where.append("state = :state")
             params["state"] = state
 
@@ -508,7 +625,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
             SELECT id, key, locale, topic_category, text, tone, abstraction_level, state,
                    factors_json, meta_json
             FROM kb_fragments
-            WHERE {" AND ".join(where)}
+            WHERE {" AND ".join(where) if where else "1=1"}
             ORDER BY id ASC
             LIMIT :limit
             """.strip(),
@@ -516,26 +633,80 @@ def cmd_validate(args: argparse.Namespace) -> int:
         ).fetchall()
 
         if not rows:
-            print("ℹ️ nothing to validate")
+            if as_json:
+                print(json.dumps({"checked": 0, "ok": 0, "bad": 0, "updated": 0, "items": []}, ensure_ascii=False))
+            else:
+                log("ℹ️ nothing to validate")
             return 0
 
         ok_ids: list[int] = []
-        bad: list[tuple[str, list[str]]] = []
+        bad_items: list[dict[str, Any]] = []
+        ok_items: list[dict[str, Any]] = []
 
         for r in rows:
             errs = _validate_fragment_row(r)
+            item = {
+                "id": int(r["id"]),
+                "key": str(r["key"]),
+                "locale": str(r["locale"]),
+                "state": str(r["state"]),
+                "ok": not bool(errs),
+                "errors": errs,
+            }
             if errs:
-                bad.append((str(r["key"]), errs))
+                bad_items.append(item)
             else:
+                ok_items.append(item)
                 ok_ids.append(int(r["id"]))
 
-        if bad:
-            print("❌ validation failed:")
-            for k, errs in bad:
-                print(f"  - {k}: " + "; ".join(errs))
+        # RECHECK MODE: report only, no state changes, includes terminal states
+        if recheck:
+            if as_json:
+                print(
+                    json.dumps(
+                        {
+                            "checked": len(rows),
+                            "ok": len(ok_items),
+                            "bad": len(bad_items),
+                            "updated": 0,
+                            "items": ok_items + bad_items,
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                    )
+                )
+            else:
+                if bad_items:
+                    log("❌ recheck failed:")
+                    for it in bad_items:
+                        log(f"  - {it['key']}: " + "; ".join(it["errors"]))
+                log(f"✅ recheck: checked={len(rows)} ok={len(ok_items)} bad={len(bad_items)}")
+            return 0 if not bad_items else 1
+
+        # NORMAL MODE: print errors; optionally strict prevents any state changes.
+        if bad_items and not as_json:
+            log("❌ validation failed:")
+            for it in bad_items:
+                log(f"  - {it['key']}: " + "; ".join(it["errors"]))
             if getattr(args, "strict", False) and ok_ids:
-                print("ℹ️ strict mode: not applying any state changes")
-                return 2
+                log("ℹ️ strict mode: not applying any state changes")
+
+        if getattr(args, "strict", False) and bad_items:
+            if as_json:
+                print(
+                    json.dumps(
+                        {
+                            "checked": len(rows),
+                            "ok": len(ok_items),
+                            "bad": len(bad_items),
+                            "updated": 0,
+                            "items": ok_items + bad_items,
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                    )
+                )
+            return 2
 
         updated = 0
         now = _utcnow_iso()
@@ -546,7 +717,10 @@ def cmd_validate(args: argparse.Namespace) -> int:
             row = conn.execute("SELECT state FROM kb_fragments WHERE id=?", (fid,)).fetchone()
             if not row:
                 continue
+
             from_state = str(row["state"] or "").strip()
+
+            # Don't auto-mutate terminal-ish states in normal validate mode.
             if from_state in {"validated", "enabled", "archived"}:
                 continue
 
@@ -565,20 +739,59 @@ def cmd_validate(args: argparse.Namespace) -> int:
                 )
 
         conn.commit()
-        print(f"✅ validate ok: checked={len(rows)} ok={len(ok_ids)} updated={updated} bad={len(bad)}")
-        return 0 if not bad else 1
+
+        if as_json:
+            print(
+                json.dumps(
+                    {
+                        "checked": len(rows),
+                        "ok": len(ok_items),
+                        "bad": len(bad_items),
+                        "updated": updated,
+                        "items": ok_items + bad_items,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+        else:
+            log(f"✅ validate ok: checked={len(rows)} ok={len(ok_items)} updated={updated} bad={len(bad_items)}")
+
+        return 0 if not bad_items else 1
     finally:
         conn.close()
 
 
 def cmd_build(args: argparse.Namespace) -> int:
+    """Build production DB from staging.
+
+    What it does:
+      1) UPSERT all staging fragments with state='enabled' into prod knowledge_items (is_active=1)
+      2) AUTO-DEACTIVATE in prod (is_active=0) any items that are "managed by staging"
+         but are NOT enabled in staging anymore.
+
+    Dry-run:
+      - If --dry-run is set, we execute changes inside a transaction and ROLLBACK at the end.
+      - Output still shows what WOULD be inserted/updated/deactivated.
+
+    Safety:
+      - We deactivate ONLY keys that exist in staging (managed_keys).
+      - We do NOT touch prod-only seeded keys (e.g., natal.*) that are absent from staging.
+    """
+    dry_run = bool(getattr(args, "dry_run", False))
+    as_json = bool(getattr(args, "json", False))
+    compact = bool(getattr(args, "compact", False))
+
     staging = _connect(_staging_db_path())
     prod = _connect(_prod_db_path())
     try:
         _ensure_staging_schema(staging)
         _ensure_prod_schema(prod)
 
-        rows = staging.execute(
+        if dry_run:
+            prod.execute("BEGIN")
+
+        enabled_rows = staging.execute(
             """
             SELECT id, key, locale, topic_category, text, tone, abstraction_level, source_id, author, created_at
             FROM kb_fragments
@@ -587,11 +800,17 @@ def cmd_build(args: argparse.Namespace) -> int:
             """.strip()
         ).fetchall()
 
-        enabled = len(rows)
+        enabled = len(enabled_rows)
         inserted = 0
         updated = 0
+        deactivated = 0
 
-        for r in rows:
+        inserted_pairs: list[tuple[str, str]] = []
+        updated_pairs: list[tuple[str, str]] = []
+        deactivated_pairs: list[tuple[str, str]] = []
+
+        # 1) Upsert enabled -> prod (active)
+        for r in enabled_rows:
             key = str(r["key"])
             locale = str(r["locale"])
             topic = str(r["topic_category"])
@@ -617,6 +836,7 @@ def cmd_build(args: argparse.Namespace) -> int:
             )
             if int(cur.rowcount or 0) > 0:
                 updated += int(cur.rowcount or 0)
+                updated_pairs.append((key, locale))
                 continue
 
             prod.execute(
@@ -627,16 +847,97 @@ def cmd_build(args: argparse.Namespace) -> int:
                 (key, topic, locale, text_, 200, created_at, 1, meta_json),
             )
             inserted += 1
+            inserted_pairs.append((key, locale))
 
-        prod.execute("CREATE TABLE IF NOT EXISTS kb_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-        prod.execute(
-            "INSERT OR REPLACE INTO kb_meta(key,value) VALUES(?,?)",
-            ("updated_at", datetime.now().replace(microsecond=0).isoformat(timespec="seconds")),
+        # 2) Auto-deactivate: managed in staging but not enabled anymore
+        managed_pairs = staging.execute("SELECT DISTINCT key, locale FROM kb_fragments").fetchall()
+        managed_set = {(str(r["key"]), str(r["locale"])) for r in managed_pairs}
+
+        enabled_pairs = staging.execute(
+            "SELECT DISTINCT key, locale FROM kb_fragments WHERE state='enabled'"
+        ).fetchall()
+        enabled_set = {(str(r["key"]), str(r["locale"])) for r in enabled_pairs}
+
+        to_deactivate = sorted(managed_set - enabled_set)
+        for key, locale in to_deactivate:
+            cur = prod.execute(
+                """
+                UPDATE knowledge_items
+                SET is_active=0
+                WHERE key=? AND locale=? AND is_active<>0
+                """.strip(),
+                (key, locale),
+            )
+            n = int(cur.rowcount or 0)
+            if n > 0:
+                deactivated += n
+                deactivated_pairs.append((key, locale))
+
+        if not dry_run:
+            prod.execute("CREATE TABLE IF NOT EXISTS kb_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+            prod.execute(
+                "INSERT OR REPLACE INTO kb_meta(key,value) VALUES(?,?)",
+                ("updated_at", datetime.now().replace(microsecond=0).isoformat(timespec="seconds")),
+            )
+            prod.execute("INSERT OR REPLACE INTO kb_meta(key,value) VALUES(?,?)", ("enabled", str(enabled)))
+            prod.execute("INSERT OR REPLACE INTO kb_meta(key,value) VALUES(?,?)", ("inserted", str(inserted)))
+            prod.execute("INSERT OR REPLACE INTO kb_meta(key,value) VALUES(?,?)", ("updated", str(updated)))
+            prod.execute("INSERT OR REPLACE INTO kb_meta(key,value) VALUES(?,?)", ("deactivated", str(deactivated)))
+
+        if dry_run:
+            prod.execute("ROLLBACK")
+        else:
+            prod.commit()
+
+        report = {
+            "dry_run": dry_run,
+            "enabled": enabled,
+            "inserted": inserted,
+            "updated": updated,
+            "deactivated": deactivated,
+            "inserted_items": [{"key": k, "locale": loc} for k, loc in inserted_pairs],
+            "updated_items": [{"key": k, "locale": loc} for k, loc in updated_pairs],
+            "deactivated_items": [{"key": k, "locale": loc} for k, loc in deactivated_pairs],
+            "prod_path": str(_prod_db_path()),
+        }
+
+        if as_json:
+            if compact:
+                print(json.dumps(report, ensure_ascii=False, separators=(",", ":")))
+            else:
+                print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 0
+
+        prefix = "🧪 dry-run" if dry_run else "✅ build ok"
+        print(
+            f"{prefix}: enabled={enabled} inserted={inserted} updated={updated} deactivated={deactivated}\n"
+            f"   prod: {_prod_db_path()}"
         )
-        prod.execute("INSERT OR REPLACE INTO kb_meta(key,value) VALUES(?,?)", ("enabled", str(enabled)))
 
-        prod.commit()
-        print(f"✅ build ok: enabled={enabled} inserted={inserted} updated={updated}\n   prod: {_prod_db_path()}")
+        if deactivated_pairs:
+            preview = deactivated_pairs[:20]
+            suffix = "" if len(deactivated_pairs) <= 20 else f" (+{len(deactivated_pairs) - 20} more)"
+            print("🧹 deactivated keys:")
+            for k, loc in preview:
+                print(f"  - {k} [{loc}]")
+            print(f"🧾 deactivated_total={len(deactivated_pairs)}{suffix}")
+
+        if dry_run:
+            if inserted_pairs:
+                prev = inserted_pairs[:20]
+                suf = "" if len(inserted_pairs) <= 20 else f" (+{len(inserted_pairs) - 20} more)"
+                print("➕ would insert:")
+                for k, loc in prev:
+                    print(f"  - {k} [{loc}]")
+                print(f"🧾 inserted_total={len(inserted_pairs)}{suf}")
+            if updated_pairs:
+                prev = updated_pairs[:20]
+                suf = "" if len(updated_pairs) <= 20 else f" (+{len(updated_pairs) - 20} more)"
+                print("✏️ would update:")
+                for k, loc in prev:
+                    print(f"  - {k} [{loc}]")
+                print(f"🧾 updated_total={len(updated_pairs)}{suf}")
+
         return 0
     finally:
         staging.close()
@@ -644,6 +945,7 @@ def cmd_build(args: argparse.Namespace) -> int:
 
 
 def cmd_list(args: argparse.Namespace) -> int:
+    key = (getattr(args, "key", "") or "").strip()
     state = (args.state or "").strip()
     topic = (args.topic or "").strip()
     locale = (args.locale or "").strip()
@@ -662,6 +964,9 @@ def cmd_list(args: argparse.Namespace) -> int:
                 where.append("is_active=1")
             if getattr(args, "inactive", False):
                 where.append("is_active=0")
+            if key:
+                where.append("key = ?")
+                params.append(key)
 
             if topic:
                 where.append("topic_category = ?")
@@ -694,7 +999,9 @@ def cmd_list(args: argparse.Namespace) -> int:
 
         where = ["1=1"]
         params: list[Any] = []
-
+        if key:
+            where.append("key = ?")
+            params.append(key)
         if state:
             where.append("state = ?")
             params.append(state)
@@ -723,6 +1030,258 @@ def cmd_list(args: argparse.Namespace) -> int:
     finally:
         conn.close()
 
+def cmd_show(args: argparse.Namespace) -> int:
+    key = (args.key or "").strip()
+    if not key:
+        raise SystemExit("kb show: --key is required")
+
+    with_text = bool(getattr(args, "with_text", False))
+    as_json = bool(getattr(args, "json", False))
+
+    staging = _connect(_staging_db_path())
+    prod = _connect(_prod_db_path())
+    try:
+        _ensure_staging_schema(staging)
+        _ensure_prod_schema(prod)
+
+        st_rows = staging.execute(
+            """
+            SELECT id, key, state, topic_category, locale, tone, abstraction_level, created_at, updated_at,
+                   source_id, author, factors_json, meta_json, text
+            FROM kb_fragments
+            WHERE key=?
+            ORDER BY id DESC
+            LIMIT 20
+            """.strip(),
+            (key,),
+        ).fetchall()
+
+        pr_rows = prod.execute(
+            """
+            SELECT id, key, topic_category, locale, is_active, priority, created_at, meta_json, text
+            FROM knowledge_items
+            WHERE key=?
+            ORDER BY id DESC
+            LIMIT 20
+            """.strip(),
+            (key,),
+        ).fetchall()
+
+        if as_json:
+            def row_to_dict(r: sqlite3.Row) -> dict[str, Any]:
+                return dict(r)
+
+            payload = {
+                "key": key,
+                "staging": [row_to_dict(r) for r in st_rows],
+                "production": [row_to_dict(r) for r in pr_rows],
+            }
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return 0
+
+        if not st_rows and not pr_rows:
+            print("ℹ️ not found in staging or production")
+            return 0
+
+        if st_rows:
+            print("=== STAGING (kb_fragments) ===")
+            for r in st_rows:
+                print(
+                    f"- id={r['id']} state={r['state']} locale={r['locale']} topic={r['topic_category']} "
+                    f"tone={r['tone']} ab={r['abstraction_level']} created={r['created_at']} updated={r['updated_at']}"
+                )
+                print(f"  source_id={r['source_id']} author={r['author']}")
+                print(f"  factors_json={r['factors_json']}")
+                print(f"  meta_json={r['meta_json']}")
+                if with_text:
+                    print("  text:")
+                    print(str(r["text"] or ""))
+                print()
+
+        if pr_rows:
+            print("=== PRODUCTION (knowledge_items) ===")
+            for r in pr_rows:
+                print(
+                    f"- id={r['id']} active={r['is_active']} locale={r['locale']} topic={r['topic_category']} "
+                    f"priority={r['priority']} created={r['created_at']}"
+                )
+                print(f"  meta_json={r['meta_json']}")
+                if with_text:
+                    print("  text:")
+                    print(str(r["text"] or ""))
+                print()
+
+        return 0
+    finally:
+        staging.close()
+        prod.close()
+
+def cmd_restore(args: argparse.Namespace) -> int:
+    """Restore a fragment to enabled in one command.
+
+    Flow (staging only):
+      archived -> needs_review -> validated -> enabled
+
+    Notes:
+      - Uses deterministic validator (_validate_fragment_row).
+      - Respects rule: enabled only from validated.
+      - Updates kb_events for each transition.
+    """
+    key = (args.key or "").strip()
+    if not key:
+        raise SystemExit("kb restore: --key is required")
+
+    locale_filter = (getattr(args, "locale", None) or "").strip()
+    who = (getattr(args, "who", "KB") or "KB").strip()
+    note = (getattr(args, "note", "restore") or "restore").strip()
+    review_state = (getattr(args, "review_state", "needs_review") or "needs_review").strip()
+    dry_run = bool(getattr(args, "dry_run", False))
+    run_build = bool(getattr(args, "build", False))
+    build_json = bool(getattr(args, "json", False))
+    build_compact = bool(getattr(args, "compact", False))
+    verbose = bool(getattr(args, "verbose", False))
+
+    # Default behavior:
+    # - if --build --json: print ONLY JSON by default
+    # - --verbose enables human logs
+    silent = run_build and build_json and not verbose
+
+    def log(msg: str) -> None:
+        if not silent:
+            print(msg, file=sys.stderr)
+
+    conn = _connect(_staging_db_path())
+    try:
+        _ensure_staging_schema(conn)
+
+        if locale_filter:
+            row = conn.execute(
+                """
+                SELECT *
+                FROM kb_fragments
+                WHERE key=? AND locale=?
+                ORDER BY id DESC
+                LIMIT 1
+                """.strip(),
+                (key, locale_filter),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                """
+                SELECT *
+                FROM kb_fragments
+                WHERE key=?
+                ORDER BY id DESC
+                LIMIT 1
+                """.strip(),
+                (key,),
+            ).fetchone()
+
+        if not row:
+            print("ℹ️ not found in staging")
+            return 0
+
+        fid = int(row["id"])
+        locale = str(row["locale"])
+        state0 = str(row["state"] or "").strip()
+        now = _utcnow_iso()
+        sim_state = state0  # used for --dry-run to simulate transitions
+
+        def _event(from_state: str, to_state: str, _note: str) -> None:
+            if dry_run:
+                return
+            conn.execute(
+                """
+                INSERT INTO kb_events(fragment_id, from_state, to_state, who, note, ts)
+                VALUES(?,?,?,?,?,?)
+                """.strip(),
+                (fid, from_state, to_state, who, _note, now),
+            )
+
+        def _set_state(to_state: str, _note: str) -> str:
+            nonlocal sim_state
+
+            if dry_run:
+                from_state = sim_state
+                log(f"🧪 dry-run: {from_state} -> {to_state} ({_note})")
+                sim_state = to_state
+                return to_state
+
+            cur_state_row = conn.execute(
+                "SELECT state FROM kb_fragments WHERE id=?",
+                (fid,),
+            ).fetchone()
+            if not cur_state_row:
+                raise RuntimeError("fragment disappeared during restore")
+
+            from_state = str(cur_state_row["state"] or "").strip()
+
+            conn.execute(
+                "UPDATE kb_fragments SET state=?, updated_at=? WHERE id=?",
+                (to_state, now, fid),
+            )
+            _event(from_state, to_state, _note)
+
+            # keep state machine in sync in non-dry-run too
+            sim_state = to_state
+            return to_state
+
+        # Already enabled -> still optionally run build (or dry-run build) if requested.
+        if state0 == "enabled":
+            log(f"✅ restore: already enabled key={key} locale={locale}")
+            if run_build:
+                if dry_run:
+                    log("🏗️ ...")
+                    cmd_build(argparse.Namespace(dry_run=True, json=build_json, compact=build_compact))
+                else:
+                    log("🏗️ ...")
+                    cmd_build(argparse.Namespace(dry_run=False, json=build_json, compact=build_compact))
+            return 0
+
+        # If archived -> move into review_state first so normal validate can mutate to validated.
+        if state0 == "archived":
+            _set_state(review_state, f"{note}: unarchive")
+
+        # Validate deterministically (content-based; state doesn't affect validator).
+        cur = conn.execute("SELECT * FROM kb_fragments WHERE id=?", (fid,)).fetchone()
+        if not cur:
+            print("ℹ️ not found in staging")
+            return 0
+
+        errs = _validate_fragment_row(cur)
+        if errs:
+            print("❌ restore blocked by validation:")
+            print("  - " + "; ".join(errs))
+            return 1
+
+        # Ensure validated (state machine).
+        if sim_state != "validated":
+            # At this point, archived should have been moved to review_state already (even in dry-run).
+            if sim_state in {"enabled", "archived"}:
+                log(f"❌ restore: cannot validate from terminal state={sim_state!r}")
+                return 2
+            _set_state("validated", f"{note}: validated")
+
+        # Now enable (must be from validated).
+        if sim_state != "validated":
+            print("❌ restore: invariant failed; expected state='validated' before enabling")
+            return 2
+
+        _set_state("enabled", f"{note}: enabled")
+        if not dry_run:
+            conn.commit()
+            log(f"✅ restore: already enabled key={key} locale={locale}")
+            if run_build:
+                log("🏗️ ...")
+                cmd_build(argparse.Namespace(dry_run=False, json=build_json, compact=build_compact))
+        else:
+            log(f"🧪 dry-run ok: key={key} locale={locale} would become enabled")
+            if run_build:
+                log("🏗️ ...")
+                cmd_build(argparse.Namespace(dry_run=True, json=build_json, compact=build_compact))
+        return 0
+    finally:
+        conn.close()
 
 # ----------------------------
 # Argparse
@@ -736,6 +1295,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.set_defaults(func=cmd_init)
 
     sp = sub.add_parser("build", help="build production knowledge.db from enabled staging fragments")
+    sp.add_argument("--dry-run", action="store_true", help="show what would change, but do not write to production DB")
+    sp.add_argument("--json", action="store_true", help="print JSON report (works with --dry-run too)")
+    sp.add_argument("--compact", action="store_true", help="with --json: print one-line JSON (no indent)")
     sp.set_defaults(func=cmd_build)
 
     sp = sub.add_parser("add", help="add fragment to staging")
@@ -767,12 +1329,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_val = sub.add_parser("validate", help="validate staging fragments and move to state=validated")
     p_val.add_argument("--key", default="", help="fragment key (optional)")
-    p_val.add_argument("--locale", default="ru-RU")
-    p_val.add_argument("--state", default="draft", help="which state to validate (default: draft)")
+    p_val.add_argument("--verbose", action="store_true", help="print human-readable logs to stderr (useful with --recheck --json)")
+
+    # If --key is provided: we do not force default state/locale filters
+    # unless user explicitly provides them.
+    # If --key is NOT provided: defaults stay locale=ru-RU, state=draft (old behavior).
+    p_val.add_argument("--locale", default=None, help="filter by locale (optional)")
+    p_val.add_argument("--state", default=None, help="filter by state (optional; default is draft when --key not provided)")
+
     p_val.add_argument("--limit", type=int, default=1000)
     p_val.add_argument("--who", default="KB")
     p_val.add_argument("--note", default="validated")
     p_val.add_argument("--strict", action="store_true", help="if any errors, do not update states")
+
+    # NEW:
+    p_val.add_argument("--recheck", action="store_true", help="check only (do not change states), includes terminal states")
+    p_val.add_argument("--json", action="store_true", help="print JSON report (works great with --recheck)")
     p_val.set_defaults(func=cmd_validate)
 
     sp = sub.add_parser("list", help="list fragments in staging (default) or items in production (--prod)")
@@ -783,9 +1355,30 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--state", default="", help="(staging) filter by state")
     sp.add_argument("--topic", default="")
     sp.add_argument("--locale", default="")
+    sp.add_argument("--key", default="", help="exact key match")
     sp.add_argument("--q", default="", help="search in key/text (LIKE)")
     sp.add_argument("--limit", type=int, default=50)
     sp.set_defaults(func=cmd_list)
+
+    sp = sub.add_parser("show", help="show a key in staging + production")
+    sp.add_argument("--key", required=True, help="exact key")
+    sp.add_argument("--with-text", action="store_true", help="print full text")
+    sp.add_argument("--json", action="store_true", help="print JSON")
+    sp.set_defaults(func=cmd_show)
+
+    sp = sub.add_parser("restore", help="restore a key to enabled (archived -> needs_review -> validated -> enabled)")
+    sp.add_argument("--key", required=True, help="exact key")
+    sp.add_argument("--locale", default=None, help="optional locale filter")
+    sp.add_argument("--review-state", default="needs_review", help="state to move archived into before validating")
+    sp.add_argument("--who", default="KB")
+    sp.add_argument("--note", default="restore")
+    sp.add_argument("--dry-run", action="store_true", help="show steps and validation, but do not change anything")
+    sp.add_argument("--build", action="store_true", help="run kb build after successful restore (ignored in --dry-run)")
+    sp.add_argument("--json", action="store_true", help="with --build: print build report as JSON")
+    sp.add_argument("--compact", action="store_true", help="with --build --json: one-line JSON")
+    sp.add_argument("--verbose", action="store_true", help="print human-readable logs even with --build --json")
+    sp.set_defaults(func=cmd_restore)
+
 
     return p
 
