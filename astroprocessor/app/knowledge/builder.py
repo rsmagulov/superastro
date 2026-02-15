@@ -15,7 +15,11 @@ from html.parser import HTMLParser
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional
+from datetime import datetime, timezone
 from app.knowledge.sql import sql_norm
+
+def _utc_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 class _HTMLText(HTMLParser):
     def __init__(self) -> None:
@@ -30,6 +34,12 @@ class _HTMLText(HTMLParser):
         return " ".join(" ".join(self._chunks).split())
 
 
+def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    # row: (cid, name, type, notnull, dflt_value, pk)
+    return {str(r[1]) for r in rows}
+
+
 def _html_to_text(s: str) -> str:
     p = _HTMLText()
     p.feed(s)
@@ -38,10 +48,8 @@ def _html_to_text(s: str) -> str:
 
 def _read_fb2_to_text(path: Path) -> str:
     raw = path.read_text(encoding="utf-8", errors="replace")
-    # fb2 may include namespaces; ElementTree needs care
     root = ET.fromstring(raw)
 
-    # Extract <body> text; ignore binaries etc.
     texts: list[str] = []
     for elem in root.iter():
         tag = elem.tag
@@ -55,7 +63,6 @@ def _read_fb2_to_text(path: Path) -> str:
 def _read_epub_to_text(path: Path) -> str:
     texts: list[str] = []
     with zipfile.ZipFile(path, "r") as z:
-        # take xhtml/html files in a stable order
         html_names = sorted(
             [n for n in z.namelist() if n.lower().endswith((".xhtml", ".html", ".htm"))]
         )
@@ -72,22 +79,16 @@ def _read_epub_to_text(path: Path) -> str:
 
 
 def _read_rtf_to_text(path: Path) -> str:
-    # best-effort RTF -> text (simple)
     s = path.read_text(encoding="utf-8", errors="replace")
 
-    # Remove rtf groups and control words crudely; keep plain text.
-    # 1) drop escaped hex \'hh
     s = re.sub(r"\\'[0-9a-fA-F]{2}", " ", s)
-    # 2) replace paragraph marks
     s = s.replace("\\par", "\n")
-    # 3) remove control words like \b0, \fs20, \u1234?
-    s = re.sub(r"\\[a-zA-Z]+\d* ?"," ", s)
-    # 4) remove braces
+    s = re.sub(r"\\[a-zA-Z]+\d* ?", " ", s)
     s = s.replace("{", " ").replace("}", " ")
-    # 5) cleanup
     s = re.sub(r"[ \t]+", " ", s)
     s = re.sub(r"\n\s+\n", "\n\n", s)
     return s.strip()
+
 
 # ============================================================
 # Paths (CWD-independent)
@@ -98,7 +99,6 @@ def _astro_root() -> Path:
     Absolute path to astroprocessor/ directory (project root inside repo),
     independent of process CWD.
     """
-    # builder.py is at: astroprocessor/app/knowledge/builder.py
     return Path(__file__).resolve().parents[2]
 
 
@@ -107,7 +107,6 @@ def _data_dir() -> Path:
 
 
 def _docs_dir() -> Path:
-    # matches your structure: astroprocessor/knowledge/docs
     return _astro_root() / "knowledge" / "docs"
 
 
@@ -150,10 +149,6 @@ def _knowledge_db_path() -> Path:
 # ============================================================
 
 def resolve_ev1_keys_file(keys_file: Optional[str]) -> tuple[Path, bool]:
-    """
-    Resolve EV1 keys file path deterministically from astroprocessor/.
-    Returns (resolved_path, exists).
-    """
     root = _astro_root()
 
     candidates: list[Path] = []
@@ -164,9 +159,9 @@ def resolve_ev1_keys_file(keys_file: Optional[str]) -> tuple[Path, bool]:
         candidates.extend(
             [
                 root / "tools" / "knowledge" / "seed_keys_core_v1.txt",
-                root / "ev1_keys_unique.txt",          # repo root has this too, but we prefer astroprocessor root
+                root / "ev1_keys_unique.txt",
                 root / "data" / "ev1_keys_unique.txt",
-                root.parent / "ev1_keys_unique.txt",   # repo root fallback
+                root.parent / "ev1_keys_unique.txt",
             ]
         )
 
@@ -178,9 +173,6 @@ def resolve_ev1_keys_file(keys_file: Optional[str]) -> tuple[Path, bool]:
 
 
 def load_keys_txt(path: Path) -> list[str]:
-    """
-    Load keys from a txt file (one key per line). Ignores empty lines and comments.
-    """
     text = path.read_text(encoding="utf-8", errors="replace")
     keys: list[str] = []
     for line in text.splitlines():
@@ -203,50 +195,18 @@ def load_keys_txt(path: Path) -> list[str]:
 # SQLite schema (minimal, idempotent)
 # ============================================================
 
-def ensure_schema_items(conn: sqlite3.Connection) -> None:
-    """
-    Minimal schema for knowledge_items used by UI, seed and coverage.
-    Non-destructive: IF NOT EXISTS only.
-    """
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS knowledge_items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            key TEXT NOT NULL,
-            locale TEXT NOT NULL,
-            topic_category TEXT,
-            text TEXT,
-            priority INTEGER NOT NULL DEFAULT 0,
-            is_active INTEGER NOT NULL DEFAULT 1,
-            meta_json TEXT,
-            created_at INTEGER,
-            updated_at INTEGER
-        )
-        """.strip()
-    )
-    conn.execute(
-        """
-        CREATE UNIQUE INDEX IF NOT EXISTS ux_knowledge_items_key_locale_topic
-        ON knowledge_items(key, locale, topic_category)
-        """.strip()
-    )
-    conn.execute(
-        """
-        CREATE INDEX IF NOT EXISTS ix_knowledge_items_active_key
-        ON knowledge_items(is_active, key)
-        """.strip()
-    )
-    conn.execute(
-        """
-        CREATE INDEX IF NOT EXISTS ix_knowledge_items_active_locale_topic
-        ON knowledge_items(is_active, locale, topic_category)
-        """.strip()
-    )
-
+# NOTE:
+# У тебя в исходнике было ДВА определения ensure_schema_items и одно из них содержало
+# вложенное (по отступам) ensure_schema_meta. Это легко приводит к ситуации, когда
+# ensure_schema_items_and_meta “как бы есть”, но в рантайме его нет/не то.
+#
+# Я оставляю один “канонический” ensure_schema_items (самый расширяемый),
+# а старый — сохраняю как алиас-совместимость.
 
 def ensure_schema_meta(conn: sqlite3.Connection) -> None:
     """
-    kb_meta for build info and EV1 metrics.
+    Ensure kb_meta table exists.
+    Used by admin UI to store build/coverage markers.
     """
     conn.execute(
         """
@@ -289,7 +249,6 @@ def ensure_schema_docs_chunks(conn: sqlite3.Connection) -> None:
         """.strip()
     )
 
-    # FTS5 virtual table (contentless is simplest)
     conn.execute(
         """
         CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_chunks_fts
@@ -298,21 +257,98 @@ def ensure_schema_docs_chunks(conn: sqlite3.Connection) -> None:
     )
 
 
+def ensure_schema_items(conn: sqlite3.Connection) -> None:
+    """
+    knowledge_items schema used by UI/seed/coverage.
+
+    IMPORTANT:
+    - Non-destructive: CREATE IF NOT EXISTS + ADD COLUMN if missing.
+    """
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS knowledge_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            key TEXT NOT NULL,
+            locale TEXT NOT NULL,
+            topic_category TEXT,
+            text TEXT,
+            priority INTEGER NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            meta_json TEXT,
+            created_at INTEGER,
+            updated_at INTEGER
+        )
+        """.strip()
+    )
+
+    cols = _table_columns(conn, "knowledge_items")
+
+    def _add(col: str, ddl: str) -> None:
+        conn.execute(f"ALTER TABLE knowledge_items ADD COLUMN {col} {ddl}")
+
+    if "text" not in cols:
+        _add("text", "TEXT")
+    if "priority" not in cols:
+        _add("priority", "INTEGER NOT NULL DEFAULT 0")
+    if "is_active" not in cols:
+        _add("is_active", "INTEGER NOT NULL DEFAULT 1")
+    if "meta_json" not in cols:
+        _add("meta_json", "TEXT")
+    if "created_at" not in cols:
+        _add("created_at", "INTEGER")
+    if "updated_at" not in cols:
+        _add("updated_at", "INTEGER")
+
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_knowledge_items_key_locale_topic
+        ON knowledge_items(key, locale, topic_category)
+        """.strip()
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS ix_knowledge_items_active_key
+        ON knowledge_items(is_active, key)
+        """.strip()
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS ix_knowledge_items_active_locale_topic
+        ON knowledge_items(is_active, locale, topic_category)
+        """.strip()
+    )
+
+
+# --- compatibility alias (твое старое определение было короче) ---
+def ensure_schema_items_minimal(conn: sqlite3.Connection) -> None:
+    """
+    Legacy minimal schema (kept for compatibility; not used by default).
+    """
+    ensure_schema_items(conn)
+
+
 def ensure_schema_items_and_meta(conn: sqlite3.Connection) -> None:
     """
-    Backward-compatible entrypoint expected by UI seed.
+    Backward-compatible helper expected by admin UI.
+
+    Safe to call multiple times.
+    Creates/updates:
+      - knowledge_items
+      - kb_meta
     """
     ensure_schema_items(conn)
     ensure_schema_meta(conn)
 
 
 def _set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
+    ensure_schema_meta(conn)
     conn.execute(
         """
-        INSERT INTO kb_meta(key, value) VALUES(?, ?)
+        INSERT INTO kb_meta(key, value)
+        VALUES(?, ?)
         ON CONFLICT(key) DO UPDATE SET value=excluded.value
         """.strip(),
-        (key, value),
+        (str(key), str(value)),
     )
 
 
@@ -323,6 +359,11 @@ def _set_meta(conn: sqlite3.Connection, key: str, value: str) -> None:
 def _sql_in_placeholders(n: int) -> str:
     return ",".join(["?"] * n)
 
+@dataclass(frozen=True)
+class BuildResult:
+    enabled: int
+    inserted: int
+    updated: int
 
 @dataclass(frozen=True)
 class Ev1Coverage:
@@ -346,6 +387,112 @@ class Ev1DataIssues:
     null_topic_category_count: int
     sample_keys: list[str]
 
+def build_from_staging(
+    *,
+    staging_db: str | Path,
+    prod_db: str | Path,
+    priority_default: int = 200,
+) -> BuildResult:
+    staging_db = Path(staging_db)
+    prod_db = Path(prod_db)
+
+    if not staging_db.exists():
+        raise FileNotFoundError(f"staging db not found: {staging_db}")
+
+    # prod db должен существовать (или создаваться у тебя отдельно),
+    # иначе schema knowledge_items не будет.
+    if not prod_db.exists():
+        raise FileNotFoundError(f"prod db not found: {prod_db}")
+
+    sconn = sqlite3.connect(str(staging_db))
+    sconn.row_factory = sqlite3.Row
+
+    pconn = sqlite3.connect(str(prod_db))
+    pconn.row_factory = sqlite3.Row
+
+    try:
+        rows = sconn.execute(
+            """
+            SELECT
+              id, key, locale, topic_category, text, tone, abstraction_level,
+              source_id, author
+            FROM kb_fragments
+            WHERE state = 'enabled'
+            ORDER BY id
+            """
+        ).fetchall()
+
+        enabled = len(rows)
+        inserted = 0
+        updated = 0
+        now = _utc_iso()
+
+        # В prod ожидаем UNIQUE(key, locale) — как у тебя в kb_fragments.
+        # Если у тебя в knowledge_items UNIQUE иначе — скажи, подстрою upsert.
+        for r in rows:
+            meta = {
+                "tone": r["tone"],
+                "abstraction_level": r["abstraction_level"],
+                "kb_fragment_id": int(r["id"]),
+                "source_id": r["source_id"],
+                "author": r["author"] or "KB",
+            }
+
+            # Проверим, есть ли уже item
+            existing = pconn.execute(
+                "SELECT id FROM knowledge_items WHERE key=? AND locale=?",
+                (r["key"], r["locale"]),
+            ).fetchone()
+
+            if existing:
+                pconn.execute(
+                    """
+                    UPDATE knowledge_items
+                    SET topic_category=?,
+                        text=?,
+                        priority=COALESCE(priority, ?),
+                        is_active=1,
+                        meta_json=?
+                    WHERE key=? AND locale=?
+                    """,
+                    (
+                        r["topic_category"],
+                        r["text"],
+                        int(priority_default),
+                        json.dumps(meta, ensure_ascii=False),
+                        r["key"],
+                        r["locale"],
+                    ),
+                )
+                updated += 1
+            else:
+                pconn.execute(
+                    """
+                    INSERT INTO knowledge_items
+                      (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+                    VALUES
+                      (?,   ?,            ?,     ?,    ?,        ?,          1,        ?)
+                    """,
+                    (
+                        r["key"],
+                        r["topic_category"],
+                        r["locale"],
+                        r["text"],
+                        int(priority_default),
+                        now,
+                        json.dumps(meta, ensure_ascii=False),
+                    ),
+                )
+                inserted += 1
+
+        pconn.commit()
+        return BuildResult(enabled=enabled, inserted=inserted, updated=updated)
+
+    finally:
+        try:
+            sconn.close()
+        finally:
+            pconn.close()
 
 def coverage_ev1(
     conn: sqlite3.Connection,
@@ -366,7 +513,7 @@ def coverage_ev1(
         params.append(locale.strip())
 
     if topic_category:
-        where.append(f"{sql_norm('locale')} = ?")
+        where.append(f"{sql_norm('topic_category')} = ?")
         params.append(topic_category.strip())
 
     sql = f"""
@@ -382,18 +529,10 @@ def coverage_ev1(
 
     total = len(keys)
     present_active = len(present)
-    return Ev1Coverage(
-        total=total,
-        present_active=present_active,
-        missing=total - present_active,
-        missing_keys=missing_keys,
-    )
+    return Ev1Coverage(total=total, present_active=present_active, missing=total - present_active, missing_keys=missing_keys)
 
 
 def coverage_breakdown_ev1(conn: sqlite3.Connection, keys: list[str]) -> list[Ev1BreakdownRow]:
-    """
-    Breakdown only among EV1 keys (active), grouped by normalized locale/topic_category.
-    """
     if not keys:
         return []
 
@@ -428,9 +567,6 @@ def coverage_breakdown_ev1(conn: sqlite3.Connection, keys: list[str]) -> list[Ev
 
 
 def ev1_data_issues(conn: sqlite3.Connection, keys: list[str], *, locale: str = "ru-RU", sample_limit: int = 20) -> Ev1DataIssues:
-    """
-    EV1 keys that exist as active items but have empty/NULL topic_category (after normalization).
-    """
     if not keys:
         return Ev1DataIssues(null_topic_category_count=0, sample_keys=[])
 
@@ -493,43 +629,72 @@ def export_missing_jsonl(
 # Seed helpers
 # ============================================================
 
-def apply_seed_ignore_unique(
-    conn: sqlite3.Connection,
-    items: list[dict[str, Any]],
-) -> tuple[int, int]:
+def apply_seed_ignore_unique(conn: sqlite3.Connection, items: list[dict[str, object]]) -> tuple[int, int]:
     """
-    Insert items into knowledge_items ignoring UNIQUE conflicts.
-    Returns (inserted, skipped).
+    Insert seed items into knowledge_items.
+    If UNIQUE constraint fails (key+locale+topic_category) -> skip.
+
+    Works with old DB schemas: inserts only columns that exist.
     """
     ensure_schema_items_and_meta(conn)
 
+    cols = _table_columns(conn, "knowledge_items")
+    now_i = int(time.time())
+
     inserted = 0
     skipped = 0
-    now = int(time.time())
-
-    sql = """
-        INSERT INTO knowledge_items(key, locale, topic_category, text, priority, is_active, meta_json, created_at, updated_at)
-        VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """.strip()
 
     for it in items:
-        try:
-            conn.execute(
-                sql,
-                (
-                    it["key"],
-                    it.get("locale") or "ru-RU",
-                    it.get("topic_category"),
-                    it.get("text") or "",
-                    int(it.get("priority", 0)),
-                    int(it.get("is_active", 1)),
-                    json.dumps(it.get("meta", {}), ensure_ascii=False) if isinstance(it.get("meta"), dict) else it.get("meta_json"),
-                    it.get("created_at", now),
-                    it.get("updated_at", now),
-                ),
-            )
+        key = str(it.get("key", "") or "").strip()
+        locale = str(it.get("locale", "") or "").strip()
+        if not key or not locale:
+            # key/locale are required by schema
+            skipped += 1
+            continue
+
+        topic_category = it.get("topic_category", None)
+
+        # normalize text/meta_json to non-null strings when column exists
+        text_val = str(it.get("text", "") or "")
+        meta_val = str(it.get("meta_json", "") or "")
+
+        # IMPORTANT:
+        # Use INSERT OR IGNORE to avoid raising IntegrityError on duplicates.
+        # This makes behavior stable and avoids partial transactions.
+        col_names: list[str] = ["key", "locale", "topic_category"]
+        values: list[object] = [key, locale, topic_category]
+
+        if "text" in cols:
+            col_names.append("text")
+            values.append(text_val)
+
+        if "priority" in cols:
+            col_names.append("priority")
+            values.append(int(it.get("priority", 0) or 0))
+
+        if "is_active" in cols:
+            col_names.append("is_active")
+            values.append(int(it.get("is_active", 1) or 0))
+
+        if "meta_json" in cols:
+            col_names.append("meta_json")
+            values.append(meta_val)
+
+        if "created_at" in cols:
+            col_names.append("created_at")
+            values.append(now_i)
+
+        if "updated_at" in cols:
+            col_names.append("updated_at")
+            values.append(now_i)
+
+        placeholders = ",".join(["?"] * len(col_names))
+        sql = f"INSERT OR IGNORE INTO knowledge_items ({', '.join(col_names)}) VALUES ({placeholders})"
+        cur = conn.execute(sql, tuple(values))
+
+        if cur.rowcount and cur.rowcount > 0:
             inserted += 1
-        except sqlite3.IntegrityError:
+        else:
             skipped += 1
 
     return inserted, skipped
@@ -546,9 +711,6 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def seed_default(conn: sqlite3.Connection, *, glob_pattern: str = "knowledge_items_*_ETALON.jsonl") -> tuple[int, int]:
-    """
-    Loads default seed JSONL files from astroprocessor/data/.
-    """
     data_dir = _data_dir()
     files = sorted(data_dir.glob(glob_pattern))
     total_inserted = 0
@@ -570,7 +732,13 @@ def make_ev1_seed_items(
     topic_category: str,
     priority: int,
     stub_text: str = "",
+    is_active: int = 1,
 ) -> list[dict[str, Any]]:
+    """
+    NOTE:
+    Я добавил is_active параметр (по умолчанию как у тебя было = 1),
+    чтобы router/UI могли создавать EV1-stubs inactive при желании.
+    """
     return [
         {
             "key": k,
@@ -578,7 +746,7 @@ def make_ev1_seed_items(
             "topic_category": topic_category,
             "priority": int(priority),
             "text": stub_text,
-            "is_active": 1,
+            "is_active": int(is_active),
         }
         for k in keys
     ]
@@ -594,9 +762,6 @@ def seed_ev1(
     build_version: Optional[str] = None,
     knowledge_build_version: Optional[str] = None,
 ) -> dict[str, Any]:
-    """
-    Idempotent EV1 seed + writes coverage to kb_meta.
-    """
     ensure_schema_items_and_meta(conn)
 
     keys_path, ok = resolve_ev1_keys_file(keys_file)
@@ -612,6 +777,8 @@ def seed_ev1(
         locale=locale,
         topic_category=topic_category,
         priority=priority,
+        stub_text="",
+        is_active=1,
     )
     inserted, skipped = apply_seed_ignore_unique(conn, items)
 
@@ -652,10 +819,6 @@ def _doc_id_from_file_bytes(data: bytes) -> str:
 
 
 def _convert_to_markdown(src: Path) -> tuple[str, str]:
-    """
-    Best-effort conversion to markdown.
-    Returns (title, markdown_text).
-    """
     ext = src.suffix.lower()
     title = src.stem
 
@@ -674,7 +837,6 @@ def _convert_to_markdown(src: Path) -> tuple[str, str]:
             raise RuntimeError(f"docx conversion failed: {e}") from e
 
     if ext == ".pdf":
-        # optional dependency path
         try:
             from pypdf import PdfReader  # type: ignore
             reader = PdfReader(str(src))
@@ -689,33 +851,24 @@ def _convert_to_markdown(src: Path) -> tuple[str, str]:
             raise RuntimeError(f"pdf conversion failed (install pypdf): {e}") from e
 
     if ext == ".fb2":
-        title = src.stem
         text = _read_fb2_to_text(src)
         md = f"# {title}\n\n{text}\n"
         return title, md
 
     if ext == ".epub":
-        title = src.stem
         text = _read_epub_to_text(src)
         md = f"# {title}\n\n{text}\n"
         return title, md
 
     if ext == ".rtf":
-        title = src.stem
         text = _read_rtf_to_text(src)
         md = f"# {title}\n\n{text}\n"
         return title, md
-
 
     raise RuntimeError(f"unsupported extension: {ext}")
 
 
 def import_books(*, inbox_dir: Optional[str] = None) -> dict[str, Any]:
-    """
-    Reads files from astroprocessor/data/knowledge_sources/inbox,
-    converts to markdown and writes into astroprocessor/knowledge/docs.
-    Moves processed/failed originals and updates _import_manifest.json.
-    """
     src_dir = Path(inbox_dir) if inbox_dir else _inbox_dir()
     if not src_dir.is_absolute():
         src_dir = _astro_root() / src_dir
@@ -757,12 +910,7 @@ def import_books(*, inbox_dir: Optional[str] = None) -> dict[str, Any]:
             out_path.write_text(md, encoding="utf-8")
 
             entry.update(
-                {
-                    "status": "ok",
-                    "doc_id": doc_id,
-                    "title": title,
-                    "md_path": str(out_path),
-                }
+                {"status": "ok", "doc_id": doc_id, "title": title, "md_path": str(out_path)}
             )
 
             shutil.move(str(src), str(_processed_inbox_dir() / src.name))
@@ -806,10 +954,6 @@ def _chunk_markdown(md: str, *, max_chars: int = 1200) -> list[str]:
 
 
 def build_chunks(conn: sqlite3.Connection) -> dict[str, Any]:
-    """
-    Reads markdown docs from astroprocessor/knowledge/docs and rebuilds knowledge_docs,
-    knowledge_chunks, knowledge_chunks_fts.
-    """
     ensure_schema_docs_chunks(conn)
     ensure_schema_meta(conn)
 

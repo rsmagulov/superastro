@@ -11,22 +11,42 @@
 <div class="card">
   <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
     <h2 style="margin:0;">Состояние</h2>
-    <a class="btn" href="/admin/ui/health">🔄 Refresh</a>
+
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <a class="btn" href="/admin/ui/health">🔄 Refresh</a>
+
+      <a class="btn secondary" href="/admin/ui/health/kb_meta/recompute">🧮 Recompute kb_meta</a>
+
+      {# точный бейдж после recompute (берём реальные значения из db_snap) #}
+      {% set _flash_q = (request.query_params.get('flash') or '') %}
+      {% if 'kb_meta' in _flash_q and 'updated' in _flash_q %}
+        <span class="badge ok">
+          kb_meta: docs={{ kb_meta_dict.get("docs_total", "") }}, chunks={{ kb_meta_dict.get("chunks_total", "") }}
+        </span>
+      {% elif 'kb_meta' in _flash_q %}
+        <span class="badge warn">kb_meta: check</span>
+      {% endif %}
+    </div>
   </div>
 
   <div class="kv" style="margin-top:10px;">
     <div><b>DB:</b> <code>{{ db_snap.db_path }}</code></div>
     <div><b>DB exists:</b> {{ "yes" if db_snap.db_exists else "no" }}</div>
-    <div><b>Docs total:</b> {{ db_snap.docs_total }}</div>
-    <div><b>Chunks total:</b> {{ db_snap.chunks_total }}</div>
+    <div><b>Docs total:</b> {{ kb_meta_dict.get("docs_total", "") }}</div>
+    <div><b>Chunks total:</b> {{ kb_meta_dict.get("chunks_total", "") }}</div>
     <div>
       <b>FTS:</b>
       {% if db_snap.fts_ok %}
         <span class="badge ok">OK</span>
-      {% else %}
+        {% if fts_content_ok %}
+            <span class="muted">(match "{{ fts_q }}": {{ fts_content_count }})</span>
+        {% else %}
+            <span class="muted">({{ fts_content_status }})</span>
+        {% endif %}
+        {% else %}
         <span class="badge warn">NOT OK</span>
         <span class="muted">({{ db_snap.fts_error }})</span>
-      {% endif %}
+        {% endif %}
     </div>
   </div>
 </div>

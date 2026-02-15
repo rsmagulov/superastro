@@ -25,6 +25,38 @@ router = APIRouter()
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+# ============================================================
+# Admin nav (single source of truth for expandable menu)
+# ============================================================
+
+ADMIN_NAV_ITEMS: list[dict[str, str]] = [
+    {"id": "health", "title": "Health", "url_name": "health_page"},
+    {"id": "builds", "title": "Builds", "url_name": "builds_page"},
+    {"id": "items", "title": "Items", "url_name": "items_page"},
+    # Optional: if sources_router is included and templates have it
+    {"id": "sources", "title": "Sources", "url_name": "sources_page"},
+]
+
+
+def _nav_items(request: Request) -> list[dict[str, str]]:
+    out: list[dict[str, str]] = []
+    for it in ADMIN_NAV_ITEMS:
+        url_name = it.get("url_name") or ""
+        href = "#"
+        try:
+            href = str(request.url_for(url_name))
+        except Exception:
+            href = "#"
+        out.append({**it, "href": href})
+    return out
+
+
+# Make available to templates as global too (optional usage from base layout)
+try:
+    templates.env.globals["ADMIN_NAV_ITEMS"] = ADMIN_NAV_ITEMS
+except Exception:
+    pass
+
 # optional sub-router
 try:
     from app.admin.ui.sources_router import router as sources_router  # type: ignore
@@ -663,6 +695,37 @@ def _sqlite_fts_ok(conn: sqlite3.Connection) -> tuple[bool, str]:
         return False, f"{type(e).__name__}: {e}"
 
 
+def _kb_meta_upsert_sqlite(db_path: Path, items: dict[str, str]) -> None:
+    """
+    Обновляет kb_meta (key/value) атомарно.
+    Пишем именно в kb_meta, чтобы Health показывал "официальные" метаданные сборки.
+    """
+    if not db_path.exists():
+        raise FileNotFoundError(f"DB not found: {db_path}")
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS kb_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+        )
+
+        # SQLite supports ON CONFLICT DO UPDATE in modern versions; fallback if needed.
+        try:
+            conn.executemany(
+                "INSERT INTO kb_meta(key, value) VALUES(?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                [(k, v) for k, v in items.items()],
+            )
+        except sqlite3.OperationalError:
+            for k, v in items.items():
+                cur = conn.execute("UPDATE kb_meta SET value=? WHERE key=?", (v, k))
+                if cur.rowcount == 0:
+                    conn.execute("INSERT INTO kb_meta(key, value) VALUES(?, ?)", (k, v))
+
+        conn.commit()
+    finally:
+        conn.close()
+
 def _read_kb_meta_dict_sqlite(db_path: Path) -> dict[str, str]:
     if not db_path.exists():
         return {}
@@ -745,6 +808,8 @@ def _kb_health_snapshot() -> dict[str, Any]:
     snap: dict[str, Any] = {
         "db_path": str(db_path),
         "db_exists": db_path.exists(),
+        "db_size_bytes": db_path.stat().st_size if db_path.exists() else 0,
+        "db_mtime_iso": datetime.fromtimestamp(db_path.stat().st_mtime).isoformat() if db_path.exists() else "",
         "inbox_dir": str(inbox_dir),
         "failed_dir": str(failed_dir),
         "processed_dir": str(processed_dir),
@@ -773,6 +838,12 @@ def _kb_health_snapshot() -> dict[str, Any]:
             ok, msg = _sqlite_fts_ok(conn)
             snap["fts_ok"] = ok
             snap["fts_status"] = msg
+            snap["tables"].update(
+                {
+                    "knowledge_chunks_fts": _sqlite_count(conn, "knowledge_chunks_fts"),
+                    "kb_meta": _sqlite_count(conn, "kb_meta"),
+                }
+            )
         finally:
             conn.close()
 
@@ -1301,26 +1372,15 @@ async def builds_page(request: Request):
         top_missing=50,
     )
 
-    try:
-        from app.admin.ui.router import _ev1_empty_text_active  # type: ignore
-        empty_live = await asyncio.to_thread(
-            _ev1_empty_text_active,
-            keys_file=ev1_keys_file,
-            locale=ev1_locale,
-            topic_category=ev1_topic_category,
-            sample_limit=20,
-        )
-    except Exception:
-        empty_live = None
-
     empty_live = await asyncio.to_thread(
-            _ev1_empty_text_active,
-            keys_file=ev1_keys_file,
-            locale=ev1_locale,
-            topic_category=ev1_topic_category,
-            sample_limit=20,
+        _ev1_empty_text_active,
+        keys_file=ev1_keys_file,
+        locale=ev1_locale,
+        topic_category=ev1_topic_category,
+        sample_limit=20,
     )
 
+       
     return templates.TemplateResponse(
         request,
         "admin/builds.html",
@@ -1343,84 +1403,92 @@ async def builds_page(request: Request):
             "ev1_missing": ev1_missing,
             "ev1_pct": ev1_pct,
             **live,
-            **(empty_live or {}),
+            **empty_live,
+            "nav_items": _nav_items(request),
+            "supported_import_formats": ["txt", "fb2", "epub", "rtf", "md", "docx", "pdf"],
+            "build_help": {
+                "import_build": "Импортирует книги из inbox → конвертирует в markdown → пересобирает chunks/FTS.",
+                "seed_default": "Сидит базовые items (если нужны).",
+                "seed_ev1": "Сидит EV1 по keys-файлу (обычно 266 ключей).",
+                "repair_ev1": "Чинит дрейф locale/topic_category и устраняет дубли по (key, locale).",
+                "seed_missing_ev1": "Создаёт только недостающие EV1-заглушки (по умолчанию is_active=0).",
+            },
         },
     )
 
 # =============================
 # Health / Status UI
 # =============================
-@router.get("/health", name="health_page")
-async def health_page(request: Request):
-    d = _kb_defaults()
-    kb_rows = await _read_kb_meta_rows()
-    kb_dict = {k: v for (k, v) in kb_rows}
 
-    inbox_count = _count_files(d["inbox_dir"])
-    processed_count = _count_files(d["processed_dir"])
-    failed_count = _count_files(d["failed_dir"])
-
-    db_snap = await asyncio.to_thread(_db_health_snapshot)
-    last_doc = _last_imported_doc_path()
-
-    last_doc_preview = ""
-    last_doc_name = ""
-    if last_doc and last_doc.exists():
-        last_doc_name = last_doc.name
-        try:
-            txt = last_doc.read_text(encoding="utf-8", errors="replace")
-            last_doc_preview = "\n".join(txt.splitlines()[:60])
-        except Exception:
-            last_doc_preview = ""
-
-    errors = _manifest_last_errors(limit=10)
-
-    return templates.TemplateResponse(
-        "admin/health.html",
-        {
-            "request": request,
-            "flash": _flash_from_query(request),
-            "nav_active": "health",
-            "kb_meta": kb_rows,
-            "kb_meta_dict": kb_dict,
-            "inbox_dir": d["inbox_dir"],
-            "processed_dir": d["processed_dir"],
-            "failed_dir": d["failed_dir"],
-            "inbox_count": inbox_count,
-            "processed_count": processed_count,
-            "failed_count": failed_count,
-            "db_snap": db_snap,
-            "last_doc_name": last_doc_name,
-            "last_doc_preview": last_doc_preview,
-            "manifest_errors": errors,
-        },
-    )
-
-
-@router.get("/health/last_import", name="health_last_import_full")
-async def health_last_import_full(request: Request):
+def _sqlite_fts_content_check(conn: sqlite3.Connection, q: str) -> tuple[bool, int, str]:
     """
-    Показать последний импортированный .md полностью (text/plain).
+    FTS check with content query:
+    - verifies FTS table exists
+    - runs MATCH query for user-provided 'q'
     """
-    p = _last_imported_doc_path()
-    if not p or not p.exists():
-        return PlainTextResponse("Нет импортированных .md в knowledge/docs\n", status_code=404)
+    q = (q or "").strip()
+    if not q:
+        return False, 0, "empty query"
+
+    if not _sqlite_table_exists(conn, "knowledge_chunks_fts"):
+        return False, 0, "knowledge_chunks_fts: not found"
+
     try:
-        body = p.read_text(encoding="utf-8", errors="replace")
+        # Note: parameterized MATCH works in SQLite FTS5.
+        row = conn.execute(
+            "SELECT COUNT(*) FROM knowledge_chunks_fts WHERE knowledge_chunks_fts MATCH ?",
+            (q,),
+        ).fetchone()
+        cnt = int(row[0] or 0) if row else 0
+        return True, cnt, "ok"
     except Exception as e:
-        return PlainTextResponse(f"Ошибка чтения файла: {type(e).__name__}: {e}\n", status_code=500)
-    return PlainTextResponse(body, media_type="text/plain; charset=utf-8")
+        return False, 0, f"{type(e).__name__}: {e}"
 
 
 @router.get("/", name="admin_ui_home")
 async def admin_ui_home(request: Request):
-    # Главная админки -> Health/Status
     return RedirectResponse(url=str(request.url_for("health_page")), status_code=303)
 
 
 @router.get("/health", response_class=HTMLResponse, name="health_page")
 async def health_page(request: Request):
-    snap = await asyncio.to_thread(_kb_health_snapshot)
+    """
+    Contract for templates/admin/health.html:
+
+    - db_snap: legacy quick snapshot (db_path, db_exists, docs_total, chunks_total, fts_ok, fts_error)
+      produced by _db_health_snapshot()
+
+    - health: rich snapshot (queues, manifest, kb_meta dict, tables counts, etc.)
+      produced by _kb_health_snapshot()
+
+    - kb_meta_dict: dict[str,str] from kb_meta table (official build meta)
+    """
+    health = await asyncio.to_thread(_kb_health_snapshot)
+    db_snap = await asyncio.to_thread(_db_health_snapshot)
+
+    # FTS content query: user can pass ?fts_q=...
+    fts_q = _qp(request, "fts_q", "test")
+    fts_content_ok = False
+    fts_content_count = 0
+    fts_content_status = ""
+
+    db_path = Path(str(health.get("db_path") or ""))
+    if db_path.exists():
+        conn = sqlite3.connect(str(db_path))
+        try:
+            fts_content_ok, fts_content_count, fts_content_status = _sqlite_fts_content_check(conn, fts_q)
+        finally:
+            conn.close()
+    else:
+        fts_content_ok, fts_content_count, fts_content_status = False, 0, "db not found"
+
+    manifest_errors = await asyncio.to_thread(_manifest_last_errors, 10)
+
+    kb_meta_dict = health.get("kb_meta") or {}
+
+    last_md = str(health.get("last_import_md_path") or "")
+    last_doc_name = Path(last_md).name if last_md else ""
+    last_doc_preview = str(health.get("last_import_preview") or "")
 
     return templates.TemplateResponse(
         request,
@@ -1429,9 +1497,77 @@ async def health_page(request: Request):
             "request": request,
             "flash": _flash_from_query(request),
             "nav_active": "health",
-            "health": snap,
+            "nav_items": _nav_items(request),
+
+            # canonical objects
+            "db_snap": db_snap,
+            "health": health,
+            "kb_meta_dict": kb_meta_dict,
+
+            # UI extras
+            "supported_import_formats": ["txt", "fb2", "epub", "rtf", "md", "docx", "pdf"],
+            "fts_q": fts_q,
+            "fts_content_ok": fts_content_ok,
+            "fts_content_count": fts_content_count,
+            "fts_content_status": fts_content_status,
+            "manifest_errors": manifest_errors,
+            "last_import_full_url": str(request.url_for("health_last_import_full")),
+
+            # legacy fields used by current template blocks
+            "inbox_dir": health.get("inbox_dir", ""),
+            "processed_dir": health.get("processed_dir", ""),
+            "failed_dir": health.get("failed_dir", ""),
+            "inbox_count": int(health.get("inbox_files") or 0),
+            "processed_count": int(health.get("processed_files") or 0),
+            "failed_count": int(health.get("failed_files") or 0),
+            "last_doc_name": last_doc_name,
+            "last_doc_preview": last_doc_preview,
         },
     )
+
+def _kb_meta_recompute_from_db(db_path: Path) -> dict[str, str]:
+    """
+    Пересчитывает минимально нужные мета-ключи из фактического состояния БД.
+    """
+    conn = sqlite3.connect(str(db_path))
+    try:
+        docs_total = _sqlite_count(conn, "knowledge_docs")
+        chunks_total = _sqlite_count(conn, "knowledge_chunks")
+        items_total = _sqlite_count(conn, "knowledge_items")
+        fts_ok, fts_status = _sqlite_fts_ok(conn)
+    finally:
+        conn.close()
+
+    now_iso = datetime.now().isoformat(timespec="seconds")
+
+    return {
+        "updated_at": now_iso,
+        "docs_total": str(int(docs_total)),
+        "chunks_total": str(int(chunks_total)),
+        "items_total": str(int(items_total)),
+        "fts_ok": "1" if fts_ok else "0",
+        "fts_status": str(fts_status or ""),
+    }
+
+@router.get("/health/last_import", name="health_last_import_full")
+async def health_last_import_full(request: Request):
+    """
+    Show the last imported .md fully (text/plain).
+    We prefer the md path from manifest; fallback to newest *.md in knowledge/docs.
+    """
+    snap = await asyncio.to_thread(_kb_health_snapshot)
+    md_path_str = str(snap.get("last_import_md_path") or "").strip()
+    p = Path(md_path_str) if md_path_str else None
+
+    if not p or not p.exists():
+        return PlainTextResponse("Нет импортированных .md в knowledge/docs\n", status_code=404)
+
+    try:
+        body = p.read_text(encoding="utf-8", errors="replace")
+    except Exception as e:
+        return PlainTextResponse(f"Ошибка чтения файла: {type(e).__name__}: {e}\n", status_code=500)
+
+    return PlainTextResponse(body, media_type="text/plain; charset=utf-8")
 
 @router.get("/builds/ev1/missing.txt", name="builds_ev1_missing_txt")
 async def builds_ev1_missing_txt(
@@ -1516,6 +1652,10 @@ async def builds_ev1_missing_jsonl(
         return Response(body, media_type="application/jsonl; charset=utf-8")
     finally:
         conn.close()
+
+@router.get("/health/kb_meta/recompute", name="health_kb_meta_recompute_get")
+async def health_kb_meta_recompute_get(request: Request):
+    return await health_kb_meta_recompute(request)
 
 @router.post("/builds/ev1/repair", name="builds_ev1_repair")
 async def builds_ev1_repair(
@@ -2079,3 +2219,35 @@ async def builds_ev1_activate_nonempty(
         kind = "err"
 
     return _flash_redirect(str(request.url_for("builds_page")), kind=kind, text=msg)
+
+@router.post("/health/kb_meta/recompute", name="health_kb_meta_recompute")
+async def health_kb_meta_recompute(request: Request):
+    """
+    Правильная "починка" Health: записываем docs_total/chunks_total в kb_meta.
+    Никаких UI-заглушек — после этого Health отображает реальные метаданные.
+    """
+    snap = await asyncio.to_thread(_kb_health_snapshot)
+    db_path = Path(str(snap.get("db_path") or ""))
+
+    if not db_path.exists():
+        return RedirectResponse(
+            url=str(request.url_for("health_page")) + "?flash=DB%20not%20found",
+            status_code=303,
+        )
+
+    try:
+        payload = await asyncio.to_thread(_kb_meta_recompute_from_db, db_path)
+        await asyncio.to_thread(_kb_meta_upsert_sqlite, db_path, payload)
+    except Exception as e:
+        return RedirectResponse(
+            url=str(request.url_for("health_page"))
+            + "?flash="
+            + str(f"kb_meta recompute failed: {type(e).__name__}: {e}"),
+            status_code=303,
+        )
+
+    return RedirectResponse(
+        url=str(request.url_for("health_page")) + "?flash=kb_meta%20updated",
+        status_code=303,
+    )
+

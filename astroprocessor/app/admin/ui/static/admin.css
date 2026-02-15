@@ -226,3 +226,13 @@ pre{ background:rgba(255,255,255,.04); border:1px solid var(--border); border-ra
   line-height:18px;
   border:1px solid #2a2a2a;
 }
+/* Secondary action button (e.g., Recompute kb_meta) */
+.btn.secondary {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+}
+
+.btn.secondary:hover {
+  border-color: rgba(0, 0, 0, 0.28);
+  filter: brightness(0.98);
+}
