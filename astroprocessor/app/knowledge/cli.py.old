@@ -12,12 +12,6 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
-from dataclasses import dataclass
-
-@dataclass
-class GarbleInfo:
-    score: float
-    bad_lines: int
 
 VALIDATOR_PROFILE = "ru_v1"
 
@@ -48,7 +42,7 @@ def _utcnow_iso() -> str:
 
 
 def _die(msg: str, code: int = 2) -> int:
-    print(f"❌ {msg}", file=sys.stderr)
+    print(f"❌ {msg}")
     return code
 
 
@@ -397,7 +391,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             ("initialized_at", _utcnow_iso()),
         )
         conn.commit()
-        print(f"✅ staging db initialized: {sp}", file=sys.stderr)
+        print(f"✅ staging db initialized: {sp}")
     finally:
         conn.close()
 
@@ -496,7 +490,7 @@ def cmd_add(args: argparse.Namespace) -> int:
         )
 
         conn.commit()
-        print(f"✅ added: id={fid} key={key} state={state} locale={locale} topic={topic}", file=sys.stderr)
+        print(f"✅ added: id={fid} key={key} state={state} locale={locale} topic={topic}")
         return 0
     finally:
         conn.close()
@@ -1004,8 +998,7 @@ def cmd_build(args: argparse.Namespace) -> int:
         prefix = "🧪 dry-run" if dry_run else "✅ build ok"
         print(
             f"{prefix}: enabled={enabled} inserted={inserted} updated={updated} deactivated={deactivated}\n"
-            f"   prod: {_prod_db_path()}",
-            file=sys.stderr,
+            f"   prod: {_prod_db_path()}"
         )
         return 0
     finally:
@@ -1021,8 +1014,6 @@ def cmd_list(args: argparse.Namespace) -> int:
     q = (args.q or "").strip()
     limit = int(args.limit or 50)
     source_id = int(getattr(args, "source_id", 0) or 0)
-    needs_rewrite_only = bool(getattr(args, "needs_rewrite_only", False))
-    bot_ready_only = bool(getattr(args, "bot_ready_only", False))
 
     if getattr(args, "prod", False):
         conn = _connect(_prod_db_path())
@@ -1051,7 +1042,7 @@ def cmd_list(args: argparse.Namespace) -> int:
                 params.extend([f"%{q}%", f"%{q}%"])
 
             sql = f"""
-                SELECT id, key, topic_category, locale, is_active, priority, created_at, meta_json, text
+                SELECT id, key, topic_category, locale, is_active, priority, created_at, text
                 FROM knowledge_items
                 WHERE {' AND '.join(where)}
                 ORDER BY priority DESC, id ASC
@@ -1115,28 +1106,9 @@ def cmd_list(args: argparse.Namespace) -> int:
             ORDER BY id DESC
             LIMIT ?
         """.strip()
+        params.append(limit)
 
-        sql_limit = limit
-        if needs_rewrite_only or bot_ready_only:
-            sql_limit = max(limit * 50, 500)
-
-        params.append(sql_limit)
         rows = conn.execute(sql, params).fetchall()
-
-        if needs_rewrite_only or bot_ready_only:
-            filtered: list[sqlite3.Row] = []
-            for r in rows:
-                meta = _json_load_dict(r["meta_json"])
-                requires_rewrite = bool(meta.get("requires_rewrite", False))
-                bot_ready = bool(_DIRECT_ADDRESS_RE.search(str(r["text"] or "")))
-
-                if needs_rewrite_only and not requires_rewrite:
-                    continue
-                if bot_ready_only and not bot_ready:
-                    continue
-                filtered.append(r)
-            rows = filtered[:limit]
-
         _print_rows(rows)
         return 0
     finally:
@@ -1414,39 +1386,12 @@ _BOX_GARBLE_RE = re.compile(r"[\u2500-\u259f\u00a4]")  # box drawing + currency 
 
 
 def _garble_score(s: str) -> float:
-    """
-    Garble score for encoding/font artifacts.
-
-    We intentionally treat ANY presence of box-drawing chars (U+2500–U+259F)
-    or the currency sign '¤' (U+00A4) as a strong garble signal.
-    This is because even a couple of such characters usually means the entire
-    chunk is decoded with the wrong codepage (classic "кракозябры").
-    """
     s = s or ""
     if not s:
         return 0.0
-
     bad = len(_BOX_GARBLE_RE.findall(s))
-    if bad == 0:
-        return 0.0
+    return bad / max(1, len(s))
 
-    # Strong signal: one artifact char already indicates garbling.
-    # Keep it compatible with threshold-based filtering (e.g. 0.20).
-    return 1.0
-
-def _garble_info(s: str) -> GarbleInfo:
-    s = s or ""
-    if not s:
-        return GarbleInfo(score=0.0, bad_lines=0)
-
-    lines = s.splitlines() or [s]
-    bad_lines = 0
-    for ln in lines:
-        if _BOX_GARBLE_RE.search(ln):
-            bad_lines += 1
-
-    score = _garble_score(s)
-    return GarbleInfo(score=score, bad_lines=bad_lines)
 
 def _fb2_to_text(fb2_bytes: bytes) -> tuple[str, str]:
     """Return (locale, plain_text) from FB2 bytes (best-effort, with encoding recovery)."""
@@ -1657,28 +1602,50 @@ def cmd_sources_diagnose(args: argparse.Namespace) -> int:
             return 2
 
         rows = conn.execute(
-            "SELECT id, seq, text FROM kb_source_chunks WHERE source_id=? ORDER BY seq ASC",
+            "SELECT id, seq, locale, text FROM kb_source_chunks WHERE source_id=? ORDER BY seq ASC",
             (source_id,),
         ).fetchall()
 
-        scores: list[tuple[int, float, int, str]] = []
+        scores: list[tuple[int, float, str]] = []
         for r in rows:
             txt = str(r["text"] or "")
-            info = _garble_info(txt)
+            score = _garble_score(txt)
             preview = re.sub(r"\s+", " ", txt.strip())[:160]
-            scores.append((int(r["seq"]), float(info.score), int(info.bad_lines), preview))
+            scores.append((int(r["seq"]), float(score), preview))
 
         chunks_total = len(scores)
-        score_min = min((s for _, s, _, _ in scores), default=0.0)
-        score_max = max((s for _, s, _, _ in scores), default=0.0)
-        score_avg = (sum(s for _, s, _, _ in scores) / chunks_total) if chunks_total else 0.0
-        chunks_garbled = sum(1 for _, s, _, _ in scores if s >= threshold)
+        if chunks_total == 0:
+            payload = {
+                "source": {
+                    "id": int(src["id"]),
+                    "title": src["title"],
+                    "source_type": src["source_type"] if "source_type" in src.keys() else None,
+                    "locale": src["locale"] if "locale" in src.keys() else None,
+                    "file_name": src["file_name"] if "file_name" in src.keys() else None,
+                    "file_size": src["file_size"] if "file_size" in src.keys() else None,
+                    "imported_at": src["imported_at"],
+                },
+                "chunks_total": 0,
+                "threshold": threshold,
+                "chunks_garbled": 0,
+                "score_min": 0.0,
+                "score_avg": 0.0,
+                "score_max": 0.0,
+                "worst": [],
+            }
+            if as_json:
+                print(json.dumps(payload, ensure_ascii=False, indent=None if compact else 2))
+            else:
+                print(f"diagnose: source_id={source_id} chunks_total=0", file=sys.stderr)
+            return 0
+
+        score_min = min(s for _, s, _ in scores)
+        score_max = max(s for _, s, _ in scores)
+        score_avg = sum(s for _, s, _ in scores) / chunks_total
+        chunks_garbled = sum(1 for _, s, _ in scores if s >= threshold)
 
         worst = sorted(scores, key=lambda x: x[1], reverse=True)[:top]
-        worst_items = [
-            {"seq": seq, "garble_score": sc, "bad_lines": bl, "preview": prev}
-            for seq, sc, bl, prev in worst
-        ]
+        worst_items = [{"seq": seq, "garble_score": sc, "preview": prev} for seq, sc, prev in worst]
 
         payload = {
             "source": {
@@ -1690,8 +1657,8 @@ def cmd_sources_diagnose(args: argparse.Namespace) -> int:
                 "file_size": src["file_size"] if "file_size" in src.keys() else None,
                 "imported_at": src["imported_at"],
             },
-            "threshold": threshold,
             "chunks_total": chunks_total,
+            "threshold": threshold,
             "chunks_garbled": chunks_garbled,
             "score_min": score_min,
             "score_avg": score_avg,
@@ -1700,17 +1667,15 @@ def cmd_sources_diagnose(args: argparse.Namespace) -> int:
         }
 
         if as_json:
-            if compact:
-                print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-            else:
-                print(json.dumps(payload, ensure_ascii=False, indent=2))
+            print(json.dumps(payload, ensure_ascii=False, indent=None if compact else 2))
         else:
             print(
-                f"diagnose: source_id={source_id} chunks_total={chunks_total} garbled={chunks_garbled} "
-                f"threshold={threshold} min={score_min:.4f} avg={score_avg:.4f} max={score_max:.4f}",
+                f"diagnose: source_id={source_id} chunks_total={chunks_total} "
+                f"garbled={chunks_garbled} threshold={threshold} "
+                f"min={score_min:.4f} avg={score_avg:.4f} max={score_max:.4f}",
                 file=sys.stderr,
             )
-            for it in worst_items[: min(top, 10)]:
+            for it in worst_items:
                 print(f"  - seq={it['seq']} score={it['garble_score']:.4f} {it['preview']}", file=sys.stderr)
 
         return 0
@@ -2079,83 +2044,6 @@ def cmd_fragments_export(args: argparse.Namespace) -> int:
     finally:
         conn.close()
 
-def cmd_fragments_list(args: argparse.Namespace) -> int:
-    """
-    List staging fragments with the same filters as `fragments export`.
-
-    Filters:
-      --needs-rewrite-only  -> meta_json.requires_rewrite == True
-      --bot-ready-only      -> direct address heuristic in text
-    """
-    conn = _connect(_staging_db_path())
-    try:
-        _ensure_staging_schema(conn)
-
-        state = (getattr(args, "state", "") or "").strip()
-        source_id = int(getattr(args, "source_id", 0) or 0)
-        topic = (getattr(args, "topic", "") or "").strip()
-        locale = (getattr(args, "locale", "") or "").strip()
-        key = (getattr(args, "key", "") or "").strip()
-        q = (getattr(args, "q", "") or "").strip()
-        limit = int(getattr(args, "limit", 50) or 50)
-
-        needs_rewrite_only = bool(getattr(args, "needs_rewrite_only", False))
-        bot_ready_only = bool(getattr(args, "bot_ready_only", False))
-
-        where: list[str] = []
-        params: list[Any] = []
-
-        if state:
-            where.append("state=?")
-            params.append(state)
-        if source_id:
-            where.append("source_id=?")
-            params.append(source_id)
-        if topic:
-            where.append("topic_category=?")
-            params.append(topic)
-        if locale:
-            where.append("locale=?")
-            params.append(locale)
-        if key:
-            where.append("key=?")
-            params.append(key)
-        if q:
-            where.append("(key LIKE ? OR text LIKE ?)")
-            params.extend([f"%{q}%", f"%{q}%"])
-
-        sql = f"""
-            SELECT id, key, topic_category, locale, tone, abstraction_level, state, created_at, meta_json, text
-            FROM kb_fragments
-            WHERE {' AND '.join(where) if where else '1=1'}
-            ORDER BY id DESC
-            LIMIT ?
-        """.strip()
-        params.append(limit)
-
-        rows = conn.execute(sql, params).fetchall()
-
-        # Same filtering logic as export (important!)
-        if needs_rewrite_only or bot_ready_only:
-            filtered: list[sqlite3.Row] = []
-            for r in rows:
-                meta = _json_load_dict(r["meta_json"])
-                requires_rewrite = bool(meta.get("requires_rewrite", False))
-                bot_ready = bool(_DIRECT_ADDRESS_RE.search(str(r["text"] or "")))
-
-                if needs_rewrite_only and not requires_rewrite:
-                    continue
-                if bot_ready_only and not bot_ready:
-                    continue
-                filtered.append(r)
-            rows = filtered
-
-        _print_rows(rows)
-        return 0
-    finally:
-        conn.close()
-
-
 def cmd_fragments_purge(args: argparse.Namespace) -> int:
     source_id = int(getattr(args, "source_id", 0) or 0)
     if not source_id:
@@ -2479,11 +2367,6 @@ def cmd_atomize(args: argparse.Namespace) -> int:
     target_max = int(getattr(args, "target_max", 900) or 900)
     max_newlines = int(getattr(args, "max_newlines", 6) or 6)
 
-    skip_garbled = bool(getattr(args, "skip_garbled", False))
-    garble_threshold = float(getattr(args, "garble_threshold", 0.20) or 0.20)
-    skipped_garbled = 0
-
-
     if mode not in {"a", "b"}:
         print("ERROR: --mode must be 'a' or 'b'", file=sys.stderr)
         return 2
@@ -2499,7 +2382,7 @@ def cmd_atomize(args: argparse.Namespace) -> int:
         else:
             where.append("source_id=?")
             params.append(source_id)
-        
+
         sql = f"SELECT id, source_id, seq, locale, text FROM kb_source_chunks WHERE {' AND '.join(where)} ORDER BY source_id, seq"
         rows = conn.execute(sql, params).fetchall()
 
@@ -2512,11 +2395,6 @@ def cmd_atomize(args: argparse.Namespace) -> int:
             sid = int(r["source_id"])
             chunk_locale = (locale_override or r["locale"] or "ru-RU")
             chunk_text = r["text"] or ""
-
-            if skip_garbled and _garble_score(chunk_text) >= garble_threshold:
-                skipped_garbled += 1
-                continue
-
             atoms = _atomize_chunk(
                 chunk_text,
                 min_len=min_len,
@@ -2596,7 +2474,6 @@ def cmd_atomize(args: argparse.Namespace) -> int:
             "created": inserted,
             "skipped_existing": skipped_existing,
             "skipped_mode": skipped_mode,
-            "skipped_garbled": skipped_garbled,
         }
         if as_json:
             print(json.dumps(report, ensure_ascii=False, indent=None if compact else 2))
@@ -2723,8 +2600,6 @@ def build_parser() -> argparse.ArgumentParser:
     sp.set_defaults(func=cmd_ingest)
 
     sp = sub.add_parser("atomize", help="create candidate kb_fragments from ingested chunks")
-    sp.add_argument("--skip-garbled", action="store_true", help="skip chunks that look garbled")
-    sp.add_argument("--garble-threshold", type=float, default=0.20, help="garble threshold for skipping")
     sp.add_argument("--source-id", dest="source_id", type=int, default=0)
     sp.add_argument("--all", action="store_true")
     sp.add_argument("--mode", choices=["a", "b"], default="b")
@@ -2777,7 +2652,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp3.add_argument("--q", default="")
     sp3.add_argument("--limit", type=int, default=50)
     
-    sp3.set_defaults(func=cmd_fragments_list)
+    sp3.set_defaults(func=cmd_list)
     sp4 = sub3.add_parser("sample", help="print sample fragments for review")
     sp4.add_argument("--source-id", type=int, required=True)
     sp4.add_argument("--state", default="")
