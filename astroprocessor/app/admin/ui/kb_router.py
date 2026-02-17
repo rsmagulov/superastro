@@ -348,11 +348,18 @@ async def kb_fragment_editor(
             text(
                 """
                 SELECT
-                  id, key, locale, state, topic_category, text, meta_json,
-                  json_extract(meta_json, '$.chunk_id')    AS chunk_id,
-                  json_extract(meta_json, '$.chunk_seq')   AS chunk_seq,
-                  json_extract(meta_json, '$.char_start')  AS char_start,
-                  json_extract(meta_json, '$.char_end')    AS char_end
+                  id,
+                  source_id,
+                  key,
+                  locale,
+                  state,
+                  topic_category,
+                  text,
+                  meta_json,
+                  json_extract(meta_json, '$.chunk_id')   AS chunk_id,
+                  json_extract(meta_json, '$.chunk_seq')  AS chunk_seq,
+                  json_extract(meta_json, '$.char_start') AS char_start,
+                  json_extract(meta_json, '$.char_end')   AS char_end
                 FROM kb_fragments
                 WHERE id=:id
                 """
@@ -370,13 +377,15 @@ async def kb_fragment_editor(
         {"request": request, "frag": data},
     )
 
+
 @router.post("/kb/fragment/{fragment_id}/save", response_class=HTMLResponse, name="kb_fragment_save")
 async def kb_fragment_save(
     request: Request,
     fragment_id: int,
     text_value: str = Form(..., alias="text"),
-    meta_json_value: str = Form("", alias="meta_json"),
     state_value: str = Form("", alias="state"),
+    requires_rewrite_value: str | None = Form(None, alias="requires_rewrite"),
+    meta_json_value: str = Form("", alias="meta_json"),
     session: AsyncSession = Depends(get_staging_session),
 ) -> HTMLResponse:
     new_text = (text_value or "").replace("\r\n", "\n").replace("\r", "\n").strip()
@@ -390,7 +399,9 @@ async def kb_fragment_save(
     meta_obj = _json_load(new_meta_raw)
     meta_obj["edited_in_admin_ui"] = True
 
-    # узнаём прошлый state (если хочешь логировать события — позже допишем)
+    # checkbox: если пришёл параметр — считаем True
+    meta_obj["requires_rewrite"] = requires_rewrite_value is not None
+
     await session.execute(
         text(
             """
@@ -399,13 +410,28 @@ async def kb_fragment_save(
             WHERE id=:id
             """
         ),
-        {"t": new_text, "s": new_state, "m": json.dumps(meta_obj, ensure_ascii=False), "id": fragment_id},
+        {
+            "t": new_text,
+            "s": new_state,
+            "m": json.dumps(meta_obj, ensure_ascii=False),
+            "id": fragment_id,
+        },
     )
     await session.commit()
 
-    return templates.TemplateResponse(
-        "admin/_kb_save_ok.html",
-        {"request": request, "what": f"fragment#{fragment_id} saved"},
+    # ВАЖНО: возвращаем data-* для обновления строки в таблице без reload
+    return HTMLResponse(
+        f"""
+        <span class="badge ok kb-save-ok"
+              data-kb-saved="1"
+              data-kind="fragment"
+              data-id="{fragment_id}"
+              data-state="{new_state}">
+          saved
+        </span>
+        """
     )
+
+
 
 

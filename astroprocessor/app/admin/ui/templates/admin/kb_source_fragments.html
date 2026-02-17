@@ -108,7 +108,8 @@
                 hx-swap="innerHTML">
 
             <td class="mono">{{ f.id }}</td>
-            <td><span class="pill pill-{{ f.state }}">{{ f.state }}</span></td>
+            <td><span class="pill pill-{{ f.state }}" data-role="state-pill">{{ f.state }}</span></td>
+
 
             <td class="mono">
                 {% if cid %}

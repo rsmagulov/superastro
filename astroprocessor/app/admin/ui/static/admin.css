@@ -261,3 +261,69 @@ summary { cursor: pointer; }
 .kb-row.is-selected {
   background: rgba(120, 170, 255, 0.12);
 }
+.kb-editor-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.02);
+}
+
+.kb-editor-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kb-editor-form .kb-editor-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+.kb-quick .btn {
+  padding: 6px 10px;
+}
+.kb-editor-head{
+  display:flex;
+  gap:12px;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:10px;
+}
+.kb-editor-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.btn-small{
+  padding:6px 10px;
+  font-size:12px;
+}
+.kb-editor-form .kb-form-row{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:end;
+  margin-bottom:10px;
+}
+.kb-flags{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-width:220px;
+}
+.kb-flag{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  font-size:13px;
+}
+.kb-save-ok{
+  margin-left:8px;
+}

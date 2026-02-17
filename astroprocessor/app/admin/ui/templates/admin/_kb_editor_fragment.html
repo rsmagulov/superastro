@@ -1,79 +1,92 @@
 {% if not frag %}
-  <div class="kb-editor">
-    <div class="kb-editor__header">
-      <h3>Fragment not found</h3>
-    </div>
-  </div>
+  <div class="muted">Fragment not found.</div>
 {% else %}
 
-{% set meta = frag.meta or {} %}
-{% set chunk_id = frag.chunk_id if frag.chunk_id is defined and frag.chunk_id is not none else meta.get('chunk_id') %}
-{% set chunk_seq = frag.chunk_seq if frag.chunk_seq is defined and frag.chunk_seq is not none else meta.get('chunk_seq') %}
-{% set char_start = frag.char_start if frag.char_start is defined and frag.char_start is not none else meta.get('char_start') %}
-{% set char_end = frag.char_end if frag.char_end is defined and frag.char_end is not none else meta.get('char_end') %}
+{% set meta = (frag.meta if frag.meta else {}) %}
+{% set cid = frag.chunk_id if frag.chunk_id is not none else meta.get('chunk_id','') %}
+{% set cseq = frag.chunk_seq if frag.chunk_seq is not none else meta.get('chunk_seq','') %}
+{% set cs = frag.char_start if frag.char_start is not none else meta.get('char_start','') %}
+{% set ce = frag.char_end if frag.char_end is not none else meta.get('char_end','') %}
 
-<div class="kb-editor">
-  <div class="kb-editor__header">
-    <div class="kb-editor__title">
-      <div class="kb-hline">
-        <strong>FRAGMENT #{{ frag.id }}</strong>
-        <span class="mono">key={{ frag.key }}</span>
-        <span class="pill pill-{{ frag.state }}">{{ frag.state }}</span>
-      </div>
-
-      <div class="kb-hline">
-        <strong>CHUNK</strong>
-        {% if chunk_id %}
-          <a class="kb-link mono"
-             href="#"
-             hx-get="/admin/ui/kb/chunk/{{ chunk_id }}"
-             hx-target="#editor_body"
-             hx-swap="innerHTML">
-            #{{ chunk_id }}
-          </a>
-        {% else %}
-          <span class="mono">—</span>
-        {% endif %}
-        <span class="mono">seq={{ chunk_seq if chunk_seq is not none else '—' }}</span>
-        <span class="mono">offsets={{ char_start if char_start is not none else '—' }}..{{ char_end if char_end is not none else '—' }}</span>
-      </div>
-
-      <div class="kb-hline small muted">
-        topic={{ frag.topic_category }} · locale={{ frag.locale }}
-      </div>
+<div class="kb-editor-head">
+  <div class="kb-editor-title">
+    <div class="mono">
+      FRAGMENT #{{ frag.id }}
+      <span class="muted">/</span>
+      <span class="muted">{{ frag.key }}</span>
+    </div>
+    <div class="muted" style="margin-top:4px;">
+      CHUNK:
+      {% if cid %}
+        <a href="#"
+           class="kb-link"
+           hx-get="/admin/ui/kb/chunk/{{ cid }}"
+           hx-target="#editor_body"
+           hx-swap="innerHTML"
+           onclick="event.preventDefault(); event.stopPropagation();">
+          #{{ cid }}
+        </a>
+      {% else %}
+        —
+      {% endif %}
+      <span class="muted">/</span>
+      seq: <span class="mono">{{ cseq }}</span>
+      <span class="muted">/</span>
+      offsets: <span class="mono">{% if cs != '' and ce != '' %}{{ cs }}..{{ ce }}{% else %}—{% endif %}</span>
     </div>
   </div>
 
-  <div class="kb-editor__body">
-    <form hx-post="/admin/ui/kb/fragment/{{ frag.id }}/save" hx-target="#kb_save_status" hx-swap="innerHTML">
-      <div class="kb-form-row">
-        <label>State</label>
-        <select name="state">
-          {% for st in ['draft','needs_review','reviewed','annotated','validated','enabled','archived'] %}
-            <option value="{{ st }}" {% if st == frag.state %}selected{% endif %}>{{ st }}</option>
-          {% endfor %}
-        </select>
-
-        <label class="kb-check">
-          <input type="checkbox" name="requires_rewrite" {% if meta.get('requires_rewrite') %}checked{% endif %}/>
-          requires_rewrite
-        </label>
-      </div>
-
-      <label class="kb-label">Text</label>
-      <textarea name="text" class="kb-textarea" rows="16">{{ frag.text }}</textarea>
-
-      <details class="kb-details">
-        <summary>meta_json (advanced)</summary>
-        <textarea name="meta_json" class="kb-textarea mono" rows="8">{{ frag.meta_json }}</textarea>
-      </details>
-
-      <div class="kb-actions">
-        <button type="submit" class="btn btn-primary">Save fragment</button>
-        <div id="kb_save_status" class="kb-save-status"></div>
-      </div>
-    </form>
+  <div class="kb-editor-actions">
+    <button class="btn btn-small" type="button" onclick="kbQuickSetFragmentState('needs_review')">needs_review</button>
+    <button class="btn btn-small" type="button" onclick="kbQuickSetFragmentState('validated')">validated</button>
+    <button class="btn btn-small" type="button" onclick="kbQuickSetFragmentState('enabled')">enabled</button>
   </div>
 </div>
+
+<form id="kb-frag-form"
+      class="kb-editor-form"
+      hx-post="/admin/ui/kb/fragment/{{ frag.id }}/save"
+      hx-target="#kb-save-status"
+      hx-swap="innerHTML">
+
+  <div class="kb-form-row">
+    <div style="min-width:220px;">
+      <label class="muted">state</label>
+      {% set st = (frag.state or "needs_review") %}
+      <select id="kb-frag-state" name="state">
+        <option value="draft" {% if st=="draft" %}selected{% endif %}>draft</option>
+        <option value="needs_review" {% if st=="needs_review" %}selected{% endif %}>needs_review</option>
+        <option value="reviewed" {% if st=="reviewed" %}selected{% endif %}>reviewed</option>
+        <option value="annotated" {% if st=="annotated" %}selected{% endif %}>annotated</option>
+        <option value="validated" {% if st=="validated" %}selected{% endif %}>validated</option>
+        <option value="enabled" {% if st=="enabled" %}selected{% endif %}>enabled</option>
+        <option value="archived" {% if st=="archived" %}selected{% endif %}>archived</option>
+      </select>
+    </div>
+
+    <div class="kb-flags">
+      <label class="muted">flags</label>
+      <label class="kb-flag">
+        <input type="checkbox" name="requires_rewrite" {% if meta.get('requires_rewrite') %}checked{% endif %} />
+        requires_rewrite
+      </label>
+      {% if meta.get('validator_profile') %}
+        <span class="badge ok">{{ meta.get('validator_profile') }}</span>
+      {% endif %}
+    </div>
+
+    <div style="margin-left:auto; display:flex; gap:8px; align-items:end;">
+      <button class="btn" type="submit">Save</button>
+      <span id="kb-save-status" class="muted"></span>
+    </div>
+  </div>
+
+  <label class="muted">text</label>
+  <textarea name="text" rows="14" style="width:100%;">{{ frag.text }}</textarea>
+
+  <label class="muted" style="margin-top:10px;">meta_json (advanced)</label>
+  <textarea name="meta_json" rows="6" style="width:100%;">{{ frag.meta_json or "" }}</textarea>
+
+</form>
 
 {% endif %}
