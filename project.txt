@@ -50,6 +50,7 @@ C:\Projects\superastro
 |   |   |   \---ui
 |   |   |       |   constants.py
 |   |   |       |   forms.py
+|   |   |       |   kb_router.py
 |   |   |       |   router.py
 |   |   |       |   router.py.old
 |   |   |       |   router.zip
@@ -70,6 +71,12 @@ C:\Projects\superastro
 |   |   |       |           dashboard.html
 |   |   |       |           health.html
 |   |   |       |           items.html
+|   |   |       |           kb_chunk_view.html
+|   |   |       |           kb_fragment_view.html
+|   |   |       |           kb_sources.html
+|   |   |       |           kb_source_chunks.html
+|   |   |       |           kb_source_detail.html
+|   |   |       |           kb_source_fragments.html
 |   |   |       |           labeling.html
 |   |   |       |           settings.html
 |   |   |       |           sources.html
@@ -81,6 +88,9 @@ C:\Projects\superastro
 |   |   |       |           _items_table_block.html
 |   |   |       |           _item_editor.html
 |   |   |       |           _item_row.html
+|   |   |       |           _kb_editor_chunk.html
+|   |   |       |           _kb_editor_fragment.html
+|   |   |       |           _kb_save_ok.html
 |   |   |       |           _layout.html
 |   |   |       |           _pagination.html
 |   |   |       |           _save_response.html
@@ -89,6 +99,7 @@ C:\Projects\superastro
 |   |   |       |           
 |   |   |       \---__pycache__
 |   |   |               constants.cpython-312.pyc
+|   |   |               kb_router.cpython-312.pyc
 |   |   |               router.cpython-312.pyc
 |   |   |               sources_router.cpython-312.pyc
 |   |   |               
@@ -109,7 +120,6 @@ C:\Projects\superastro
 |   |   |   |   builder.py
 |   |   |   |   cli.py
 |   |   |   |   cli.py.old
-|   |   |   |   cli_full.py
 |   |   |   |   meta_schema.py
 |   |   |   |   models.py
 |   |   |   |   schema.py
@@ -252,7 +262,9 @@ C:\Projects\superastro
 |   |   |               5_house_space_and_cusps.txt
 |   |   |               6_aspects.txt
 |   |   |               7_aspect_configurations.txt
+|   |   |               Andreev_Pavel_Astrologia_Vse_tayny.fb2
 |   |   |               Andreev_Pavel_Astrologia_Vse_tayny.pdf
+|   |   |               Andreev_Pavel_Astrologia_Vse_tayny_karty.pdf
 |   |   |               Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.pdf
 |   |   |               Pavel_Andreev_Astrologia_dlya_zhizni.pdf
 |   |   |               П. Андреев - Биоастрология.epub
@@ -264,6 +276,8 @@ C:\Projects\superastro
 |   |   |   \---books
 |   |   +---staging
 |   |   |       staging.db
+|   |   |       staging.db-shm
+|   |   |       staging.db-wal
 |   |   |       
 |   |   \---uploads
 |   +---knowledge

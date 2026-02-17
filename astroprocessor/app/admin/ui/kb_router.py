@@ -37,6 +37,25 @@ def _json_load(s: Any) -> dict[str, Any]:
         return {}
 
 
+# Topic-gate topics (must match app.knowledge.topic_gate_ru_natal.NatalTopicGate topic keys)
+KB_TOPIC_OPTIONS: list[str] = [
+    "elements_ip",
+    "planets",
+    "signs",
+    "houses_rulers",
+    "angles_space",
+    "aspects",
+    "aspect_configs",
+]
+
+
+def _render_topics_html(meta: dict[str, Any]) -> str:
+    topics = meta.get("topics") or []
+    if not isinstance(topics, list):
+        return ""
+    return "".join(f'<span class="badge badge-ok">{t}</span>' for t in topics if t)
+
+
 @router.get("/kb/sources", response_class=HTMLResponse, name="kb_sources_page")
 async def kb_sources_page(
     request: Request,
@@ -137,6 +156,7 @@ async def kb_source_detail_page(
         },
     )
 
+
 @router.get("/kb/source/{source_id}/chunks", response_class=HTMLResponse, name="kb_source_chunks_page")
 async def kb_source_chunks_page(
     request: Request,
@@ -197,6 +217,7 @@ async def kb_source_fragments_page(
     state: str | None = None,
     q: str | None = None,
     chunk_seq: str | None = None,  # важно: str, чтобы chunk_seq="" не давал 422
+    topic: str | None = None,
     session: AsyncSession = Depends(get_staging_session),
 ) -> HTMLResponse:
     src = (
@@ -227,7 +248,9 @@ async def kb_source_fragments_page(
         params["state"] = state
 
     if q:
-        where.append("(key LIKE :q OR text LIKE :q)")
+        where.append(
+            "(key LIKE :q OR text LIKE :q OR EXISTS (SELECT 1 FROM json_each(meta_json, '$.topics') WHERE value LIKE :q))"
+        )
         params["q"] = f"%{q}%"
 
     chunk_seq_val: int | None = None
@@ -239,6 +262,21 @@ async def kb_source_fragments_page(
     if chunk_seq_val is not None:
         where.append("json_extract(meta_json, '$.chunk_seq') = :chunk_seq")
         params["chunk_seq"] = chunk_seq_val
+
+    topic_list: list[str] = []
+    if topic:
+        # topic can be "planets" or "planets,houses_rulers"
+        topic_list = [t.strip() for t in str(topic).split(",") if t.strip()]
+
+    if topic_list:
+        # OR: match any topic in list
+        or_parts = []
+        for i, t in enumerate(topic_list):
+            key = f"topic_{i}"
+            or_parts.append(f"EXISTS (SELECT 1 FROM json_each(meta_json, '$.topics') WHERE value = :{key})")
+            params[key] = t
+        where.append("(" + " OR ".join(or_parts) + ")")
+
 
     sql = f"""
         SELECT
@@ -265,19 +303,21 @@ async def kb_source_fragments_page(
             "tab": "fragments",
             "source": dict(src),
             "fragments": fragments,
+            "topic_options": KB_TOPIC_OPTIONS,
             "filters": {
                 "state": state or "",
                 "q": q or "",
                 "chunk_seq": "" if chunk_seq_val is None else str(chunk_seq_val),
+                "topic": topic or "",
             },
         },
     )
 
 
-
 # -------------------------
 # HTMX: load editors
 # -------------------------
+
 
 @router.get("/kb/chunk/{chunk_id}", response_class=HTMLResponse, name="kb_chunk_editor")
 async def kb_chunk_editor(
@@ -330,7 +370,6 @@ async def kb_chunk_save(
     )
     await session.commit()
 
-    # возвращаем маленький “ok” блок в редактор
     return templates.TemplateResponse(
         "admin/_kb_save_ok.html",
         {"request": request, "what": f"chunk#{chunk_id} saved"},
@@ -399,7 +438,6 @@ async def kb_fragment_save(
     meta_obj = _json_load(new_meta_raw)
     meta_obj["edited_in_admin_ui"] = True
 
-    # checkbox: если пришёл параметр — считаем True
     meta_obj["requires_rewrite"] = requires_rewrite_value is not None
 
     await session.execute(
@@ -419,19 +457,22 @@ async def kb_fragment_save(
     )
     await session.commit()
 
-    # ВАЖНО: возвращаем data-* для обновления строки в таблице без reload
+    # ВАЖНО: возвращаем data-* + topics HTML для обновления строки в таблице без reload
+    topics_html = _render_topics_html(meta_obj)
+
     return HTMLResponse(
         f"""
-        <span class="badge ok kb-save-ok"
+        <span class="badge badge-ok kb-save-ok"
               data-kb-saved="1"
               data-kind="fragment"
               data-id="{fragment_id}"
               data-state="{new_state}">
           saved
         </span>
+        <span class="kb-save-topics"
+              data-kb-topics="1"
+              data-kind="fragment"
+              data-id="{fragment_id}"
+              style="display:none">{topics_html}</span>
         """
     )
-
-
-
-

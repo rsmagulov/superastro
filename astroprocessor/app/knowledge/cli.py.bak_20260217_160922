@@ -1415,43 +1415,8 @@ def _normalize_text(s: str) -> str:
     s = re.sub(r"\n{3,}", "\n\n", s)
     s = s.strip()
     s = re.sub(r"^[©\u00a9]+\s*", "", s)  # лечим “©Далее…” → “Далее…”
-    s = s or ""
-    if _looks_like_mojibake(s):
-        s = _try_unmojibake_cp1251(s)
     return s
 
-# Маркеры битой декодировки (несколько популярных "семейств"):
-# 1) UTF-8 -> cp1251: "Р…/С…/вЂ…"
-# 2) UTF-8 -> latin1: "Ð…/Ñ…"
-# 3) UTF-8 -> cp866/koi8-r: частые "п²п╣п╦...", "О╩©", "Б─▌" и т.п.
-_MOJIBAKE_RE = re.compile(
-    r"(?:"
-    r"Р[А-Яа-яЁё]|С[А-Яа-яЁё]|вЂ[“”«»—–…]|Ð|Ñ"                 # cp1251/latin1
-    r"|О╩©"                                                   # часто в начале (BOM/служебное) при cp866/koi8-r
-    r"|Б─▌"                                                   # ABBYY/квадратики в cp866/koi8-r
-    r"|п[²³¹º»¼½¾¿]"                                          # 'п' + суперскрипты (типично для cp866-mojibake)
-    r"|п[╣╦╥╨╤]"                                              # 'п' + псевдографика/служебные (часто встречается)
-    r")"
-)
-_MOJIBAKE_RS_RE = re.compile(r"[РС][А-Яа-яЁё]")
-
-def _looks_like_mojibake(s: str) -> bool:
-    if not s:
-        return False
-    # Достаточно 2–3 маркеров на строку/абзац, чтобы считать это mojibake.
-    return len(_MOJIBAKE_RE.findall(s)) >= 2
-
-def _try_unmojibake_cp1251(s: str) -> str:
-    # UTF-8 bytes were decoded as cp1251 => reverse:
-    try:
-        fixed = s.encode("cp1251", errors="strict").decode("utf-8", errors="strict")
-    except Exception:
-        return s
-
-    # простой “скоринг”: стало ли меньше маркеров mojibake
-    if len(_MOJIBAKE_RE.findall(fixed)) < len(_MOJIBAKE_RE.findall(s)):
-        return fixed
-    return s
 
 # ----------------------------
 # Sanitation (atomize gate, v1)
@@ -1915,10 +1880,6 @@ def _garble_score(s: str) -> float:
     if not s:
         return 0.0
 
-    if _looks_like_mojibake(s):
-    # слабее чем box-drawing, но всё равно сильный сигнал
-        return 0.5
-
     bad = len(_BOX_GARBLE_RE.findall(s))
     if bad == 0:
         return 0.0
@@ -2049,76 +2010,17 @@ def _normalize_text_ingest(s: str) -> str:
     s = re.sub(r"\n{3,}", "\n\n", s)
     s = s.strip()
     s = re.sub(r"^[©\u00a9]+\s*", "", s)
-    if _looks_like_mojibake(s):
-        s = _try_unmojibake_cp1251(s)
     return s
 
 
 def _decode_bytes_best_effort(data: bytes) -> str:
-    """
-    Decode bytes to text with a SAFE priority order.
-
-    Rule:
-    - Always prefer UTF-8 (and UTF-8-SIG) if it decodes strictly.
-    - If the byte stream looks like UTF-16 (lots of NULs) -> try UTF-16 variants strictly.
-    - Only then try legacy encodings (cp1251/koi8-r/cp866) with scoring.
-
-    This prevents the common bug: UTF-8 content getting "successfully" decoded as koi8-r/cp866,
-    producing box-drawing garbage (╘╤ etc) and poisoning chunks.
-    """
-    if not data:
-        return ""
-
-    # 1) Strong preference: UTF-8 / UTF-8 with BOM
-    for enc in ("utf-8-sig", "utf-8"):
+    # deterministic fallback chain
+    for enc in ("utf-8-sig", "utf-8", "windows-1251", "cp1251", "koi8-r", "cp866", "latin-1"):
         try:
-            return data.decode(enc, errors="strict")
-        except Exception:
-            pass
-
-    # 2) UTF-16 detection: lots of NUL bytes
-    nul_ratio = data.count(b"\x00") / max(1, len(data))
-    if nul_ratio > 0.05:
-        for enc in ("utf-16", "utf-16-le", "utf-16-be"):
-            try:
-                return data.decode(enc, errors="strict")
-            except Exception:
-                pass
-
-    # 3) Legacy fallback with scoring (ONLY if UTF-8/UTF-16 didn't work strictly)
-    candidates = ("windows-1251", "cp1251", "koi8-r", "cp866", "latin-1")
-    best_s: str | None = None
-    best_score = 1e18
-
-    for enc in candidates:
-        try:
-            s = data.decode(enc, errors="strict")
+            return data.decode(enc)
         except Exception:
             continue
-
-        score = 0.0
-        # NULs inside decoded string almost always mean wrong decoding
-        score += 50.0 * s.count("\x00")
-        # Known mojibake markers (your _MOJIBAKE_RE)
-        score += 10.0 * len(_MOJIBAKE_RE.findall(s))
-        # Box drawing / currency sign is a VERY strong signal of wrong codepage
-        score += 1000.0 * (1.0 if _garble_score(s) >= 0.5 else 0.0)
-
-        # If bytes had many NULs but we are not using utf-16* -> penalize hard
-        if nul_ratio > 0.05 and not enc.startswith("utf-16"):
-            score += 2000.0
-
-        if score < best_score:
-            best_score = score
-            best_s = s
-
-    if best_s is not None:
-        return best_s
-
-    # last-resort
     return data.decode("utf-8", errors="ignore")
-
-
 
 
 class _HTMLTextExtractor(HTMLParser):
@@ -3415,11 +3317,10 @@ def _atomize_chunk(
 
             cur_len = buf_end - buf_start
             if cur_len >= target_min and last_safe_end is not None:
-                flush_end = last_safe_end
-                _flush(flush_end)
+                _flush(last_safe_end)
                 # if we flushed before current sentence end (rare), reopen buffer for remainder
-                if unit_end > flush_end:
-                    buf_start = flush_end
+                if unit_end > last_safe_end:
+                    buf_start = last_safe_end
                     buf_end = unit_end
                     last_safe_end = unit_end
 
@@ -3448,7 +3349,6 @@ def _atomize_chunk(
 
 
 def cmd_atomize(args: argparse.Namespace) -> int:
-    sid = None
     min_sent_letters = int(getattr(args, "min_sent_letters", 40) or 40)
     source_id = int(getattr(args, "source_id", 0) or 0)
     do_all = bool(getattr(args, "all", False))
@@ -3558,7 +3458,7 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                 if reason is not None:
                     skipped_sanitation += 1
                     skipped_reasons[reason] = skipped_reasons.get(reason, 0) + 1
-                    if sid is not None and dump_skipped > 0 and len(skipped_examples) < dump_skipped:
+                    if dump_skipped > 0 and len(skipped_examples) < dump_skipped:
                         src = src_meta.get(sid, {})
                         skipped_examples.append(
                             {
@@ -3583,7 +3483,7 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                     if not gate_result.accepted:
                         skipped_topic += 1
                         skipped_topic_reasons["no_topic"] += 1
-                        if sid is not None and dump_topic_rejected > 0 and len(topic_rejected_examples) < dump_topic_rejected:
+                        if dump_topic_rejected > 0 and len(topic_rejected_examples) < dump_topic_rejected:
                             src = src_meta.get(sid, {})
                             topic_rejected_examples.append(
                                 {
@@ -3731,7 +3631,40 @@ def cmd_atomize(args: argparse.Namespace) -> int:
             "topic_threshold": topic_threshold,
             "include_topics": include_topics,
         }
-        
+        if dump_skipped > 0 and len(skipped_examples) < dump_skipped:
+            src = src_meta.get(sid, {})
+            skipped_examples.append(
+                {
+                    "reason": reason,
+                    "source_id": sid,
+                    "source_title": src.get("title") or None,
+                    "source_author": src.get("author") or None,
+                    "chunk_id": chunk_id,
+                    "chunk_seq": int(r["seq"]),
+                    "char_start": int(cs),
+                    "char_end": int(ce),
+                    "snippet": _snippet_for_report(atom_text, 240),
+                }
+            )
+        if dump_topic_rejected > 0 and len(topic_rejected_examples) < dump_topic_rejected:
+            src = src_meta.get(sid, {})
+            topic_rejected_examples.append(
+                {
+                    "reason": gate_result.reason,
+                    "source_id": sid,
+                    "source_title": src.get("title") or None,
+                    "source_author": src.get("author") or None,
+                    "chunk_id": chunk_id,
+                    "chunk_seq": int(r["seq"]),
+                    "char_start": int(cs),
+                    "char_end": int(ce),
+                    "topics": gate_result.topics,
+                    "topic_scores": gate_result.topic_scores,
+                    "total_score": gate_result.total_score,
+                    "snippet": _snippet_for_report(atom_text, 240),
+                }
+            )
+
         if dump_skipped > 0:
             report["skipped_examples"] = skipped_examples
 

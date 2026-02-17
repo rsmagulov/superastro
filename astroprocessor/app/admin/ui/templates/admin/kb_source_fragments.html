@@ -31,6 +31,18 @@
         </select>
     </div>
 
+    <div>
+        <label class="muted">topic</label>
+        {% set tp = (filters.topic or "") %}
+        <select name="topic">
+          <option value="" {% if tp=="" %}selected{% endif %}>any</option>
+          {% for t in topic_options %}
+            <option value="{{ t }}" {% if tp==t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+        <div class="muted small">multi: planets,houses_rulers</div>
+    </div>
+
     <div style="min-width:140px;">
         <label class="muted">chunk_seq</label>
         <input name="chunk_seq" value="{{ filters.chunk_seq }}" placeholder="12" />
@@ -38,7 +50,7 @@
 
     <div style="min-width:260px;">
         <label class="muted">search</label>
-        <input name="q" value="{{ filters.q }}" placeholder="key/text contains..." style="width:100%;" />
+        <input name="q" value="{{ filters.q }}" placeholder="key/text/topics contains..." style="width:100%;" />
     </div>
 
     <button class="btn" type="submit">Apply</button>
@@ -48,20 +60,52 @@
     <div style="flex-basis:100%; height:0;"></div>
 
     <div class="muted" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-        <span>Quick:</span>
+        <span>Quick state:</span>
+
         <a class="btn"
-            href="/admin/ui/kb/source/{{ source.id }}/fragments?state=needs_review{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?state=needs_review{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}{% if filters.topic %}&topic={{ filters.topic|urlencode }}{% endif %}">
             needs_review
         </a>
+
         <a class="btn"
-            href="/admin/ui/kb/source/{{ source.id }}/fragments?state=validated{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?state=validated{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}{% if filters.topic %}&topic={{ filters.topic|urlencode }}{% endif %}">
             validated
         </a>
+
         <a class="btn"
-            href="/admin/ui/kb/source/{{ source.id }}/fragments?state=enabled{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?state=enabled{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}{% if filters.topic %}&topic={{ filters.topic|urlencode }}{% endif %}">
             enabled
         </a>
+
+        <span style="margin-left:10px;">Quick topics:</span>
+
+        <a class="btn"
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?topic=planets{% if filters.state %}&state={{ filters.state|urlencode }}{% endif %}{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            planets
+        </a>
+
+        <a class="btn"
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?topic=houses_rulers{% if filters.state %}&state={{ filters.state|urlencode }}{% endif %}{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            houses_rulers
+        </a>
+
+        <a class="btn"
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?topic=aspects{% if filters.state %}&state={{ filters.state|urlencode }}{% endif %}{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            aspects
+        </a>
+
+        <a class="btn"
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?topic=aspect_configs{% if filters.state %}&state={{ filters.state|urlencode }}{% endif %}{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            aspect_configs
+        </a>
+
+        <a class="btn"
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?topic=planets,houses_rulers{% if filters.state %}&state={{ filters.state|urlencode }}{% endif %}{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            planets+houses
+        </a>
+
     </div>
+
 
     </form>
 
@@ -79,6 +123,7 @@
             <th>Chunk seq</th>
             <th>Offsets</th>
             <th>Flags</th>
+            <th>Topics</th>
             <th>Len</th>
             <th>Key</th>
         </tr>
@@ -92,6 +137,7 @@
             {% set ce = meta.get('char_end','') %}
             {% set rw = meta.get('requires_rewrite', false) %}
             {% set vp = meta.get('validator_profile','') %}
+            {% set topics = meta.get('topics', []) %}
 
             <tr class="kb-row"
                 onclick="kbSelectRow(this)"
@@ -109,7 +155,6 @@
 
             <td class="mono">{{ f.id }}</td>
             <td><span class="pill pill-{{ f.state }}" data-role="state-pill">{{ f.state }}</span></td>
-
 
             <td class="mono">
                 {% if cid %}
@@ -136,9 +181,17 @@
                 {% endif %}
             </td>
 
-            <td>
-                {% if rw %}<span class="badge warn">needs_rewrite</span>{% endif %}
-                {% if vp %}<span class="badge ok">{{ vp }}</span>{% endif %}
+            <td data-role="flags-cell">
+                {% if rw %}<span class="badge badge-warn">needs_rewrite</span>{% endif %}
+                {% if vp %}<span class="badge badge-ok">{{ vp }}</span>{% endif %}
+            </td>
+
+            <td data-role="topics-cell" class="kb-badges">
+                {% if topics and topics is iterable %}
+                    {% for t in topics %}
+                        <span class="badge badge-ok">{{ t }}</span>
+                    {% endfor %}
+                {% endif %}
             </td>
 
             <td class="mono">{{ f.text_len }}</td>

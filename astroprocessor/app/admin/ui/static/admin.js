@@ -23,7 +23,7 @@ window.kbQuickSetFragmentState = function (state) {
   else form.submit();
 };
 
-// After save: update selected row pill/state without reload
+// After save: update selected row pill/state (+ topics) without reload
 document.body.addEventListener("htmx:afterSwap", function (evt) {
   const target = evt.detail && evt.detail.target ? evt.detail.target : null;
   if (!target) return;
@@ -55,6 +55,12 @@ document.body.addEventListener("htmx:afterSwap", function (evt) {
         .trim();
       pill.classList.add("pill-" + state);
       pill.textContent = state;
+
+      const topicsEl = target.querySelector(`[data-kb-topics='1'][data-kind="fragment"][data-id="${id}"]`);
+      if (topicsEl) {
+        const topicsCell = row.querySelector('[data-role="topics-cell"]');
+        if (topicsCell) topicsCell.innerHTML = topicsEl.innerHTML;
+      }
     }
   }
 });

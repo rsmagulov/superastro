@@ -18,93 +18,6 @@ from typing import Any, Iterable, Optional
 from datetime import datetime, timezone
 from app.knowledge.sql import sql_norm
 
-
-# ============================================================
-# Text decoding helpers (best-effort)
-# ============================================================
-
-_ZERO_WIDTH_RE = re.compile(r"[\u200B-\u200F\uFEFF]")
-_CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
-
-# common mojibake markers (UTF-8 bytes decoded as cp1251/latin1 etc.)
-_MOJIBAKE_RE = re.compile(r"(?:Р[А-Яа-я]|С[А-Яа-я]|вЂ[“”«»—–…]|Ð|Ñ)")
-
-def _looks_like_mojibake(s: str) -> bool:
-    if not s:
-        return False
-    return len(_MOJIBAKE_RE.findall(s)) >= 3
-
-def _try_unmojibake_cp1251(s: str) -> str:
-    """
-    Reverse common case: UTF-8 bytes were decoded as CP1251 earlier,
-    producing 'Р…/С…/вЂ…' sequences. Try to restore.
-    """
-    try:
-        fixed = s.encode("cp1251", errors="strict").decode("utf-8", errors="strict")
-    except Exception:
-        return s
-
-    # accept only if markers reduced
-    if len(_MOJIBAKE_RE.findall(fixed)) < len(_MOJIBAKE_RE.findall(s)):
-        return fixed
-    return s
-
-def _normalize_text_ingest(s: str) -> str:
-    s = (s or "").replace("\r\n", "\n").replace("\r", "\n")
-    s = re.sub(r"[ \t]+", " ", s)
-    s = re.sub(r"\n{3,}", "\n\n", s).strip()
-    if _looks_like_mojibake(s):
-        s = _try_unmojibake_cp1251(s)
-    return s
-
-def _decode_bytes_best_effort(data: bytes) -> str:
-    """
-    Decode unknown text bytes with a deterministic heuristic.
-    Tries UTF-8(+BOM), UTF-16 (LE/BE), and common Russian encodings.
-    """
-    if not data:
-        return ""
-
-    nul_ratio = data.count(b"\x00") / max(1, len(data))
-    candidates = [
-        "utf-8-sig",
-        "utf-8",
-        "utf-16",
-        "utf-16-le",
-        "utf-16-be",
-        "windows-1251",
-        "cp1251",
-        "koi8-r",
-        "cp866",
-    ]
-
-    best_s: str | None = None
-    best_score = 1e18
-
-    for enc in candidates:
-        try:
-            s = data.decode(enc, errors="strict")
-        except Exception:
-            continue
-
-        score = 0.0
-        # NULs in decoded string usually mean wrong codec
-        score += 50.0 * s.count("\x00")
-        # mojibake markers are a strong signal
-        score += 10.0 * len(_MOJIBAKE_RE.findall(s))
-        # if bytes had many NULs, prefer utf-16*
-        if nul_ratio > 0.05 and not enc.startswith("utf-16"):
-            score += 200.0
-
-        if score < best_score:
-            best_score = score
-            best_s = s
-
-    if best_s is None:
-        best_s = data.decode("utf-8", errors="ignore")
-
-    return best_s
-
 def _utc_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -134,80 +47,39 @@ def _html_to_text(s: str) -> str:
 
 
 def _read_fb2_to_text(path: Path) -> str:
-    """
-    Robust FB2 -> plain text.
+    raw = path.read_text(encoding="utf-8", errors="replace")
+    root = ET.fromstring(raw)
 
-    Reads bytes, lets ElementTree handle XML prolog encoding,
-    extracts only <p> paragraphs from <body>, ignores <binary>,
-    and avoids falling back to raw XML.
-    """
-    data = path.read_bytes()
-
-    # Strip UTF-8 BOM if present (so ET doesn't get confused in edge cases)
-    if data.startswith(b"\xef\xbb\xbf"):
-        data = data[3:]
-
-    root = ET.fromstring(data)
-
-    # FB2 namespace handling
-    ns = ""
-    if root.tag.startswith("{"):
-        ns = root.tag.split("}")[0] + "}"
-
-    def _t(el: Any) -> str:
-        # itertext() pulls text inside nested tags, not the tags themselves
-        return ("".join(el.itertext()) if el is not None else "").strip()
-
-    paragraphs: list[str] = []
-
-    # Preferred FB2 structure: <body> ... <p> ... </p>
-    for p in root.findall(f".//{ns}body//{ns}p"):
-        s = _t(p)
-        if s:
-            paragraphs.append(s)
-
-    # If no paragraphs found, fall back to all visible text except <binary>
-    if not paragraphs:
-        for el in root.iter():
-            tag = str(getattr(el, "tag", "") or "")
-            if "binary" in tag:
-                continue
-            s = _t(el)
-            if s:
-                paragraphs.append(s)
-
-    # join as book-like text
-    text = "\n\n".join(paragraphs)
-
-    # light cleanup (avoid huge whitespace blobs)
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n{3,}", "\n\n", text).strip()
-    text = _normalize_text_ingest(text)
-    return text
-
+    texts: list[str] = []
+    for elem in root.iter():
+        tag = elem.tag
+        if "binary" in tag:
+            continue
+        if elem.text and elem.text.strip():
+            texts.append(elem.text.strip())
+    return "\n".join(texts)
 
 
 def _read_epub_to_text(path: Path) -> str:
     texts: list[str] = []
     with zipfile.ZipFile(path, "r") as z:
-        html_names = sorted([n for n in z.namelist() if n.lower().endswith((".xhtml", ".html", ".htm"))])
+        html_names = sorted(
+            [n for n in z.namelist() if n.lower().endswith((".xhtml", ".html", ".htm"))]
+        )
         for name in html_names:
             try:
                 b = z.read(name)
             except Exception:
                 continue
-            s = _decode_bytes_best_effort(b)
+            s = b.decode("utf-8", errors="replace")
             t = _html_to_text(s)
-            t = _normalize_text_ingest(t)
             if t.strip():
                 texts.append(t.strip())
     return "\n\n".join(texts)
 
 
 def _read_rtf_to_text(path: Path) -> str:
-    b = path.read_bytes()
-    s = _decode_bytes_best_effort(b)
+    s = path.read_text(encoding="utf-8", errors="replace")
 
     s = re.sub(r"\\'[0-9a-fA-F]{2}", " ", s)
     s = s.replace("\\par", "\n")
@@ -215,10 +87,8 @@ def _read_rtf_to_text(path: Path) -> str:
     s = s.replace("{", " ").replace("}", " ")
     s = re.sub(r"[ \t]+", " ", s)
     s = re.sub(r"\n\s+\n", "\n\n", s)
-    return _normalize_text_ingest(s)
+    return s.strip()
 
-
-# ============================================================
 
 # ============================================================
 # Paths (CWD-independent)
@@ -953,9 +823,9 @@ def _convert_to_markdown(src: Path) -> tuple[str, str]:
     title = src.stem
 
     if ext == ".md":
-        return title, _normalize_text_ingest(_decode_bytes_best_effort(src.read_bytes()))
+        return title, src.read_text(encoding="utf-8", errors="replace")
     if ext == ".txt":
-        return title, _normalize_text_ingest(_decode_bytes_best_effort(src.read_bytes()))
+        return title, src.read_text(encoding="utf-8", errors="replace")
 
     if ext == ".docx":
         try:

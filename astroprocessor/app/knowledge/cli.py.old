@@ -9,10 +9,14 @@ import sqlite3
 import sys
 import zipfile
 import xml.etree.ElementTree as ET
+import html
+from html.parser import HTMLParser
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 from dataclasses import dataclass
+from app.knowledge.topic_gate_ru_natal import NatalTopicGate
+
 
 @dataclass
 class GarbleInfo:
@@ -731,6 +735,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
             {**params, "limit": int(args.limit or 1000)},
         ).fetchall()
 
+        
         if not rows:
             if as_json:
                 print(json.dumps({"checked": 0, "ok": 0, "bad": 0, "updated": 0, "items": []}, ensure_ascii=False))
@@ -1408,7 +1413,456 @@ def _normalize_text(s: str) -> str:
     s = (s or "").replace("\r\n", "\n").replace("\r", "\n")
     s = re.sub(r"[ \t]+", " ", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
-    return s.strip()
+    s = s.strip()
+    s = re.sub(r"^[©\u00a9]+\s*", "", s)  # лечим “©Далее…” → “Далее…”
+    return s
+
+
+# ----------------------------
+# Sanitation (atomize gate, v1)
+# ----------------------------
+
+_HTML_ENTITY_RE = re.compile(r"&(?:nbsp|amp|quot|lt|gt|apos|#\d+);", re.IGNORECASE)
+
+# Считаем HTML только если встречаются "взрослые" теги, а не мусор вроде <j>.
+_HTML_TAG_RE = re.compile(
+    r"(?is)</?\s*(?:p|br|div|span|ul|ol|li|table|tr|td|th|h[1-6]|strong|em|b|i|a|img)\b[^>]*>"
+)
+_TOC_TITLE_RE = re.compile(r"(?i)\b(содержание|оглавление|contents|table\s+of\s+contents)\b")
+_TOC_LINE_RE = re.compile(r"^\s*.+?(?:\.{2,}|…{2,}|\s{2,})\s*\d{1,5}\s*$")
+_PAGE_NUM_RE = re.compile(r"^\s*\d{1,5}\s*$")
+
+_ISBN_RE = re.compile(r"(?i)\bISBN(?:-1[03])?:?\s*[0-9Xx][0-9Xx\-\s]{8,}")
+_UDC_BBK_RE = re.compile(r"(?i)\b(?:УДК|ББК)\b")
+_COPYRIGHT_RE = re.compile(r"(?:©|\u00a9|\ball rights reserved\b)", re.IGNORECASE)
+
+_PUBLISHER_TAIL_RE = re.compile(
+    r"(?i)\b(издательств\w*|тираж|заказ\s*№|подписано\s+в\s+печать|отпечатано|верстка|корректор|редактор|ответственный\s+редактор)\b"
+)
+
+_WS_RE = re.compile(r"\s+")
+_NONPRINTABLE_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+# --- sanitation v2 helpers (atom-level) ---
+
+_SENT_END_RE = re.compile(r"[.!?…]+")
+_ISBN_RE = re.compile(r"\bISBN\b|\bИСБН\b", re.IGNORECASE)
+_QR_RE = re.compile(r"\bQR\b|\bкьюар\b|\bqr-?код\b", re.IGNORECASE)
+_BARCODE_RE = re.compile(r"\bштрих[ -]?код\b|\bbarcode\b", re.IGNORECASE)
+_COPYRIGHT_RE = re.compile(r"[©\u00a9]|\ball rights reserved\b", re.IGNORECASE)
+_PUBLISH_RE = re.compile(
+    r"\bиздательств\w*\b|\bтипограф\w*\b|\bтираж\b|\bотпечатан\w*\b|\bподписан\w*\b|\bзаказ\s*№\b",
+    re.IGNORECASE,
+)
+
+
+_AUTHOR_LINE_RE = re.compile(
+    r"^\s*[А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,2}\s*$"
+)
+
+_CAPS_TOKEN_RE = re.compile(r"\b[А-ЯЁ]{4,}\b")
+_BAD_OCR_RE = re.compile(r"\b[А-ЯЁ]{8,}\b")  # склеенные капслок-слова типа ВЕРШИНАДОМА
+
+def _letters_count(s: str) -> int:
+    return sum(1 for ch in s if ch.isalpha())
+
+
+def _uppercase_ratio(s: str) -> float:
+    letters = [ch for ch in s if ch.isalpha()]
+    if not letters:
+        return 0.0
+    ups = sum(1 for ch in letters if ch.isupper())
+    return ups / max(1, len(letters))
+
+
+def _caps_token_ratio(s: str) -> float:
+    tokens = re.findall(r"\b[^\W_]+\b", s, flags=re.UNICODE)
+    if not tokens:
+        return 0.0
+    caps = sum(1 for t in tokens if t.isalpha() and t.isupper() and len(t) >= 4)
+    return caps / max(1, len(tokens))
+
+
+_SENTENCE_RE = re.compile(r"[^.!?…]+[.!?…]+", re.UNICODE)
+
+def _has_complete_sentence(s: str, *, min_letters: int = 40) -> bool:
+    """
+    True if text contains at least one "real" sentence:
+      - has sentence-ending punctuation .!?…
+      - the sentence contains >= min_letters alphabetic chars
+    """
+    txt = (s or "").strip()
+    if not txt:
+        return False
+
+    for m in _SENTENCE_RE.finditer(txt):
+        sent = m.group(0)
+        if _letters_count(sent) >= min_letters:
+            return True
+
+    return False
+
+    for m in _SENTENCE_RE.finditer(txt):
+        sent = m.group(0)
+        if _letters_count(sent) >= min_letters:
+            return True
+
+    return False
+
+
+
+def _looks_like_title_or_publisher_block(s: str) -> bool:
+    if _ISBN_RE.search(s) or _UDC_BBK_RE.search(s):
+        return True
+    if _QR_RE.search(s) or _BARCODE_RE.search(s):
+        return True
+
+    # жёсткие признаки выходных данных
+    hard = 0
+    hard += 1 if _PUBLISH_RE.search(s) else 0
+    hard += 1 if _COPYRIGHT_RE.search(s) else 0
+
+    # город/год НЕ считаем “жёсткими”, они встречаются в обычном тексте
+    # (можно оставить как слабые, но не решающие)
+    weak = 0
+    weak += 1 if re.search(r"\b(москва|санкт[- ]петербург|спб)\b", s, re.IGNORECASE) else 0
+    weak += 1 if re.search(r"\b\d{4}\b", s) else 0
+
+    first_line = (s.splitlines()[:1] or [""])[0]
+    if _AUTHOR_LINE_RE.match(first_line) and (hard >= 1 or weak >= 2):
+        return True
+
+    # правило: только hard>=2 или hard>=1 + weak>=2
+    return (hard >= 2) or (hard >= 1 and weak >= 2)
+
+
+def _normalize_name_piece(s: str) -> str:
+    s = (s or "").strip().lower().replace("ё", "е")
+    s = re.sub(r"[^a-zа-я0-9\s\-]", " ", s, flags=re.IGNORECASE)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def _first_words(s: str, n: int = 8) -> str:
+    s = _normalize_name_piece(s)
+    parts = s.split()
+    return " ".join(parts[:n])
+
+
+def _starts_with_author_or_title(text: str, author: str | None, title: str | None) -> bool:
+    """
+    Conservative rule:
+      - only checks beginning of the atom (first ~8 words)
+      - requires 2+ tokens match for author, or 3+ tokens for title
+      - ignores very short/empty fields
+    """
+    head = _first_words(text, 10)
+    if not head:
+        return False
+
+    if author:
+        a = _first_words(author, 6)
+        a_parts = [p for p in a.split() if len(p) >= 3]
+        if len(a_parts) >= 2:
+            # author tokens should appear very early
+            score = sum(1 for p in a_parts if p in head)
+            if score >= 2:
+                return True
+
+    if title:
+        t = _first_words(title, 8)
+        t_parts = [p for p in t.split() if len(p) >= 4]
+        if len(t_parts) >= 3:
+            score = sum(1 for p in t_parts if p in head)
+            if score >= 3:
+                return True
+
+    return False
+
+
+def _looks_like_glossary_caps_list(s: str) -> bool:
+    # блок “список терминов” обычно: много капслок-токенов и мало нормальных предложений
+    if _caps_token_ratio(s) >= 0.18 and _SENT_END_RE.search(s) is None:
+        return True
+    # OCR-склейки + капслок
+    if _BAD_OCR_RE.search(s) and _caps_token_ratio(s) >= 0.12:
+        return True
+    # много капслок-терминов подряд
+    if len(_CAPS_TOKEN_RE.findall(s)) >= 6 and _uppercase_ratio(s) >= 0.22:
+        return True
+    return False
+
+
+def _atom_garble_bad(s: str) -> bool:
+    # _garble_score уже есть у тебя в cli.py
+    # для атома порог можно сделать мягче, чем для chunk
+    return _garble_score(s) >= 0.06
+
+
+def _norm_line(s: str) -> str:
+    s = _NONPRINTABLE_RE.sub("", s or "")
+    s = _WS_RE.sub(" ", s).strip().lower()
+    return s
+
+
+def _text_metrics(s: str) -> dict[str, float]:
+    s = s or ""
+    if not s:
+        return {"letters": 0.0, "digits": 0.0, "spaces": 0.0, "punct": 0.0, "other": 0.0}
+
+    n = len(s)
+    letters = sum(1 for ch in s if ch.isalpha())
+    digits = sum(1 for ch in s if ch.isdigit())
+    spaces = sum(1 for ch in s if ch.isspace())
+    punct = sum(1 for ch in s if (not ch.isalnum()) and (not ch.isspace()))
+    other = n - letters - digits - spaces - punct
+    return {
+        "letters": letters / n,
+        "digits": digits / n,
+        "spaces": spaces / n,
+        "punct": punct / n,
+        "other": other / n,
+    }
+
+
+def _looks_like_toc(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return False
+
+    lines = [ln.strip() for ln in t.splitlines() if ln.strip()]
+    if len(lines) < 5:
+        return False
+
+    toc_hits = sum(1 for ln in lines if _TOC_LINE_RE.match(ln))
+    page_hits = sum(1 for ln in lines if _PAGE_NUM_RE.match(ln))
+
+    if _TOC_TITLE_RE.search(t):
+        # Title + many toc-like lines.
+        return toc_hits >= 3 or (toc_hits / max(1, len(lines))) >= 0.25
+
+    # Pure page lists or dot leaders.
+    if page_hits / max(1, len(lines)) >= 0.6:
+        return True
+    return (toc_hits / max(1, len(lines))) >= 0.6
+
+
+def _publisher_tail_score(t: str) -> int:
+    score = 0
+    if _ISBN_RE.search(t):
+        score += 3
+    if _UDC_BBK_RE.search(t):
+        score += 2
+    if _PUBLISHER_TAIL_RE.search(t):
+        score += 3
+    if _COPYRIGHT_RE.search(t):
+        score += 1  # © сам по себе НЕ должен выкидывать текст
+    return score
+
+
+def _looks_like_publisher_tail(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return False
+
+    # работаем только с разумной длиной “служебных блоков”
+    if len(t) > 2000:
+        return False
+
+    # Важно: теперь нужно сочетание признаков (ISBN/УДК/тираж/издательство + возможно ©),
+    # а не одиночный символ ©.
+    if re.search(r"(?i)\b(введение|пролог|глава|предисловие)\b", t):
+        return False
+    return _publisher_tail_score(t) >= 4
+
+
+def _looks_like_html(text: str) -> bool:
+    t = text or ""
+    if not t:
+        return False
+    return bool(_HTML_TAG_RE.search(t) or _HTML_ENTITY_RE.search(t))
+
+
+def _looks_like_garbage(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return True
+
+    # Быстрый числовой скоринг: если "небуквенного" слишком много — мусор/верстка.
+    if _garbage_score(t) >= 0.55:
+        return True
+
+    m = _text_metrics(t)
+
+    # Very low letter ratio, or dominated by digits/symbols.
+    if m["letters"] < 0.20 and (m["digits"] > 0.35 or m["punct"] > 0.35):
+        return True
+    if m["digits"] > 0.60 and len(t) <= 1200:
+        return True
+    if m["punct"] > 0.55 and len(t) <= 1200:
+        return True
+
+    # Repeated single-char noise (e.g., ======, -----, ******)
+    stripped = re.sub(r"\s+", "", t)
+    if len(stripped) >= 20:
+        uniq = set(stripped)
+        if len(uniq) <= 3:
+            return True
+
+    # Many very short "lines" (scanned layout / broken wraps)
+    lines = [ln.strip() for ln in t.splitlines() if ln.strip()]
+    if len(lines) >= 10:
+        short = sum(1 for ln in lines if len(ln) <= 3)
+        if short / len(lines) >= 0.5:
+            return True
+
+    return False
+
+
+def _garbage_score(t: str) -> float:
+    if not t:
+        return 1.0
+    letters = sum(ch.isalpha() for ch in t)
+    digits = sum(ch.isdigit() for ch in t)
+    spaces = sum(ch.isspace() for ch in t)
+    others = len(t) - letters - digits - spaces
+    if len(t) < 80 and letters < 20:
+        return 1.0
+    # если "небуквенного" слишком много — это верстка/мусор
+    return (digits + others) / max(1, len(t))
+
+
+def _detect_repeated_headers_footers(rows: list[sqlite3.Row]) -> dict[int, set[str]]:
+    """Detect repeated first/last lines per source_id among provided chunks."""
+    by_source: dict[int, list[tuple[str, str]]] = {}
+    for r in rows:
+        sid = int(r["source_id"])
+        txt = (r["text"] or "")
+        lines = [ln.strip() for ln in txt.splitlines() if ln.strip()]
+        if not lines:
+            continue
+        first = _norm_line(lines[0])
+        last = _norm_line(lines[-1])
+        if sid not in by_source:
+            by_source[sid] = []
+        by_source[sid].append((first, last))
+
+    repeated: dict[int, set[str]] = {}
+    for sid, pairs in by_source.items():
+        total = len(pairs)
+        if total < 6:
+            repeated[sid] = set()
+            continue
+
+        first_counts: dict[str, int] = {}
+        last_counts: dict[str, int] = {}
+        for first, last in pairs:
+            if 3 <= len(first) <= 80:
+                first_counts[first] = first_counts.get(first, 0) + 1
+            if 3 <= len(last) <= 80:
+                last_counts[last] = last_counts.get(last, 0) + 1
+
+        threshold = max(3, int(total * 0.20))
+        bad: set[str] = set()
+        for k, v in first_counts.items():
+            if v >= threshold:
+                bad.add(k)
+        for k, v in last_counts.items():
+            if v >= threshold:
+                bad.add(k)
+
+        repeated[sid] = bad
+    return repeated
+
+
+def _sanitation_reason_v1(
+    text: str,
+    repeated_headers_footers: set[str] | None = None,
+    source_author: str | None = None,
+    source_title: str | None = None,
+    *,
+    min_sent_letters: int = 40,
+) -> str | None:
+    s = (text or "").strip()
+    if not s:
+        return "empty"
+
+    if len(s) < 120:
+        return "too_short"
+    if len(s) > 2600:
+        return "too_long"
+
+    if "```" in s:
+        return "code_fence"
+    if re.search(r"https?://|www\.", s, re.IGNORECASE):
+        return "url"
+
+    if repeated_headers_footers:
+        low = s.lower()
+        for hf in repeated_headers_footers:
+            if hf and hf.lower() in low:
+                return "header_footer"
+
+    if _starts_with_author_or_title(s, source_author, source_title):
+        return "author_title_prefix"
+
+    if _looks_like_title_or_publisher_block(s):
+        return "publisher_noise"
+
+    if _looks_like_glossary_caps_list(s):
+        return "glossary_caps"
+
+    if _atom_garble_bad(s):
+        return "garbled_atom"
+    
+    _DEFINITION_RE = re.compile(r"[А-Яа-яA-Za-z0-9][^.!?…\n]{0,60}\s[—-]\s[^.!?…\n]{40,}")
+    _COLON_EXPLAIN_RE = re.compile(r":[^\n.!?…]{40,}")
+
+    def _has_complete_sentence(s: str, *, min_letters: int = 40) -> bool:
+        # 1) нормальное предложение с концовкой
+        for m in re.finditer(r"([^.!?…]{0,500})([.!?…])", s):
+            chunk = m.group(1)
+            if _letters_count(chunk) >= min_letters:
+                return True
+
+        # 2) определение “X — ...” (часто без точки)
+        if _DEFINITION_RE.search(s):
+            return True
+
+        # 3) “Заголовок: объяснение...” тоже ок
+        if _COLON_EXPLAIN_RE.search(s):
+            return True
+
+        return False
+    _LISTY_RE = re.compile(r"(?m)^\s*(?:[-•—]|\d+\)|\d+\.)\s+")
+    if _LISTY_RE.search(s) and not re.search(r"[.!?…]", s):
+        return "list_without_sentences"
+
+
+    if not _has_complete_sentence(s, min_letters=min_sent_letters):
+        return "no_complete_sentence"
+
+    return None
+
+
+
+def _snippet_for_report(s: str, max_len: int = 240) -> str:
+    s = _WS_RE.sub(" ", _normalize_text(s or "")).strip()
+    if len(s) <= max_len:
+        return s
+    return s[: max_len - 1] + "…"
+
+def _line_preview_for_report(s: str, lines: int = 2, max_len: int = 240) -> str:
+    """Return first N non-empty lines, normalized, for quick debug previews."""
+    txt = _normalize_text(s or "")
+    parts = [ln.strip() for ln in txt.splitlines() if ln.strip()]
+    head = " / ".join(parts[:lines])
+    head = _WS_RE.sub(" ", head).strip()
+    if len(head) <= max_len:
+        return head
+    return head[: max_len - 1] + "…"
+
+
 
 _BOX_GARBLE_RE = re.compile(r"[\u2500-\u259f\u00a4]")  # box drawing + currency sign
 
@@ -1539,6 +1993,309 @@ def _fb2_to_text(fb2_bytes: bytes) -> tuple[str, str]:
 
     return best_locale, best_text
 
+# ----------------------------
+# Ingest readers (txt/md/docx/epub/fb2)
+# ----------------------------
+
+_ZERO_WIDTH_RE = re.compile(r"[\u200B-\u200F\uFEFF]")
+_CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
+def _normalize_text_ingest(s: str) -> str:
+    # stronger normalization for raw file text
+    s = (s or "").replace("\r\n", "\n").replace("\r", "\n")
+    s = _CTRL_RE.sub("", s)
+    s = _ZERO_WIDTH_RE.sub("", s)
+    s = re.sub(r"[ \t]+", " ", s)
+    s = re.sub(r"\n{3,}", "\n\n", s)
+    s = s.strip()
+    s = re.sub(r"^[©\u00a9]+\s*", "", s)
+    return s
+
+
+def _decode_bytes_best_effort(data: bytes) -> str:
+    # deterministic fallback chain
+    for enc in ("utf-8-sig", "utf-8", "windows-1251", "cp1251", "koi8-r", "cp866", "latin-1"):
+        try:
+            return data.decode(enc)
+        except Exception:
+            continue
+    return data.decode("utf-8", errors="ignore")
+
+
+class _HTMLTextExtractor(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._parts: list[str] = []
+        self._block = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() in {"p", "br", "div", "li", "h1", "h2", "h3", "h4", "h5", "h6"}:
+            self._parts.append("\n")
+
+    def handle_data(self, data: str) -> None:
+        if data:
+            self._parts.append(data)
+
+    def get_text(self) -> str:
+        return "".join(self._parts)
+
+
+def _html_to_text(html_text: str) -> str:
+    parser = _HTMLTextExtractor()
+    parser.feed(html_text or "")
+    txt = parser.get_text()
+    txt = html.unescape(txt)
+    return _normalize_text_ingest(txt)
+
+
+def _fb2_to_text_meta(fb2_bytes: bytes) -> tuple[str, str, str | None, str | None]:
+    """
+    Return (locale, plain_text, title, author) from FB2 bytes (best-effort).
+    Uses the same encoding recovery logic as _fb2_to_text().
+    """
+
+    def parse_bytes(data: bytes) -> tuple[str, str, str | None, str | None]:
+        root = ET.fromstring(data)
+
+        ns = ""
+        if root.tag.startswith("{"):
+            ns = root.tag.split("}")[0] + "}"
+
+        def _t(el: Any) -> str:
+            return ("".join(el.itertext()) if el is not None else "").strip()
+
+        lang_el = root.find(f".//{ns}description/{ns}title-info/{ns}lang")
+        lang = _t(lang_el) or "ru-RU"
+        locale = "ru-RU" if lang.lower().startswith("ru") else lang
+
+        title_el = root.find(f".//{ns}description/{ns}title-info/{ns}book-title")
+        title = _t(title_el) or None
+
+        a_first = _t(root.find(f".//{ns}description/{ns}title-info/{ns}author/{ns}first-name")) or ""
+        a_last = _t(root.find(f".//{ns}description/{ns}title-info/{ns}author/{ns}last-name")) or ""
+        author = (f"{a_first} {a_last}".strip() or None)
+
+        paragraphs: list[str] = []
+        for p in root.findall(f".//{ns}body//{ns}p"):
+            s = _t(p)
+            if s:
+                paragraphs.append(s)
+
+        text = _normalize_text_ingest("\n\n".join(paragraphs))
+        return locale, text, title, author
+
+    # 1) as-is
+    try:
+        locale, text, title, author = parse_bytes(fb2_bytes)
+        if _garble_score(text) < 0.002:
+            return locale, text, title, author
+    except Exception:
+        locale, text, title, author = "ru-RU", "", None, None
+
+    # 2) encoding recovery
+    candidates = ["windows-1251", "cp1251", "koi8-r", "cp866"]
+    best_locale = locale or "ru-RU"
+    best_text = text or ""
+    best_title = title
+    best_author = author
+    best_score = _garble_score(best_text) if best_text else 1.0
+
+    for enc in candidates:
+        try:
+            xml_text = fb2_bytes.decode(enc, errors="strict")
+            root = ET.fromstring(xml_text)  # unicode XML
+        except Exception:
+            continue
+
+        ns = ""
+        if root.tag.startswith("{"):
+            ns = root.tag.split("}")[0] + "}"
+
+        def _t(el: Any) -> str:
+            return ("".join(el.itertext()) if el is not None else "").strip()
+
+        lang_el = root.find(f".//{ns}description/{ns}title-info/{ns}lang")
+        lang = _t(lang_el) or "ru-RU"
+        loc = "ru-RU" if lang.lower().startswith("ru") else lang
+
+        title_el = root.find(f".//{ns}description/{ns}title-info/{ns}book-title")
+        tt = _t(title_el) or None
+
+        a_first = _t(root.find(f".//{ns}description/{ns}title-info/{ns}author/{ns}first-name")) or ""
+        a_last = _t(root.find(f".//{ns}description/{ns}title-info/{ns}author/{ns}last-name")) or ""
+        au = (f"{a_first} {a_last}".strip() or None)
+
+        paragraphs: list[str] = []
+        for p in root.findall(f".//{ns}body//{ns}p"):
+            s = _t(p)
+            if s:
+                paragraphs.append(s)
+
+        txt2 = _normalize_text_ingest("\n\n".join(paragraphs))
+        score = _garble_score(txt2)
+
+        if txt2 and score < best_score:
+            best_score = score
+            best_text = txt2
+            best_locale = loc
+            best_title = tt
+            best_author = au
+
+        if best_score < 0.002:
+            break
+
+    return best_locale, best_text, best_title, best_author
+
+
+def _read_plain_text_file(path: Path) -> tuple[str, str, str | None, str | None]:
+    data = _read_bytes(path)
+    txt = _decode_bytes_best_effort(data)
+    txt = _normalize_text_ingest(txt)
+    title = path.stem
+    return "ru-RU", txt, title, None
+
+
+def _read_docx_file(path: Path) -> tuple[str, str, str | None, str | None]:
+    # local import to avoid hard dependency failures
+    from docx import Document  # type: ignore
+
+    doc = Document(str(path))
+    paras = [p.text.strip() for p in doc.paragraphs if (p.text or "").strip()]
+    txt = _normalize_text_ingest("\n\n".join(paras))
+    title = None
+    author = None
+    try:
+        cp = doc.core_properties
+        title = (cp.title or "").strip() or None
+        author = (cp.author or "").strip() or None
+    except Exception:
+        pass
+    return "ru-RU", txt, title or path.stem, author
+
+
+def _epub_to_text_meta(epub_path: Path) -> tuple[str, str, str | None, str | None]:
+    """
+    Minimal EPUB reader without external deps:
+      - parse META-INF/container.xml -> OPF path
+      - parse OPF spine -> manifest href order
+      - read html/xhtml files in spine order
+    """
+    with zipfile.ZipFile(epub_path, "r") as zf:
+        # container.xml
+        try:
+            container_xml = zf.read("META-INF/container.xml")
+        except Exception:
+            raise ValueError("EPUB: META-INF/container.xml not found")
+
+        root = ET.fromstring(container_xml)
+        ns = ""
+        if root.tag.startswith("{"):
+            ns = root.tag.split("}")[0] + "}"
+
+        opf_path = None
+        for rf in root.findall(f".//{ns}rootfiles/{ns}rootfile"):
+            opf_path = rf.attrib.get("full-path")
+            if opf_path:
+                break
+        if not opf_path:
+            raise ValueError("EPUB: OPF full-path not found in container.xml")
+
+        opf_dir = str(Path(opf_path).parent).replace("\\", "/")
+        opf_bytes = zf.read(opf_path)
+        opf = ET.fromstring(opf_bytes)
+
+        opf_ns = ""
+        if opf.tag.startswith("{"):
+            opf_ns = opf.tag.split("}")[0] + "}"
+
+        def _t(el: Any) -> str:
+            return ("".join(el.itertext()) if el is not None else "").strip()
+
+        title = _t(opf.find(f".//{opf_ns}metadata/*[@*='title']")) or None
+        # Safer: try common dc elements
+        if not title:
+            title = _t(opf.find(".//{http://purl.org/dc/elements/1.1/}title")) or None
+        author = _t(opf.find(".//{http://purl.org/dc/elements/1.1/}creator")) or None
+        lang = _t(opf.find(".//{http://purl.org/dc/elements/1.1/}language")) or "ru-RU"
+        locale = "ru-RU" if lang.lower().startswith("ru") else lang
+
+        manifest: dict[str, str] = {}
+        for item in opf.findall(f".//{opf_ns}manifest/{opf_ns}item"):
+            iid = item.attrib.get("id") or ""
+            href = item.attrib.get("href") or ""
+            if iid and href:
+                manifest[iid] = href
+
+        spine_ids: list[str] = []
+        for itemref in opf.findall(f".//{opf_ns}spine/{opf_ns}itemref"):
+            rid = itemref.attrib.get("idref")
+            if rid:
+                spine_ids.append(rid)
+
+        html_texts: list[str] = []
+        for rid in spine_ids:
+            href = manifest.get(rid)
+            if not href:
+                continue
+            full = f"{opf_dir}/{href}".lstrip("./")
+            full = full.replace("\\", "/")
+            try:
+                data = zf.read(full)
+            except Exception:
+                # try raw href
+                try:
+                    data = zf.read(href)
+                except Exception:
+                    continue
+            raw = _decode_bytes_best_effort(data)
+            html_texts.append(_html_to_text(raw))
+
+        if not html_texts:
+            # fallback: read all html-ish files deterministically by name
+            names = sorted([n for n in zf.namelist() if n.lower().endswith((".xhtml", ".html", ".htm"))])
+            for n in names:
+                raw = _decode_bytes_best_effort(zf.read(n))
+                html_texts.append(_html_to_text(raw))
+
+        txt = _normalize_text_ingest("\n\n".join([t for t in html_texts if t.strip()]))
+        return locale, txt, title or epub_path.stem, author
+
+
+def _read_source_to_text(fp: Path, default_locale: str) -> tuple[str, str, str, str | None, str | None, bytes | None]:
+    """
+    Return:
+      (source_type, locale, plain_text, title, author, canonical_bytes_for_sha)
+    canonical_bytes_for_sha:
+      - for fb2.zip: extracted fb2 bytes (stable to content)
+      - for others: None => caller uses file bytes
+    """
+    ext = fp.suffix.lower()
+
+    if ext == ".zip":
+        fb2_bytes = _extract_fb2_from_zip(fp)
+        locale, plain, title, author = _fb2_to_text_meta(fb2_bytes)
+        return "fb2.zip", (locale or default_locale), plain, (title or fp.stem), author, fb2_bytes
+
+    if ext == ".fb2":
+        fb2_bytes = _read_bytes(fp)
+        locale, plain, title, author = _fb2_to_text_meta(fb2_bytes)
+        return "fb2", (locale or default_locale), plain, (title or fp.stem), author, fb2_bytes
+
+    if ext in {".txt", ".md"}:
+        locale, plain, title, author = _read_plain_text_file(fp)
+        return ext.lstrip("."), (locale or default_locale), plain, title or fp.stem, author, None
+
+    if ext == ".docx":
+        locale, plain, title, author = _read_docx_file(fp)
+        return "docx", (locale or default_locale), plain, title or fp.stem, author, None
+
+    if ext == ".epub":
+        locale, plain, title, author = _epub_to_text_meta(fp)
+        return "epub", (locale or default_locale), plain, title or fp.stem, author, None
+
+    raise ValueError(f"unsupported file type: {fp.suffix}")
+
 
 def _chunk_text(text: str, chunk_size: int) -> list[tuple[int, int, str]]:
     if not text:
@@ -1598,6 +2355,7 @@ def cmd_sources_list(args: argparse.Namespace) -> int:
         params.append(limit)
         rows = conn.execute(sql, params).fetchall()
 
+        
         items = []
         for r in rows:
             items.append(
@@ -2265,18 +3023,22 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     compact = bool(getattr(args, "compact", False))
     force = bool(getattr(args, "force", False))
 
+    supported = {".fb2", ".zip", ".txt", ".md", ".docx", ".epub"}
+
     files: list[Path] = []
     if path.is_dir():
         for p in sorted(path.rglob("*")):
-            if p.is_file() and (p.suffix.lower() in {".fb2", ".zip"}):
+            if p.is_file() and p.suffix.lower() in supported:
                 files.append(p)
     else:
-        files = [path]
+        if path.suffix.lower() in supported:
+            files = [path]
+        else:
+            files = [path]  # let reader raise a clear error
 
     conn = _connect(_staging_db_path())
     try:
         _ensure_staging_schema(conn)
-        started_at = _utcnow_iso()
 
         sources_created = 0
         sources_reused = 0
@@ -2285,15 +3047,19 @@ def cmd_ingest(args: argparse.Namespace) -> int:
 
         for fp in files:
             try:
-                raw = _read_bytes(fp)
-                fb2_bytes = raw
-                source_type = "fb2"
-                if fp.suffix.lower() == ".zip":
-                    fb2_bytes = _extract_fb2_from_zip(fp)
-                    source_type = "fb2.zip"
+                source_type, locale, plain, title, author, canonical_bytes = _read_source_to_text(fp, default_locale)
 
-                sha = _sha256_bytes(fb2_bytes)
-                file_size = fp.stat().st_size
+                if not plain.strip():
+                    continue
+
+                # sha: canonical-bytes for fb2.zip, else raw file bytes
+                if canonical_bytes is not None:
+                    sha = _sha256_bytes(canonical_bytes)
+                    file_size = fp.stat().st_size
+                else:
+                    sha = _sha256_file(fp)
+                    file_size = fp.stat().st_size
+
                 file_name = fp.name
 
                 row = conn.execute("SELECT id FROM kb_sources WHERE sha256=?", (sha,)).fetchone()
@@ -2306,30 +3072,28 @@ def cmd_ingest(args: argparse.Namespace) -> int:
                     if dry_run:
                         source_id = -1
                     else:
+                        meta = {"file_path": str(fp), "file_ext": fp.suffix.lower()}
                         cur = conn.execute(
                             "INSERT INTO kb_sources(title,path,sha256,imported_at,notes,source_type,author,locale,file_name,file_size,meta_json) "
                             "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                             (
-                                file_name,
+                                title or file_name,
                                 str(fp),
                                 sha,
                                 _utcnow_iso(),
                                 "",
                                 source_type,
-                                None,
-                                default_locale,
+                                author,
+                                locale,
                                 file_name,
                                 file_size,
-                                "{}",
+                                json.dumps(meta, ensure_ascii=False),
                             ),
                         )
                         source_id = int(cur.lastrowid)
                     sources_created += 1
 
-                locale, plain = _fb2_to_text(fb2_bytes)
-                locale = locale or default_locale
-                chunks = _chunk_text(plain, chunk_size)
-
+                chunks = _chunk_text(_normalize_text_ingest(plain), chunk_size)
                 if not chunks:
                     continue
 
@@ -2353,32 +3117,10 @@ def cmd_ingest(args: argparse.Namespace) -> int:
                     )
                 chunks_created += len(chunks)
 
-                if row:
-                    conn.execute(
-                        "UPDATE kb_sources SET source_type=?, locale=?, file_name=?, file_size=? WHERE id=?",
-                        (source_type, locale, file_name, file_size, source_id),
-                    )
             except Exception as e:
                 errors.append({"file": str(fp), "error": str(e)})
 
-        finished_at = _utcnow_iso()
         if not dry_run:
-            conn.execute(
-                "INSERT INTO kb_ingest_runs(started_at,finished_at,input_path,tool,tool_version,files_total,"
-                "sources_created,sources_reused,chunks_created,errors_json) VALUES(?,?,?,?,?,?,?,?,?,?)",
-                (
-                    started_at,
-                    finished_at,
-                    str(path),
-                    "kb_ingest",
-                    "v1",
-                    len(files),
-                    sources_created,
-                    sources_reused,
-                    chunks_created,
-                    json.dumps({"errors": errors}, ensure_ascii=False),
-                ),
-            )
             conn.commit()
 
         report = {
@@ -2389,15 +3131,18 @@ def cmd_ingest(args: argparse.Namespace) -> int:
             "chunks_created": chunks_created,
             "errors": errors,
         }
+
         if as_json:
             print(json.dumps(report, ensure_ascii=False, indent=None if compact else 2))
         else:
             print(
                 f"ingest: files={len(files)} sources_created={sources_created} "
-                f"sources_reused={sources_reused} chunks={chunks_created}",
+                f"sources_reused={sources_reused} chunks_created={chunks_created}",
                 file=sys.stderr,
             )
-        return 0 if not errors else 1
+            if errors:
+                print(f"errors: {len(errors)} (use --json)", file=sys.stderr)
+        return 0
     finally:
         conn.close()
 
@@ -2463,6 +3208,7 @@ def _atomize_chunk(
 
 
 def cmd_atomize(args: argparse.Namespace) -> int:
+    min_sent_letters = int(getattr(args, "min_sent_letters", 40) or 40)
     source_id = int(getattr(args, "source_id", 0) or 0)
     do_all = bool(getattr(args, "all", False))
     mode = (getattr(args, "mode", "b") or "b").strip().lower()
@@ -2473,6 +3219,11 @@ def cmd_atomize(args: argparse.Namespace) -> int:
     compact = bool(getattr(args, "compact", False))
     limit = int(getattr(args, "limit", 0) or 0)
 
+    dump_skipped = int(getattr(args, "dump_skipped", 0) or 0)
+    dump_topic_rejected = int(getattr(args, "dump_topic_rejected", 0) or 0)
+    skipped_examples: list[dict[str, Any]] = []
+    topic_rejected_examples: list[dict[str, Any]] = []
+
     min_len = int(getattr(args, "min_len", 120) or 120)
     max_len = int(getattr(args, "max_len", 1800) or 1800)
     target_min = int(getattr(args, "target_min", 450) or 450)
@@ -2481,12 +3232,30 @@ def cmd_atomize(args: argparse.Namespace) -> int:
 
     skip_garbled = bool(getattr(args, "skip_garbled", False))
     garble_threshold = float(getattr(args, "garble_threshold", 0.20) or 0.20)
-    skipped_garbled = 0
 
+    topic_gate_name = (getattr(args, "topic_gate", "ru_natal_v1") or "ru_natal_v1").strip().lower()
+    topic_threshold = int(getattr(args, "topic_threshold", 3) or 3)
+    include_topics_raw = (getattr(args, "include_topics", "") or "").strip()
+    include_topics = [t.strip() for t in include_topics_raw.split(",") if t.strip()] if include_topics_raw else []
+    upsert_existing = bool(getattr(args, "upsert_existing", False))
+
+    skipped_garbled = 0
+    skipped_sanitation = 0
+    skipped_topic = 0
+    skipped_existing = 0
+    updated = 0
+    skipped_mode = 0
+    skipped_reasons: dict[str, int] = {}
+    skipped_topic_reasons: dict[str, int] = {"no_topic": 0}
 
     if mode not in {"a", "b"}:
         print("ERROR: --mode must be 'a' or 'b'", file=sys.stderr)
         return 2
+
+    gate = None
+    if topic_gate_name not in {"off", "none", "0", ""}:
+        # currently only one profile in MVP
+        gate = NatalTopicGate(threshold=topic_threshold, include_topics=include_topics)
 
     conn = _connect(_staging_db_path())
     try:
@@ -2499,13 +3268,21 @@ def cmd_atomize(args: argparse.Namespace) -> int:
         else:
             where.append("source_id=?")
             params.append(source_id)
-        
-        sql = f"SELECT id, source_id, seq, locale, text FROM kb_source_chunks WHERE {' AND '.join(where)} ORDER BY source_id, seq"
+
+        sql = (
+            f"SELECT id, source_id, seq, locale, text "
+            f"FROM kb_source_chunks WHERE {' AND '.join(where)} ORDER BY source_id, seq"
+        )
         rows = conn.execute(sql, params).fetchall()
+        repeated_hf = _detect_repeated_headers_footers(rows)
+        # preload sources metadata for sanitation (author/title)
+        src_rows = conn.execute("SELECT id, title, author FROM kb_sources").fetchall()
+        src_meta = {
+            int(x["id"]): {"title": (x["title"] or ""), "author": (x["author"] or "")}
+            for x in src_rows
+        }
 
         inserted = 0
-        skipped_existing = 0
-        skipped_mode = 0
 
         for r in rows:
             chunk_id = int(r["id"])
@@ -2525,7 +3302,67 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                 target_max=target_max,
                 max_newlines=max_newlines,
             )
+
             for (cs, ce, atom_text) in atoms:
+                # 1) sanitation
+                src = src_meta.get(sid, {})
+                reason = _sanitation_reason_v1(
+                    atom_text,
+                    repeated_hf.get(sid, set()),
+                    source_author=src.get("author") or None,
+                    source_title=src.get("title") or None,
+                    min_sent_letters=min_sent_letters,
+                )
+
+                if reason is not None:
+                    skipped_sanitation += 1
+                    skipped_reasons[reason] = skipped_reasons.get(reason, 0) + 1
+                    if dump_skipped > 0 and len(skipped_examples) < dump_skipped:
+                        src = src_meta.get(sid, {})
+                        skipped_examples.append(
+                            {
+                                "reason": reason,
+                                "source_id": sid,
+                                "source_title": src.get("title") or None,
+                                "source_author": src.get("author") or None,
+                                "chunk_id": chunk_id,
+                                "chunk_seq": int(r["seq"]),
+                                "char_start": int(cs),
+                                "char_end": int(ce),
+                                "line_preview": _line_preview_for_report(atom_text, lines=2, max_len=240),
+                                "snippet": _snippet_for_report(atom_text, 240),
+                            }
+                        )
+                    continue
+
+                # 2) topic gate (NEW)
+                gate_result = None
+                if gate is not None:
+                    gate_result = gate.classify(atom_text)
+                    if not gate_result.accepted:
+                        skipped_topic += 1
+                        skipped_topic_reasons["no_topic"] += 1
+                        if dump_topic_rejected > 0 and len(topic_rejected_examples) < dump_topic_rejected:
+                            src = src_meta.get(sid, {})
+                            topic_rejected_examples.append(
+                                {
+                                    "reason": gate_result.reason,
+                                    "source_id": sid,
+                                    "source_title": src.get("title") or None,
+                                    "source_author": src.get("author") or None,
+                                    "chunk_id": chunk_id,
+                                    "chunk_seq": int(r["seq"]),
+                                    "char_start": int(cs),
+                                    "char_end": int(ce),
+                                    "topics": gate_result.topics,
+                                    "topic_scores": gate_result.topic_scores,
+                                    "total_score": gate_result.total_score,
+                                    "snippet": _snippet_for_report(atom_text, 240),
+                                }
+                            )
+                        continue
+
+                # 3) existing mode rule (addressing)
                 has_addr = bool(_DIRECT_ADDRESS_RE.search(atom_text))
                 if mode == "a" and not has_addr:
                     skipped_mode += 1
@@ -2534,15 +3371,47 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                 content_hash = _sha1_text(_normalize_text(atom_text))
                 key = f"src{sid}.{chunk_locale}.{content_hash[:12]}"
 
-                exists = conn.execute(
-                    "SELECT id FROM kb_fragments WHERE key=? AND locale=?",
+                row_existing = conn.execute(
+                    "SELECT id, state, meta_json FROM kb_fragments WHERE key=? AND locale=?",
                     (key, chunk_locale),
                 ).fetchone()
-                if exists:
-                    skipped_existing += 1
+
+                # Обновляем только meta_json (topics/gate), state не трогаем.
+                if row_existing:
+                    st = (row_existing["state"] or "").strip()
+                    if upsert_existing and st in {"draft", "needs_review"}:
+                        if dry_run:
+                            updated += 1
+                        else:
+                            topic_updates: dict[str, Any] = {}
+                            if gate_result is not None:
+                                topic_updates["topics"] = gate_result.topics
+                                topic_updates["topic_scores"] = gate_result.topic_scores
+                                topic_updates["gate"] = {
+                                    "profile": gate_result.profile,
+                                    "threshold": gate_result.threshold,
+                                    "strong_hit": gate_result.strong_hit,
+                                    "total_score": gate_result.total_score,
+                                }
+
+                            # Ничего не перетираем кроме topic-полей
+                            new_meta_json = _merge_meta_json(row_existing["meta_json"], topic_updates)
+
+                            conn.execute(
+                                """
+                                UPDATE kb_fragments
+                                SET meta_json=?,
+                                    updated_at=?
+                                WHERE id=?
+                                """,
+                                (new_meta_json, _utcnow_iso(), int(row_existing["id"])),
+                            )
+                            updated += 1
+                    else:
+                        skipped_existing += 1
                     continue
 
-                meta = {
+                meta: dict[str, Any] = {
                     "source_id": sid,
                     "chunk_id": chunk_id,
                     "chunk_seq": int(r["seq"]),
@@ -2550,11 +3419,25 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                     "char_end": int(ce),
                     "extractor": "atomizer_v1",
                     "content_hash": content_hash,
+                    # existing flag behavior
                     "requires_rewrite": (mode == "b" and not has_addr),
                 }
 
+                # topic-gate meta (NEW)
+                if gate_result is not None:
+                    meta["topics"] = gate_result.topics
+                    meta["topic_scores"] = gate_result.topic_scores
+                    meta["gate"] = {
+                        "profile": gate_result.profile,
+                        "threshold": gate_result.threshold,
+                        "strong_hit": gate_result.strong_hit,
+                        "total_score": gate_result.total_score,
+                    }
+
                 if dry_run:
                     inserted += 1
+                    if limit and inserted >= limit:
+                        break
                     continue
 
                 conn.execute(
@@ -2583,31 +3466,79 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                 inserted += 1
                 if limit and inserted >= limit:
                     break
+
             if limit and inserted >= limit:
                 break
 
         if not dry_run:
             conn.commit()
 
-        report = {
+        report: dict[str, Any] = {
             "dry_run": dry_run,
             "mode": mode,
             "inserted": inserted,
+            "updated": updated,
             "created": inserted,
             "skipped_existing": skipped_existing,
             "skipped_mode": skipped_mode,
             "skipped_garbled": skipped_garbled,
+            "skipped_sanitation": skipped_sanitation,
+            "skipped_topic": skipped_topic,
+            "skipped_reasons": skipped_reasons,
+            "skipped_topic_reasons": skipped_topic_reasons,
+            "topic_gate": "off" if gate is None else "ru_natal_v1",
+            "topic_threshold": topic_threshold,
+            "include_topics": include_topics,
         }
+        if dump_skipped > 0 and len(skipped_examples) < dump_skipped:
+            src = src_meta.get(sid, {})
+            skipped_examples.append(
+                {
+                    "reason": reason,
+                    "source_id": sid,
+                    "source_title": src.get("title") or None,
+                    "source_author": src.get("author") or None,
+                    "chunk_id": chunk_id,
+                    "chunk_seq": int(r["seq"]),
+                    "char_start": int(cs),
+                    "char_end": int(ce),
+                    "snippet": _snippet_for_report(atom_text, 240),
+                }
+            )
+        if dump_topic_rejected > 0 and len(topic_rejected_examples) < dump_topic_rejected:
+            src = src_meta.get(sid, {})
+            topic_rejected_examples.append(
+                {
+                    "reason": gate_result.reason,
+                    "source_id": sid,
+                    "source_title": src.get("title") or None,
+                    "source_author": src.get("author") or None,
+                    "chunk_id": chunk_id,
+                    "chunk_seq": int(r["seq"]),
+                    "char_start": int(cs),
+                    "char_end": int(ce),
+                    "topics": gate_result.topics,
+                    "topic_scores": gate_result.topic_scores,
+                    "total_score": gate_result.total_score,
+                    "snippet": _snippet_for_report(atom_text, 240),
+                }
+            )
+
+        if dump_skipped > 0:
+            report["skipped_examples"] = skipped_examples
+
         if as_json:
             print(json.dumps(report, ensure_ascii=False, indent=None if compact else 2))
         else:
             print(
-                f"atomize: inserted={inserted} skipped_existing={skipped_existing} skipped_mode={skipped_mode}",
+                f"atomize: inserted={inserted} skipped_existing={skipped_existing} "
+                f"skipped_mode={skipped_mode} skipped_topic={skipped_topic}",
                 file=sys.stderr,
             )
         return 0
     finally:
         conn.close()
+
 
 
 # ----------------------------
@@ -2712,7 +3643,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.set_defaults(func=cmd_restore)
 
     # ---- ingest / atomize / sources / fragments ----
-    sp = sub.add_parser("ingest", help="ingest .fb2/.zip books into staging sources + chunks")
+    sp = sub.add_parser("ingest", help="ingest txt/md/docx/epub/fb2(/zip) into staging sources + chunks")
     sp.add_argument("--path", required=True)
     sp.add_argument("--locale", default="ru-RU")
     sp.add_argument("--chunk-size", dest="chunk_size", type=int, default=6000)
@@ -2725,6 +3656,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("atomize", help="create candidate kb_fragments from ingested chunks")
     sp.add_argument("--skip-garbled", action="store_true", help="skip chunks that look garbled")
     sp.add_argument("--garble-threshold", type=float, default=0.20, help="garble threshold for skipping")
+    sp.add_argument(
+    "--dump-skipped",
+    dest="dump_skipped",
+    type=int,
+    default=0,
+    help="with --json: include up to N sanitation-skipped examples in report",
+)
     sp.add_argument("--source-id", dest="source_id", type=int, default=0)
     sp.add_argument("--all", action="store_true")
     sp.add_argument("--mode", choices=["a", "b"], default="b")
@@ -2746,6 +3684,41 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--dry-run", action="store_true")
     sp.add_argument("--json", action="store_true")
     sp.add_argument("--compact", action="store_true")
+    sp.add_argument(
+        "--topic-gate",
+        default="ru_natal_v1",
+        help="topic gate profile: ru_natal_v1 | off",
+    )
+    sp.add_argument(
+        "--topic-threshold",
+        type=int,
+        default=3,
+        help="topic gate threshold (default=3)",
+    )
+    sp.add_argument(
+        "--include-topics",
+        default="",
+        help="comma-separated subset of topics (e.g. aspects,houses_rulers). empty = all",
+    )
+    sp.add_argument(
+        "--dump-topic-rejected",
+        type=int,
+        default=0,
+        help="include N examples rejected by topic gate in JSON report",
+    )
+    sp.add_argument(
+    "--upsert-existing",
+    action="store_true",
+    help="update existing fragments meta_json (topics/gate) if state is draft/needs_review; do not change state",
+    )
+    sp.add_argument(
+        "--min-sent-letters",
+        dest="min_sent_letters",
+        type=int,
+        default=40,
+        help="sanitation: minimum letters in at least one finished sentence (default=40)",
+    )
+
     sp.set_defaults(func=cmd_atomize)
 
     sp = sub.add_parser("sources", help="sources helpers")
