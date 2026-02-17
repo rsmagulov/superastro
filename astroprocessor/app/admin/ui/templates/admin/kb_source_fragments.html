@@ -1,0 +1,160 @@
+{% extends "admin/_layout.html" %}
+{% block content %}
+
+<h2>KB Fragments — Source #{{ source.id }}</h2>
+<p class="muted">
+  {{ source.title }} | {{ source.source_type or "" }} | {{ source.locale or "" }} | {{ source.file_name or "" }}
+</p>
+
+<div class="card" style="display:flex; gap:10px; flex-wrap:wrap;">
+  <a class="btn" href="/admin/ui/kb/source/{{ source.id }}">Overview</a>
+  <a class="btn" href="/admin/ui/kb/source/{{ source.id }}/chunks">Chunks</a>
+  <a class="btn" href="/admin/ui/kb/source/{{ source.id }}/fragments">Fragments</a>
+</div>
+
+<div class="card" style="margin-top:12px;">
+    <form method="get" action="/admin/ui/kb/source/{{ source.id }}/fragments"
+        style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
+
+    <div>
+        <label class="muted">state</label>
+        {% set st = (filters.state or "") %}
+        <select name="state">
+        <option value="" {% if st=="" %}selected{% endif %}>any</option>
+        <option value="draft" {% if st=="draft" %}selected{% endif %}>draft</option>
+        <option value="needs_review" {% if st=="needs_review" %}selected{% endif %}>needs_review</option>
+        <option value="reviewed" {% if st=="reviewed" %}selected{% endif %}>reviewed</option>
+        <option value="annotated" {% if st=="annotated" %}selected{% endif %}>annotated</option>
+        <option value="validated" {% if st=="validated" %}selected{% endif %}>validated</option>
+        <option value="enabled" {% if st=="enabled" %}selected{% endif %}>enabled</option>
+        <option value="archived" {% if st=="archived" %}selected{% endif %}>archived</option>
+        </select>
+    </div>
+
+    <div style="min-width:140px;">
+        <label class="muted">chunk_seq</label>
+        <input name="chunk_seq" value="{{ filters.chunk_seq }}" placeholder="12" />
+    </div>
+
+    <div style="min-width:260px;">
+        <label class="muted">search</label>
+        <input name="q" value="{{ filters.q }}" placeholder="key/text contains..." style="width:100%;" />
+    </div>
+
+    <button class="btn" type="submit">Apply</button>
+
+    <a class="btn" href="/admin/ui/kb/source/{{ source.id }}/fragments">Reset</a>
+
+    <div style="flex-basis:100%; height:0;"></div>
+
+    <div class="muted" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <span>Quick:</span>
+        <a class="btn"
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?state=needs_review{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            needs_review
+        </a>
+        <a class="btn"
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?state=validated{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            validated
+        </a>
+        <a class="btn"
+            href="/admin/ui/kb/source/{{ source.id }}/fragments?state=enabled{% if filters.q %}&q={{ filters.q|urlencode }}{% endif %}{% if filters.chunk_seq %}&chunk_seq={{ filters.chunk_seq|urlencode }}{% endif %}">
+            enabled
+        </a>
+    </div>
+
+    </form>
+
+</div>
+
+<div class="grid-2" style="margin-top:12px;">
+  <div>
+    <h3>Fragments ({{ fragments|length }})</h3>
+    <table class="table">
+      <thead>
+        <tr>
+            <th>ID</th>
+            <th>State</th>
+            <th>Chunk ID</th>
+            <th>Chunk seq</th>
+            <th>Offsets</th>
+            <th>Flags</th>
+            <th>Len</th>
+            <th>Key</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in fragments %}
+            {% set meta = (f.meta if f.meta else {}) %}
+            {% set cid = meta.get('chunk_id','') %}
+            {% set cseq = meta.get('chunk_seq','') %}
+            {% set cs = meta.get('char_start','') %}
+            {% set ce = meta.get('char_end','') %}
+            {% set rw = meta.get('requires_rewrite', false) %}
+            {% set vp = meta.get('validator_profile','') %}
+
+            <tr class="kb-row"
+                onclick="kbSelectRow(this)"
+                data-kind="fragment"
+                data-fragment-id="{{ f.id }}"
+                data-fragment-key="{{ f.key }}"
+                data-fragment-state="{{ f.state }}"
+                data-chunk-id="{{ cid }}"
+                data-chunk-seq="{{ cseq }}"
+                data-char-start="{{ cs }}"
+                data-char-end="{{ ce }}"
+                hx-get="/admin/ui/kb/fragment/{{ f.id }}"
+                hx-target="#editor_body"
+                hx-swap="innerHTML">
+
+            <td class="mono">{{ f.id }}</td>
+            <td><span class="pill pill-{{ f.state }}">{{ f.state }}</span></td>
+
+            <td class="mono">
+                {% if cid %}
+                <a href="#"
+                    class="kb-link"
+                    hx-get="/admin/ui/kb/chunk/{{ cid }}"
+                    hx-target="#editor_body"
+                    hx-swap="innerHTML"
+                    onclick="event.preventDefault(); event.stopPropagation();">
+                    {{ cid }}
+                </a>
+                {% else %}
+                —
+                {% endif %}
+            </td>
+
+            <td class="mono">{{ cseq }}</td>
+
+            <td class="mono">
+                {% if cs != '' and ce != '' %}
+                {{ cs }}..{{ ce }}
+                {% else %}
+                —
+                {% endif %}
+            </td>
+
+            <td>
+                {% if rw %}<span class="badge warn">needs_rewrite</span>{% endif %}
+                {% if vp %}<span class="badge ok">{{ vp }}</span>{% endif %}
+            </td>
+
+            <td class="mono">{{ f.text_len }}</td>
+            <td class="mono small">{{ f.key }}</td>
+            </tr>
+        {% endfor %}
+       </tbody>
+
+    </table>
+  </div>
+
+  <div id="editor" class="card" style="position:sticky; top:12px; align-self:start;">
+    <h3 style="margin-top:0;">Editor</h3>
+    <div id="editor_body" class="muted">
+      Выбери fragment слева — загрузится тут.
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1408,7 +1408,240 @@ def _normalize_text(s: str) -> str:
     s = (s or "").replace("\r\n", "\n").replace("\r", "\n")
     s = re.sub(r"[ \t]+", " ", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
-    return s.strip()
+    s = s.strip()
+    s = re.sub(r"^[©\u00a9]+\s*", "", s)  # лечим “©Далее…” → “Далее…”
+    return s
+
+
+# ----------------------------
+# Sanitation (atomize gate, v1)
+# ----------------------------
+
+_HTML_ENTITY_RE = re.compile(r"&(?:nbsp|amp|quot|lt|gt|apos|#\d+);", re.IGNORECASE)
+
+# Считаем HTML только если встречаются "взрослые" теги, а не мусор вроде <j>.
+_HTML_TAG_RE = re.compile(
+    r"(?is)</?\s*(?:p|br|div|span|ul|ol|li|table|tr|td|th|h[1-6]|strong|em|b|i|a|img)\b[^>]*>"
+)
+_TOC_TITLE_RE = re.compile(r"(?i)\b(содержание|оглавление|contents|table\s+of\s+contents)\b")
+_TOC_LINE_RE = re.compile(r"^\s*.+?(?:\.{2,}|…{2,}|\s{2,})\s*\d{1,5}\s*$")
+_PAGE_NUM_RE = re.compile(r"^\s*\d{1,5}\s*$")
+
+_ISBN_RE = re.compile(r"(?i)\bISBN(?:-1[03])?:?\s*[0-9Xx][0-9Xx\-\s]{8,}")
+_UDC_BBK_RE = re.compile(r"(?i)\b(?:УДК|ББК)\b")
+_COPYRIGHT_RE = re.compile(r"(?:©|\u00a9|\ball rights reserved\b)", re.IGNORECASE)
+
+_PUBLISHER_TAIL_RE = re.compile(
+    r"(?i)\b(издательств\w*|тираж|заказ\s*№|подписано\s+в\s+печать|отпечатано|верстка|корректор|редактор|ответственный\s+редактор)\b"
+)
+
+_WS_RE = re.compile(r"\s+")
+_NONPRINTABLE_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
+def _norm_line(s: str) -> str:
+    s = _NONPRINTABLE_RE.sub("", s or "")
+    s = _WS_RE.sub(" ", s).strip().lower()
+    return s
+
+
+def _text_metrics(s: str) -> dict[str, float]:
+    s = s or ""
+    if not s:
+        return {"letters": 0.0, "digits": 0.0, "spaces": 0.0, "punct": 0.0, "other": 0.0}
+
+    n = len(s)
+    letters = sum(1 for ch in s if ch.isalpha())
+    digits = sum(1 for ch in s if ch.isdigit())
+    spaces = sum(1 for ch in s if ch.isspace())
+    punct = sum(1 for ch in s if (not ch.isalnum()) and (not ch.isspace()))
+    other = n - letters - digits - spaces - punct
+    return {
+        "letters": letters / n,
+        "digits": digits / n,
+        "spaces": spaces / n,
+        "punct": punct / n,
+        "other": other / n,
+    }
+
+
+def _looks_like_toc(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return False
+
+    lines = [ln.strip() for ln in t.splitlines() if ln.strip()]
+    if len(lines) < 5:
+        return False
+
+    toc_hits = sum(1 for ln in lines if _TOC_LINE_RE.match(ln))
+    page_hits = sum(1 for ln in lines if _PAGE_NUM_RE.match(ln))
+
+    if _TOC_TITLE_RE.search(t):
+        # Title + many toc-like lines.
+        return toc_hits >= 3 or (toc_hits / max(1, len(lines))) >= 0.25
+
+    # Pure page lists or dot leaders.
+    if page_hits / max(1, len(lines)) >= 0.6:
+        return True
+    return (toc_hits / max(1, len(lines))) >= 0.6
+
+
+def _publisher_tail_score(t: str) -> int:
+    score = 0
+    if _ISBN_RE.search(t):
+        score += 3
+    if _UDC_BBK_RE.search(t):
+        score += 2
+    if _PUBLISHER_TAIL_RE.search(t):
+        score += 3
+    if _COPYRIGHT_RE.search(t):
+        score += 1  # © сам по себе НЕ должен выкидывать текст
+    return score
+
+
+def _looks_like_publisher_tail(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return False
+
+    # работаем только с разумной длиной “служебных блоков”
+    if len(t) > 2000:
+        return False
+
+    # Важно: теперь нужно сочетание признаков (ISBN/УДК/тираж/издательство + возможно ©),
+    # а не одиночный символ ©.
+    if re.search(r"(?i)\b(введение|пролог|глава|предисловие)\b", t):
+        return False
+    return _publisher_tail_score(t) >= 4
+
+
+def _looks_like_html(text: str) -> bool:
+    t = text or ""
+    if not t:
+        return False
+    return bool(_HTML_TAG_RE.search(t) or _HTML_ENTITY_RE.search(t))
+
+
+def _looks_like_garbage(text: str) -> bool:
+    t = (text or "").strip()
+    if not t:
+        return True
+
+    # Быстрый числовой скоринг: если "небуквенного" слишком много — мусор/верстка.
+    if _garbage_score(t) >= 0.55:
+        return True
+
+    m = _text_metrics(t)
+
+    # Very low letter ratio, or dominated by digits/symbols.
+    if m["letters"] < 0.20 and (m["digits"] > 0.35 or m["punct"] > 0.35):
+        return True
+    if m["digits"] > 0.60 and len(t) <= 1200:
+        return True
+    if m["punct"] > 0.55 and len(t) <= 1200:
+        return True
+
+    # Repeated single-char noise (e.g., ======, -----, ******)
+    stripped = re.sub(r"\s+", "", t)
+    if len(stripped) >= 20:
+        uniq = set(stripped)
+        if len(uniq) <= 3:
+            return True
+
+    # Many very short "lines" (scanned layout / broken wraps)
+    lines = [ln.strip() for ln in t.splitlines() if ln.strip()]
+    if len(lines) >= 10:
+        short = sum(1 for ln in lines if len(ln) <= 3)
+        if short / len(lines) >= 0.5:
+            return True
+
+    return False
+
+
+def _garbage_score(t: str) -> float:
+    if not t:
+        return 1.0
+    letters = sum(ch.isalpha() for ch in t)
+    digits = sum(ch.isdigit() for ch in t)
+    spaces = sum(ch.isspace() for ch in t)
+    others = len(t) - letters - digits - spaces
+    if len(t) < 80 and letters < 20:
+        return 1.0
+    # если "небуквенного" слишком много — это верстка/мусор
+    return (digits + others) / max(1, len(t))
+
+
+def _detect_repeated_headers_footers(rows: list[sqlite3.Row]) -> dict[int, set[str]]:
+    """Detect repeated first/last lines per source_id among provided chunks."""
+    by_source: dict[int, list[tuple[str, str]]] = {}
+    for r in rows:
+        sid = int(r["source_id"])
+        txt = (r["text"] or "")
+        lines = [ln.strip() for ln in txt.splitlines() if ln.strip()]
+        if not lines:
+            continue
+        first = _norm_line(lines[0])
+        last = _norm_line(lines[-1])
+        if sid not in by_source:
+            by_source[sid] = []
+        by_source[sid].append((first, last))
+
+    repeated: dict[int, set[str]] = {}
+    for sid, pairs in by_source.items():
+        total = len(pairs)
+        if total < 6:
+            repeated[sid] = set()
+            continue
+
+        first_counts: dict[str, int] = {}
+        last_counts: dict[str, int] = {}
+        for first, last in pairs:
+            if 3 <= len(first) <= 80:
+                first_counts[first] = first_counts.get(first, 0) + 1
+            if 3 <= len(last) <= 80:
+                last_counts[last] = last_counts.get(last, 0) + 1
+
+        threshold = max(3, int(total * 0.20))
+        bad: set[str] = set()
+        for k, v in first_counts.items():
+            if v >= threshold:
+                bad.add(k)
+        for k, v in last_counts.items():
+            if v >= threshold:
+                bad.add(k)
+
+        repeated[sid] = bad
+    return repeated
+
+
+def _sanitation_reason_v1(atom_text: str, repeated_lines: set[str]) -> str | None:
+    t = (atom_text or "").strip()
+    if not t:
+        return "empty"
+
+    # Сначала мусор/верстка, потом уже html.
+    if _looks_like_garbage(t):
+        return "garbage"
+
+    if _HTML_TAG_RE.search(t) or _HTML_ENTITY_RE.search(t):
+        return "html"
+
+    # header/footer standalone atoms
+    nl = _norm_line(t)
+    if nl in repeated_lines and len(t) <= 250:
+        return "header_footer"
+
+    if _looks_like_garbage(t):
+        return "garbage"
+    return None
+
+def _snippet_for_report(s: str, max_len: int = 240) -> str:
+    s = _WS_RE.sub(" ", _normalize_text(s or "")).strip()
+    if len(s) <= max_len:
+        return s
+    return s[: max_len - 1] + "…"
+
 
 _BOX_GARBLE_RE = re.compile(r"[\u2500-\u259f\u00a4]")  # box drawing + currency sign
 
@@ -2472,6 +2705,9 @@ def cmd_atomize(args: argparse.Namespace) -> int:
     as_json = bool(getattr(args, "json", False))
     compact = bool(getattr(args, "compact", False))
     limit = int(getattr(args, "limit", 0) or 0)
+    dump_skipped = int(getattr(args, "dump_skipped", 0) or 0)
+    skipped_examples: list[dict[str, Any]] = []
+
 
     min_len = int(getattr(args, "min_len", 120) or 120)
     max_len = int(getattr(args, "max_len", 1800) or 1800)
@@ -2482,7 +2718,8 @@ def cmd_atomize(args: argparse.Namespace) -> int:
     skip_garbled = bool(getattr(args, "skip_garbled", False))
     garble_threshold = float(getattr(args, "garble_threshold", 0.20) or 0.20)
     skipped_garbled = 0
-
+    skipped_sanitation = 0
+    skipped_reasons: dict[str, int] = {}
 
     if mode not in {"a", "b"}:
         print("ERROR: --mode must be 'a' or 'b'", file=sys.stderr)
@@ -2502,6 +2739,8 @@ def cmd_atomize(args: argparse.Namespace) -> int:
         
         sql = f"SELECT id, source_id, seq, locale, text FROM kb_source_chunks WHERE {' AND '.join(where)} ORDER BY source_id, seq"
         rows = conn.execute(sql, params).fetchall()
+
+        repeated_hf = _detect_repeated_headers_footers(rows)
 
         inserted = 0
         skipped_existing = 0
@@ -2526,6 +2765,24 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                 max_newlines=max_newlines,
             )
             for (cs, ce, atom_text) in atoms:
+                reason = _sanitation_reason_v1(atom_text, repeated_hf.get(sid, set()))
+                if reason is not None:
+                    skipped_sanitation += 1
+                    skipped_reasons[reason] = skipped_reasons.get(reason, 0) + 1
+
+                    if dump_skipped > 0 and len(skipped_examples) < dump_skipped:
+                        skipped_examples.append(
+                            {
+                                "reason": reason,
+                                "source_id": sid,
+                                "chunk_id": chunk_id,
+                                "chunk_seq": int(r["seq"]),
+                                "char_start": int(cs),
+                                "char_end": int(ce),
+                                "snippet": _snippet_for_report(atom_text, 240),
+                            }
+                        )
+                    continue
                 has_addr = bool(_DIRECT_ADDRESS_RE.search(atom_text))
                 if mode == "a" and not has_addr:
                     skipped_mode += 1
@@ -2597,7 +2854,11 @@ def cmd_atomize(args: argparse.Namespace) -> int:
             "skipped_existing": skipped_existing,
             "skipped_mode": skipped_mode,
             "skipped_garbled": skipped_garbled,
+            "skipped_sanitation": skipped_sanitation,
+            "skipped_reasons": skipped_reasons,
         }
+        if dump_skipped > 0:
+            report["skipped_examples"] = skipped_examples
         if as_json:
             print(json.dumps(report, ensure_ascii=False, indent=None if compact else 2))
         else:
@@ -2725,6 +2986,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("atomize", help="create candidate kb_fragments from ingested chunks")
     sp.add_argument("--skip-garbled", action="store_true", help="skip chunks that look garbled")
     sp.add_argument("--garble-threshold", type=float, default=0.20, help="garble threshold for skipping")
+    sp.add_argument(
+    "--dump-skipped",
+    dest="dump_skipped",
+    type=int,
+    default=0,
+    help="with --json: include up to N sanitation-skipped examples in report",
+)
     sp.add_argument("--source-id", dest="source_id", type=int, default=0)
     sp.add_argument("--all", action="store_true")
     sp.add_argument("--mode", choices=["a", "b"], default="b")

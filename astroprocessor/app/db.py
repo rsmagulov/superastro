@@ -37,12 +37,16 @@ def _ensure_parent_dir(abs_path: str) -> None:
 # -------------------------
 _ASTRO_DB_PATH = _resolve_db_path(settings.astro_db_path)
 _KNOWLEDGE_DB_PATH = _resolve_db_path(settings.knowledge_db_path)
+_STAGING_DB_PATH = _resolve_db_path(settings.staging_db_path)
+
 
 _ensure_parent_dir(_ASTRO_DB_PATH)
 _ensure_parent_dir(_KNOWLEDGE_DB_PATH)
+_ensure_parent_dir(_STAGING_DB_PATH)
 
 ASTRO_DB_PATH = _ASTRO_DB_PATH
 KNOWLEDGE_DB_PATH = _KNOWLEDGE_DB_PATH
+STAGING_DB_PATH = _STAGING_DB_PATH
 
 # -------------------------
 # Astro DB (основная БД: геокэш, etc.)
@@ -61,6 +65,17 @@ class Base(DeclarativeBase):
 knowledge_engine = create_async_engine(_make_sqlite_url(_KNOWLEDGE_DB_PATH), echo=False, future=True)
 KnowledgeSessionLocal = async_sessionmaker(knowledge_engine, class_=AsyncSession, expire_on_commit=False)
 
+# -------------------------
+# Staging DB (Knowledge Builder staging.db)
+# -------------------------
+staging_engine = create_async_engine(_make_sqlite_url(_STAGING_DB_PATH), echo=False, future=True)
+StagingSessionLocal = async_sessionmaker(staging_engine, class_=AsyncSession, expire_on_commit=False)
+
+
+async def get_staging_session() -> AsyncIterator[AsyncSession]:
+    # staging schema создаётся/мигрируется CLI; здесь просто даём сессию
+    async with StagingSessionLocal() as session:
+        yield session
 
 async def _ensure_sources_table_on_engine() -> None:
     async with knowledge_engine.begin() as conn:

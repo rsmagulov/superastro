@@ -236,3 +236,28 @@ pre{ background:rgba(255,255,255,.04); border:1px solid var(--border); border-ra
   border-color: rgba(0, 0, 0, 0.28);
   filter: brightness(0.98);
 }
+/* KB tables */
+.kb-row {
+  cursor: pointer;
+}
+
+.kb-row.is-selected td {
+  outline: 2px solid rgba(0,0,0,0.18);
+  outline-offset: -2px;
+  font-weight: 600;
+}
+.kb-hline { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.kb-link { color: inherit; text-decoration: underline; cursor: pointer; }
+.kb-save-error { padding: 8px 10px; border: 1px solid #f5a3a3; background: #ffecec; border-radius: 8px; }
+.kb-check { display:inline-flex; align-items:center; gap:8px; margin-left: 12px; }
+details.kb-details { margin-top: 10px; }
+summary { cursor: pointer; }
+/* KB selected row */
+.kb-row.is-selected td {
+  outline: 2px solid rgba(255, 255, 255, 0.18);
+  outline-offset: -2px;
+}
+
+.kb-row.is-selected {
+  background: rgba(120, 170, 255, 0.12);
+}

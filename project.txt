@@ -20,9 +20,12 @@ C:\Projects\superastro
 |               nodeids
 |               
 +---astroprocessor
+|   |   archived_recheck.json
 |   |   astro.db
 |   |   ev1_keys_unique.txt
+|   |   out.json
 |   |   pytest.ini
+|   |   recheck.json
 |   |   структура.txt
 |   |   
 |   +---.pytest_cache
@@ -105,6 +108,8 @@ C:\Projects\superastro
 |   |   +---knowledge
 |   |   |   |   builder.py
 |   |   |   |   cli.py
+|   |   |   |   cli.py.old
+|   |   |   |   cli_full.py
 |   |   |   |   meta_schema.py
 |   |   |   |   models.py
 |   |   |   |   schema.py
@@ -202,7 +207,9 @@ C:\Projects\superastro
 |   +---data
 |   |   |   knowledge.backup.db
 |   |   |   knowledge.db
+|   |   |   knowledge.db-shm
 |   |   |   knowledge.db-shm.BROKEN.bak
+|   |   |   knowledge.db-wal
 |   |   |   knowledge.db-wal.BROKEN.bak
 |   |   |   knowledge.db.BAK.20260215-104147
 |   |   |   knowledge.db.BROKEN
@@ -219,6 +226,10 @@ C:\Projects\superastro
 |   |   |   knowledge_items_distortions.jsonl
 |   |   |   knowledge_items_houses_distortions_2levels_and_boundaries.jsonl
 |   |   |   
+|   |   +---exports
+|   |   |       source6_bot_ready.jsonl
+|   |   |       source6_needs_rewrite.jsonl
+|   |   |       
 |   |   +---knowledge
 |   |   |   \---ru
 |   |   |       \---natal
@@ -226,8 +237,26 @@ C:\Projects\superastro
 |   |   |   +---failed
 |   |   |   |   \---inbox
 |   |   |   +---inbox
+|   |   |   |       Andreev_Pavel_Astrologia_Vse_tayny.fb2
+|   |   |   |       Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.fb2
+|   |   |   |       Astrology-natalnaya-karta.fb2
+|   |   |   |       Pavel_Andreev_Astrologia_dlya_zhizni.fb2
+|   |   |   |       П. Андреев - Биоастрология.fb2
+|   |   |   |       
 |   |   |   \---processed
 |   |   |       \---inbox
+|   |   |               1_elements_integrals.txt
+|   |   |               2_planets.txt
+|   |   |               3_signs.txt
+|   |   |               4_houses_and_rulers.txt
+|   |   |               5_house_space_and_cusps.txt
+|   |   |               6_aspects.txt
+|   |   |               7_aspect_configurations.txt
+|   |   |               Andreev_Pavel_Astrologia_Vse_tayny.pdf
+|   |   |               Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.pdf
+|   |   |               Pavel_Andreev_Astrologia_dlya_zhizni.pdf
+|   |   |               П. Андреев - Биоастрология.epub
+|   |   |               П. Андреев - Биоастрология.fb2
 |   |   |               П. Андреев - Биоастрология.pdf
 |   |   |               
 |   |   +---sources
@@ -239,7 +268,17 @@ C:\Projects\superastro
 |   |   \---uploads
 |   +---knowledge
 |   |   \---docs
+|   |           04d5ef088adfa574.md
+|   |           052b259137e36d38.md
+|   |           08e5c4b32416ebb6.md
+|   |           09f36bc44f9600de.md
+|   |           3e2ac29ea275024f.md
+|   |           6d16e57653a7bc6c.md
+|   |           75b014ea98655932.md
+|   |           94f5c1a558555fb8.md
+|   |           b5a69e3a8950dcbc.md
 |   |           c13dd4999e439d3a.md
+|   |           e4f220787ed15f9b.md
 |   |           _import_manifest.json
 |   |           
 |   +---migrations
@@ -258,6 +297,13 @@ C:\Projects\superastro
 |   |   |   test_contract_natal_data.py
 |   |   |   test_error_contract_404.py
 |   |   |   test_error_contract_500.py
+|   |   |   test_kb_build_managed_only.py
+|   |   |   test_kb_fragments_list_filters.py
+|   |   |   test_kb_ingest_atomize_fb2.py
+|   |   |   test_kb_ingest_atomize_modes.py
+|   |   |   test_kb_sources_diagnose.py
+|   |   |   test_kb_validator_profile_ru_v1.py
+|   |   |   test_kb_validator_profile_ru_v1_state_stdout.py
 |   |   |   test_project_integrity_smoke.py
 |   |   |   test_public_v2.py
 |   |   |   test_public_v2_buttons_enabled_only.py
@@ -290,6 +336,13 @@ C:\Projects\superastro
 |   |           test_contract_natal_data.cpython-312-pytest-9.0.2.pyc
 |   |           test_error_contract_404.cpython-312-pytest-9.0.2.pyc
 |   |           test_error_contract_500.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_build_managed_only.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_fragments_list_filters.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_ingest_atomize_fb2.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_ingest_atomize_modes.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_sources_diagnose.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_validator_profile_ru_v1.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_validator_profile_ru_v1_state_stdout.cpython-312-pytest-9.0.2.pyc
 |   |           test_knowledge_builder_mvp.cpython-312-pytest-9.0.2.pyc
 |   |           test_project_integrity_smoke.cpython-312-pytest-9.0.2.pyc
 |   |           test_public_v2.cpython-312-pytest-9.0.2.pyc

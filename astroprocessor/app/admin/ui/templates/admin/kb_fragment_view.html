@@ -1,0 +1,39 @@
+{% set meta = (fragment.meta if fragment.meta else {}) %}
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap;">
+    <div>
+      <div class="muted">FRAGMENT</div>
+      <div style="font-weight:700;">
+        #{{ fragment.id }} · {{ fragment.key }} · {{ fragment.state }}
+      </div>
+
+      <div class="muted" style="margin-top:4px;">
+        {% if meta.get('chunk_seq') is not none %}
+          from chunk_seq {{ meta.get('chunk_seq') }}
+        {% endif %}
+        {% if meta.get('char_start') is not none and meta.get('char_end') is not none %}
+          · {{ meta.get('char_start') }}..{{ meta.get('char_end') }}
+        {% endif %}
+        {% if meta.get('chunk_id') is not none %}
+          · chunk_id
+          <a href="#editor"
+             hx-get="/admin/ui/kb/chunk/{{ meta.get('chunk_id') }}"
+             hx-target="#editor_body"
+             hx-swap="innerHTML"
+             onclick="event.stopPropagation();">
+            {{ meta.get('chunk_id') }}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="muted" style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a href="/admin/ui/kb/source/{{ fragment.source_id }}/fragments">open fragments</a>
+      <a href="/admin/ui/kb/source/{{ fragment.source_id }}">source overview</a>
+    </div>
+  </div>
+
+  <hr />
+
+  <pre style="white-space:pre-wrap; margin:0; max-height:60vh; overflow:auto;">{{ fragment.text }}</pre>
+</div>

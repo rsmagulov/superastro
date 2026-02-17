@@ -38,6 +38,7 @@ class Settings(BaseSettings):
 
     astro_db_path: str = "./astro.db"
     knowledge_db_path: str = "./data/knowledge.db"
+    staging_db_path: str = "./data/staging/staging.db"
 
     ephemeris_path: str | None = None  # опционально
     se_ephe_path: str = "./se"

@@ -1,0 +1,34 @@
+{% if not chunk %}
+  <div class="kb-editor">
+    <div class="kb-editor__header">
+      <h3>Chunk not found</h3>
+    </div>
+  </div>
+{% else %}
+<div class="kb-editor">
+  <div class="kb-editor__header">
+    <div class="kb-editor__title">
+      <div class="kb-hline">
+        <strong>CHUNK #{{ chunk.id }}</strong>
+        <span class="mono">seq={{ chunk.seq }}</span>
+        <span class="mono">offsets={{ chunk.char_start }}..{{ chunk.char_end }}</span>
+      </div>
+      <div class="kb-hline small muted">
+        source_id={{ chunk.source_id }} · locale={{ chunk.locale }} · sha256={{ chunk.sha256[:12] }}…
+      </div>
+    </div>
+  </div>
+
+  <div class="kb-editor__body">
+    <form hx-post="/admin/ui/kb/chunk/{{ chunk.id }}/save" hx-target="#kb_save_status" hx-swap="innerHTML">
+      <label class="kb-label">Text</label>
+      <textarea name="text" class="kb-textarea" rows="18">{{ chunk.text }}</textarea>
+
+      <div class="kb-actions">
+        <button type="submit" class="btn btn-primary">Save chunk</button>
+        <div id="kb_save_status" class="kb-save-status"></div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}

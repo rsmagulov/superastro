@@ -1,0 +1,25 @@
+{% extends "admin/_layout.html" %}
+{% block content %}
+
+{% if not source %}
+  <h2>Source not found</h2>
+{% else %}
+
+<h2>KB Staging — Source #{{ source.id }}</h2>
+<p class="muted">
+  {{ source.title }} | {{ source.source_type or "" }} | {{ source.locale or "" }} | {{ source.file_name or "" }}
+</p>
+
+<div class="card">
+  <div style="display:flex; gap:12px; flex-wrap:wrap;">
+    <a class="btn" href="/admin/ui/kb/source/{{ source.id }}/chunks">Chunks</a>
+    <a class="btn" href="/admin/ui/kb/source/{{ source.id }}/fragments">Fragments</a>
+    <a class="btn" href="/admin/ui/kb/sources">← Back to sources</a>
+  </div>
+  <div class="muted" style="margin-top:10px;">
+    Открой Chunks или Fragments — там список + редактор справа + подсветка выбранного.
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

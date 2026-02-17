@@ -1,0 +1,36 @@
+{# astroprocessor/app/admin/ui/templates/admin/kb_sources.html #}
+{% extends "admin/_layout.html" %}
+{% block content %}
+
+<h2>KB Staging — Sources</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Title</th>
+      <th>Type</th>
+      <th>Locale</th>
+      <th>File</th>
+      <th>Chunks</th>
+      <th>Fragments</th>
+      <th>Imported</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in items %}
+      <tr>
+        <td>{{ s.id }}</td>
+        <td><a href="/admin/ui/kb/source/{{ s.id }}">{{ s.title }}</a></td>
+        <td>{{ s.source_type or "" }}</td>
+        <td>{{ s.locale or "" }}</td>
+        <td>{{ s.file_name or "" }}</td>
+        <td>{{ s.chunks_count }}</td>
+        <td>{{ s.fragments_count }}</td>
+        <td>{{ s.imported_at }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

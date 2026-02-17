@@ -65,6 +65,14 @@ try:
 except Exception:
     pass
 
+# KB staging UI
+try:
+    from app.admin.ui.kb_router import router as kb_router  # type: ignore
+
+    router.include_router(kb_router)
+except Exception:
+    pass
+
 # constants used by tests + UI validation
 from app.knowledge.meta_schema import ALLOWED_ABSTRACTION_LEVELS, ALLOWED_TONES  # type: ignore
 
