@@ -17,6 +17,8 @@ from typing import Any, Optional
 from dataclasses import dataclass
 from app.knowledge.topic_gate_ru_natal import NatalTopicGate
 from collections import Counter
+from app.knowledge.quality_rating_ru import rate_fragment_ru
+
 
 @dataclass
 class GarbleInfo:
@@ -123,7 +125,7 @@ def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
 # Staging schema
 # ----------------------------
 
-STAGING_SCHEMA_VERSION = 2
+STAGING_SCHEMA_VERSION = 3
 
 STAGING_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS kb_schema_meta (
@@ -169,6 +171,9 @@ CREATE TABLE IF NOT EXISTS kb_fragments (
   source_id INTEGER,
   author TEXT,
 
+  quality_score INTEGER NOT NULL DEFAULT 50,
+  quality_label TEXT NOT NULL DEFAULT 'D',
+  quality_reasons_json TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
 
@@ -180,6 +185,7 @@ CREATE INDEX IF NOT EXISTS idx_kb_fragments_state ON kb_fragments(state);
 CREATE INDEX IF NOT EXISTS idx_kb_fragments_topic ON kb_fragments(topic_category);
 CREATE INDEX IF NOT EXISTS idx_kb_fragments_locale ON kb_fragments(locale);
 CREATE INDEX IF NOT EXISTS idx_kb_fragments_key ON kb_fragments(key);
+CREATE INDEX IF NOT EXISTS idx_kb_fragments_quality_score ON kb_fragments(quality_score);
 
 CREATE TABLE IF NOT EXISTS kb_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -262,6 +268,27 @@ def _migrate_staging_v2(conn: sqlite3.Connection) -> None:
 
     conn.executescript(STAGING_SCHEMA_V2_SQL)
 
+def _migrate_staging_v3(conn: sqlite3.Connection) -> None:
+    """Staging schema v3 migration: add quality rating columns to kb_fragments."""
+    if _table_exists(conn, "kb_fragments"):
+        if not _has_column(conn, "kb_fragments", "quality_score"):
+            conn.execute(
+                "ALTER TABLE kb_fragments ADD COLUMN quality_score INTEGER NOT NULL DEFAULT 50"
+            )
+        if not _has_column(conn, "kb_fragments", "quality_label"):
+            conn.execute(
+                "ALTER TABLE kb_fragments ADD COLUMN quality_label TEXT NOT NULL DEFAULT 'D'"
+            )
+        if not _has_column(conn, "kb_fragments", "quality_reasons_json"):
+            conn.execute(
+                "ALTER TABLE kb_fragments ADD COLUMN quality_reasons_json TEXT NOT NULL DEFAULT '{}'"
+            )
+
+    # helpful index for sorting/filtering in admin
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_kb_fragments_quality_score ON kb_fragments(quality_score)"
+    )
+
 
 def _ensure_staging_schema(conn: sqlite3.Connection) -> None:
     """Ensure staging schema exists and is migrated forward."""
@@ -285,9 +312,18 @@ def _ensure_staging_schema(conn: sqlite3.Connection) -> None:
 
     if version < 2:
         _migrate_staging_v2(conn)
+    conn.execute(
+        "INSERT OR REPLACE INTO kb_schema_meta(key,value) VALUES(?,?)",
+        ("schema_version", "2"),
+    )
+    conn.commit()
+    version = 2
+
+    if version < 3:
+        _migrate_staging_v3(conn)
         conn.execute(
             "INSERT OR REPLACE INTO kb_schema_meta(key,value) VALUES(?,?)",
-            ("schema_version", "2"),
+            ("schema_version", "3"),
         )
         conn.commit()
 
@@ -390,8 +426,13 @@ def cmd_init(args: argparse.Namespace) -> int:
     sp = _staging_db_path()
     conn = _connect(sp)
     try:
-        conn.executescript(STAGING_SCHEMA_SQL)
-        _migrate_staging_v2(conn)
+        # IMPORTANT:
+        # - Do NOT executescript(STAGING_SCHEMA_SQL) unconditionally.
+        #   It breaks when an existing DB is older (no quality_* columns),
+        #   because STAGING_SCHEMA_SQL tries to create an index on quality_score.
+        _ensure_staging_schema(conn)
+
+        # Ensure meta present/updated
         conn.execute(
             "INSERT OR REPLACE INTO kb_schema_meta(key,value) VALUES(?,?)",
             ("schema_version", str(STAGING_SCHEMA_VERSION)),
@@ -401,7 +442,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             ("initialized_at", _utcnow_iso()),
         )
         conn.commit()
-        print(f"✅ staging db initialized: {sp}", file=sys.stderr)
+        print(f"✅ staging db initialized/migrated: {sp}", file=sys.stderr)
     finally:
         conn.close()
 
@@ -465,13 +506,21 @@ def cmd_add(args: argparse.Namespace) -> int:
                     )
                     source_id = int(cur.lastrowid)
 
+        qr = rate_fragment_ru(text_)
+        quality_score = int(qr.score)
+        quality_label = str(qr.label)
+        quality_reasons_json = json.dumps(qr.reasons, ensure_ascii=False)
+
+
         cur = conn.execute(
             """
             INSERT INTO kb_fragments(
-              key, locale, topic_category, text, tone, abstraction_level, state,
-              factors_json, meta_json, source_id, author, created_at, updated_at
+            key, locale, topic_category, text, tone, abstraction_level, state,
+            factors_json, meta_json, source_id, author,
+            quality_score, quality_label, quality_reasons_json,
+            created_at, updated_at
             )
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """.strip(),
             (
                 key,
@@ -485,6 +534,9 @@ def cmd_add(args: argparse.Namespace) -> int:
                 meta_json,
                 source_id,
                 author,
+                quality_score,
+                quality_label,
+                quality_reasons_json,
                 now,
                 now,
             ),
@@ -2879,6 +2931,7 @@ def cmd_fragments_promote(args: argparse.Namespace) -> int:
     dry_run = bool(getattr(args, "dry_run", False))
     as_json = bool(getattr(args, "json", False))
     compact = bool(getattr(args, "compact", False))
+    commit_batch = int(getattr(args, "commit_batch", 500) or 500)
     limit = int(getattr(args, "limit", 0) or 0)
     who = (getattr(args, "who", "KB") or "KB").strip()
     note = (getattr(args, "note", "promote") or "promote").strip()
@@ -2938,7 +2991,9 @@ def cmd_fragments_promote(args: argparse.Namespace) -> int:
                     (fid, from_state, to_state, who, note, now),
                 )
                 updated += 1
-            conn.commit()
+            if (not dry_run) and commit_batch > 0 and (updated % commit_batch == 0):
+                conn.commit()
+
         else:
             updated = len(eligible_ids)
 
@@ -2966,19 +3021,176 @@ def cmd_fragments_promote(args: argparse.Namespace) -> int:
         return 0
     finally:
         conn.close()
+def _print_quality_stats_pretty(report: dict) -> None:
+    """Pretty stderr output for `fragments stats --by-quality`."""
+    label_by_state = report.get("label_by_state") or {}
+    state_counts = report.get("state_counts") or {}
+    label_counts = report.get("label_counts") or {}
+    buckets = report.get("score_buckets") or {}
+
+    states = list(state_counts.keys()) or sorted(label_by_state.keys())
+    # Prefer stable ordering
+    preferred = ["enabled", "needs_review", "archived", "draft", "reviewed", "annotated", "validated"]
+    states = [s for s in preferred if s in states] + [s for s in states if s not in preferred]
+
+    labels = ["A", "B", "C", "D", "F"]
+
+    def fmt_int(n: object) -> str:
+        try:
+            return str(int(n))
+        except Exception:
+            return "0"
+
+    # Header
+    header = ["STATE", "TOTAL"] + labels
+    widths = [12, 7] + [6] * len(labels)
+
+    def row_line(cols: list[str]) -> str:
+        out = []
+        for i, c in enumerate(cols):
+            w = widths[i] if i < len(widths) else 10
+            out.append(c.rjust(w) if i else c.ljust(w))
+        return " ".join(out)
+
+    print("\nQUALITY STATS (by state)", file=sys.stderr)
+    print(row_line(header), file=sys.stderr)
+    print(row_line(["-" * widths[0], "-" * widths[1]] + ["-" * 6] * len(labels)), file=sys.stderr)
+
+    # Rows
+    for st in states:
+        per = label_by_state.get(st) or {}
+        cols = [st, fmt_int(state_counts.get(st, 0))]
+        for lb in labels:
+            cols.append(fmt_int(per.get(lb, 0)))
+        print(row_line(cols), file=sys.stderr)
+
+    # Totals
+    print("", file=sys.stderr)
+    total = report.get("fragments_total", 0)
+    min_s = report.get("min_score", 0)
+    avg_s = report.get("avg_score", 0.0)
+    max_s = report.get("max_score", 0)
+    print(f"TOTAL: {total}    min/avg/max: {min_s}/{avg_s:.1f}/{max_s}", file=sys.stderr)
+    print(f"LABELS: {label_counts}", file=sys.stderr)
+
+    if buckets:
+        order = ["0-44", "45-54", "55-69", "70-84", "85-100"]
+        parts = [f"{k}:{fmt_int(buckets.get(k, 0))}" for k in order if k in buckets] + [
+            f"{k}:{fmt_int(v)}" for k, v in buckets.items() if k not in order
+        ]
+        print("BUCKETS: " + "  ".join(parts), file=sys.stderr)
 
 
 def cmd_fragments_stats(args: argparse.Namespace) -> int:
+    by_quality = bool(getattr(args, "by_quality", False))
     source_id = int(getattr(args, "source_id", 0) or 0)
-    if not source_id:
-        print("ERROR: --source-id is required", file=sys.stderr)
+    if (not by_quality) and (not source_id):
+        print("ERROR: --source-id is required (unless --by-quality)", file=sys.stderr)
         return 2
-
     state = (getattr(args, "state", "") or "").strip()
+    
+    where = ["1=1"]
+    params: list[object] = []
+    if source_id > 0:
+        where.append("source_id=?")
+        params.append(source_id)
+    state = (getattr(args, "state", "") or "").strip()
+    if state:
+        where.append("state=?")
+        params.append(state)
+    
+    where_sql = " AND ".join(where)
+
     as_json = bool(getattr(args, "json", False))
     compact = bool(getattr(args, "compact", False))
 
     conn = _connect(_staging_db_path())
+    if by_quality:
+        rows = conn.execute(
+            f"""
+            SELECT quality_score, quality_label, state, quality_reasons_json
+            FROM kb_fragments
+            WHERE {where_sql}
+            """,
+            params,
+        ).fetchall()
+
+        total = len(rows)
+        label_ctr: Counter[str] = Counter()
+        state_ctr: Counter[str] = Counter()
+        label_by_state: dict[str, Counter[str]] = {}
+        reason_ctr: Counter[str] = Counter()
+        score_buckets = {
+            "0-44": 0,
+            "45-54": 0,
+            "55-69": 0,
+            "70-84": 0,
+            "85-100": 0,
+        }
+
+
+        min_score: Optional[int] = None
+        max_score: Optional[int] = None
+        sum_score = 0
+
+        for score, label, st, reasons_json in rows:
+            sc = int(score or 0)
+            if sc <= 44:
+                score_buckets["0-44"] += 1
+            elif sc <= 54:
+                score_buckets["45-54"] += 1
+            elif sc <= 69:
+                score_buckets["55-69"] += 1
+            elif sc <= 84:
+                score_buckets["70-84"] += 1
+            else:
+                score_buckets["85-100"] += 1
+            lb = str(label or "")
+            st = str(st or "")
+
+            label_ctr[lb] += 1
+            state_ctr[st] += 1
+            label_by_state.setdefault(st, Counter())[lb] += 1
+
+            min_score = sc if min_score is None else min(min_score, sc)
+            max_score = sc if max_score is None else max(max_score, sc)
+            sum_score += sc
+
+            if reasons_json:
+                try:
+                    r = json.loads(reasons_json)
+                    if isinstance(r, dict):
+                        for k, v in r.items():
+                            reason_ctr[str(k)] += int(v or 0)
+                except Exception:
+                    reason_ctr["reasons_json_parse_error"] += 1
+
+        report = {
+            "fragments_total": total,
+            "filters": {"source_id": source_id or None, "state": state or None},
+            "min_score": int(min_score or 0),
+            "avg_score": (sum_score / total) if total else 0.0,
+            "max_score": int(max_score or 0),
+            "label_counts": dict(label_ctr),
+            "state_counts": dict(state_ctr),
+            "label_by_state": {k: dict(v) for k, v in label_by_state.items()},
+            "top_reason_counts": dict(reason_ctr.most_common(20)),
+            "score_buckets": score_buckets,
+        }
+
+        as_json = bool(getattr(args, "json", False))
+        compact = bool(getattr(args, "compact", False))
+        if as_json:
+            if compact:
+                print(json.dumps(report, ensure_ascii=False, separators=(",", ":")))
+            else:
+                print(json.dumps(report, ensure_ascii=False, indent=2))
+        else:
+            _print_quality_stats_pretty(report)
+
+        return 0
+
+
     try:
         _ensure_staging_schema(conn)
 
@@ -3031,8 +3243,11 @@ def cmd_fragments_stats(args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
         return 0
+        
     finally:
         conn.close()
+
+    
 
 def cmd_fragments_export(args: argparse.Namespace) -> int:
     source_id = int(getattr(args, "source_id", 0) or 0)
@@ -3313,6 +3528,224 @@ def cmd_fragments_purge(args: argparse.Namespace) -> int:
     finally:
         conn.close()
 
+def cmd_fragments_rerate(args: argparse.Namespace) -> int:
+    """
+    Recompute RU quality rating for existing staging fragments and store it in columns:
+      - quality_score
+      - quality_label
+      - quality_reasons_json
+
+    Usage:
+      kb fragments re-rate --all
+      kb fragments re-rate --source-id 1
+    """
+    if not getattr(args, "all", False) and not getattr(args, "source_id", 0):
+        raise SystemExit("Provide --all or --source-id")
+
+    conn = _connect(_staging_db_path())
+    try:
+        _ensure_staging_schema(conn)
+
+        where = []
+        params: list[object] = []
+
+        if not getattr(args, "all", False):
+            where.append("source_id = ?")
+            params.append(int(args.source_id))
+
+        state = (getattr(args, "state", "") or "").strip()
+        if state:
+            where.append("state = ?")
+            params.append(state)
+
+        where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+        limit = int(getattr(args, "limit", 0) or 0)
+        limit_sql = f" LIMIT {limit}" if limit > 0 else ""
+
+        rows = conn.execute(
+            f"SELECT id, text FROM kb_fragments{where_sql} ORDER BY id{limit_sql}",
+            params,
+        ).fetchall()
+
+        total = len(rows)
+        processed = 0
+        updated = 0
+        min_score: Optional[int] = None
+        max_score: Optional[int] = None
+        sum_score = 0
+
+        label_ctr: Counter[str] = Counter()
+        reason_ctr: Counter[str] = Counter()
+
+        now = _utcnow_iso()
+        dry_run = bool(getattr(args, "dry_run", False))
+        commit_batch = int(getattr(args, "commit_batch", 500) or 500)
+        below = int(getattr(args, "below", 0) or 0)
+        set_state = (getattr(args, "set_state", "") or "").strip()
+        above = int(getattr(args, "above", 0) or 0)
+        set_state_above = (getattr(args, "set_state_above", "") or "").strip()
+        only_if_state = (getattr(args, "only_if_state", "") or "").strip()
+        normalize_3 = bool(getattr(args, "normalize_3", False))
+        reject_below = int(getattr(args, "reject_below", 45) or 45)
+        review_below = int(getattr(args, "review_below", 55) or 55)
+        state_rejected = (getattr(args, "state_rejected", "archived") or "archived").strip()
+        state_review = (getattr(args, "state_review", "needs_review") or "needs_review").strip()
+        state_enabled = (getattr(args, "state_enabled", "enabled") or "enabled").strip()
+
+        if normalize_3 and not (0 <= reject_below < review_below):
+            raise SystemExit("--reject-below must be < --review-below")
+
+        for frag_id, text_ in rows:
+            processed += 1
+            qr = rate_fragment_ru(text_ or "")
+            score = int(qr.score)
+            label = str(qr.label)
+            reasons_json = json.dumps(qr.reasons, ensure_ascii=False)
+
+            label_ctr[label] += 1
+            for k, v in (qr.reasons or {}).items():
+                reason_ctr[str(k)] += int(v)
+
+            min_score = score if min_score is None else min(min_score, score)
+            max_score = score if max_score is None else max(max_score, score)
+            sum_score += score
+
+            target_state = None
+
+            if normalize_3:
+                if score < reject_below:
+                    target_state = state_rejected
+                elif score < review_below:
+                    target_state = state_review
+                else:
+                    target_state = state_enabled
+            else:
+                if below > 0 and set_state and score < below:
+                    target_state = set_state
+                elif above > 0 and set_state_above and score >= above:
+                    target_state = set_state_above
+
+            if below > 0 and set_state and score < below:
+                target_state = set_state
+            elif above > 0 and set_state_above and score >= above:
+                target_state = set_state_above
+
+            if not dry_run:
+                if target_state is not None:
+                    # Update quality + state only if something actually changes
+                    if only_if_state:
+                        cur = conn.execute(
+                            """
+                            UPDATE kb_fragments
+                            SET quality_score=?,
+                                quality_label=?,
+                                quality_reasons_json=?,
+                                state=?,
+                                updated_at=?
+                            WHERE id=? AND state=?
+                              AND (
+                                   quality_score <> ?
+                                OR quality_label <> ?
+                                OR quality_reasons_json <> ?
+                                OR state <> ?
+                              )
+                            """,
+                            (
+                                score, label, reasons_json, target_state, now,
+                                int(frag_id), only_if_state,
+                                score, label, reasons_json, target_state,
+                            ),
+                        )
+                        updated += int(cur.rowcount or 0)
+                    else:
+                        cur = conn.execute(
+                            """
+                            UPDATE kb_fragments
+                            SET quality_score=?,
+                                quality_label=?,
+                                quality_reasons_json=?,
+                                state=?,
+                                updated_at=?
+                            WHERE id=?
+                              AND (
+                                   quality_score <> ?
+                                OR quality_label <> ?
+                                OR quality_reasons_json <> ?
+                                OR state <> ?
+                              )
+                            """,
+                            (
+                                score, label, reasons_json, target_state, now,
+                                int(frag_id),
+                                score, label, reasons_json, target_state,
+                            ),
+                        )
+                        updated += int(cur.rowcount or 0)
+                else:
+                    # Update quality only if something actually changes
+                    cur = conn.execute(
+                        """
+                        UPDATE kb_fragments
+                        SET quality_score=?,
+                            quality_label=?,
+                            quality_reasons_json=?,
+                            updated_at=?
+                        WHERE id=?
+                          AND (
+                               quality_score <> ?
+                            OR quality_label <> ?
+                            OR quality_reasons_json <> ?
+                          )
+                        """,
+                        (
+                            score, label, reasons_json, now,
+                            int(frag_id),
+                            score, label, reasons_json,
+                        ),
+                    )
+                    updated += int(cur.rowcount or 0)
+
+                # Commit in batches (updated == actually changed rows)
+                if commit_batch > 0 and (processed % commit_batch == 0):
+                    conn.commit()
+
+
+        if not dry_run:
+            conn.commit()
+
+        avg_score = (sum_score / total) if total else 0.0
+        report = {
+            "fragments_total": total,
+            "processed": processed,
+            "updated": updated,
+            "dry_run": dry_run,
+            "min_score": min_score if min_score is not None else 0,
+            "avg_score": avg_score,
+            "max_score": max_score if max_score is not None else 0,
+            "label_counts": dict(label_ctr),
+            "top_reason_counts": dict(reason_ctr.most_common(20)),
+        }
+
+        as_json = bool(getattr(args, "json", False))
+        compact = bool(getattr(args, "compact", False))
+
+        if as_json:
+            if compact:
+                print(json.dumps(report, ensure_ascii=False, separators=(",", ":")))
+            else:
+                print(json.dumps(report, ensure_ascii=False, indent=2))
+        else:
+            print(
+                f"re-rate: total={report['fragments_total']} updated={report['updated']} "
+                f"dry_run={report['dry_run']} min/avg/max={report['min_score']}/{report['avg_score']:.1f}/{report['max_score']}",
+                file=sys.stderr,
+            )
+            print(f"labels={report['label_counts']}", file=sys.stderr)
+            print(f"top_reasons={report['top_reason_counts']}", file=sys.stderr)
+        
+        return 0
+    finally:
+        conn.close()
 
 def cmd_ingest(args: argparse.Namespace) -> int:
     path = Path(getattr(args, "path", "") or "")
@@ -3677,6 +4110,8 @@ def cmd_atomize(args: argparse.Namespace) -> int:
     best_score_ctr = Counter()
     best_topic_ctr: Counter[str] = Counter()
     best_score_ctr: Counter[str] = Counter()
+    near_miss_ctr: Counter[str] = Counter()
+
 
     def _best_topic_and_score_from_scores(topic_scores: dict[str, Any] | None) -> tuple[str, int]:
         s = topic_scores or {}
@@ -3832,6 +4267,8 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                         bt, bsc = _best_topic_and_score(gate_result.topic_scores)
                         best_topic_ctr[bt] += 1
                         best_score_ctr[str(bsc)] += 1
+                        if bsc == (topic_threshold - 1):
+                            near_miss_ctr[bt] += 1
 
                         # examples (как и было) — только если попросили dump
                         if sid is not None and dump_topic_rejected > 0 and len(topic_rejected_examples) < dump_topic_rejected:
@@ -4003,12 +4440,15 @@ def cmd_atomize(args: argparse.Namespace) -> int:
             "topic_rejected_total": topic_rejected_total,
             "topic_rejected_best_topic_counts": dict(best_topic_ctr),
             "topic_rejected_best_score_counts": dict(best_score_ctr),
+            "topic_rejected_near_miss_total": int(sum(near_miss_ctr.values())),
+            "topic_rejected_near_miss_topic_counts": dict(near_miss_ctr),
         }
         report["topic_rejected_total"] = topic_rejected_total
         report["topic_rejected_examples"] = topic_rejected_examples  # уже ограничен dump'ом
         report["topic_rejected_best_topic_counts"] = dict(best_topic_ctr)
         report["topic_rejected_best_score_counts"] = dict(best_score_ctr)
-        
+        report["topic_rejected_near_miss_total"] = int(sum(near_miss_ctr.values()))
+        report["topic_rejected_near_miss_topic_counts"] = dict(near_miss_ctr)
 
         if dump_skipped > 0:
             report["skipped_examples"] = skipped_examples
@@ -4248,12 +4688,15 @@ def build_parser() -> argparse.ArgumentParser:
     sp4.add_argument("--compact", action="store_true")
     sp4.set_defaults(func=cmd_fragments_sample)
 
-    sp5 = sub3.add_parser("stats", help="stats for fragments of a source")
-    sp5.add_argument("--source-id", type=int, required=True)
-    sp5.add_argument("--state", default="")
+    sp5 = sub3.add_parser("stats", help="stats for fragments (optionally by source/state/quality)")
+    sp5.add_argument("--source-id", type=int, default=0, help="optional; 0 => all sources")
+    sp5.add_argument("--state", default="", help="optional state filter")
+    sp5.add_argument("--by-quality", action="store_true", help="quality A/B/C/D/F + top reasons + label_by_state")
     sp5.add_argument("--json", action="store_true")
     sp5.add_argument("--compact", action="store_true")
     sp5.set_defaults(func=cmd_fragments_stats)
+
+
 
     sp6 = sub3.add_parser("promote", help="bulk move fragments between states (e.g., needs_review -> reviewed)")
     sp6.add_argument("--source-id", type=int, required=True)
@@ -4295,6 +4738,32 @@ def build_parser() -> argparse.ArgumentParser:
     sp8.add_argument("--compact", action="store_true")
     sp8.set_defaults(func=cmd_fragments_purge)
 
+    sp9 = sub3.add_parser("re-rate", help="recompute RU quality rating for existing staging fragments")
+    mx = sp9.add_mutually_exclusive_group(required=True)
+    mx.add_argument("--all", action="store_true", help="re-rate all staging fragments")
+    mx.add_argument("--source-id", type=int, help="re-rate fragments of a specific source")
+    sp9.add_argument("--state", default="", help="optional state filter (e.g. enabled/needs_review)")
+    sp9.add_argument("--limit", type=int, default=0)
+    sp9.add_argument("--dry-run", action="store_true")
+    sp9.add_argument("--json", action="store_true")
+    sp9.add_argument("--compact", action="store_true")
+    sp9.add_argument("--below", type=int, default=0, help="if >0: mark fragments with score < below")
+    sp9.add_argument("--set-state", default="", help="state to set for score < --below (e.g. needs_review)")
+    sp9.add_argument("--only-if-state", default="", help="only update state if current state matches (e.g. enabled)")
+    sp9.add_argument("--commit-batch", type=int, default=500)
+    sp9.add_argument("--above", type=int, default=0, help="if >0: apply --set-state-above for score >= above")
+    sp9.add_argument("--set-state-above", default="", help="state to set for score >= --above (e.g. enabled)")
+    sp9.add_argument(
+        "--normalize-3",
+        action="store_true",
+        help="apply 3-tier state normalization based on quality_score",
+    )
+    sp9.add_argument("--reject-below", type=int, default=45, help="score < reject_below => rejected")
+    sp9.add_argument("--review-below", type=int, default=55, help="reject_below <= score < review_below => needs_review")
+    sp9.add_argument("--state-rejected", default="archived")
+    sp9.add_argument("--state-review", default="needs_review")
+    sp9.add_argument("--state-enabled", default="enabled")
+    sp9.set_defaults(func=cmd_fragments_rerate)
 
     return p
 

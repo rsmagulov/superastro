@@ -1,0 +1,30 @@
+{
+  "fragments_total": 308,
+  "updated": 308,
+  "dry_run": false,
+  "min_score": 14,
+  "avg_score": 67.19155844155844,
+  "max_score": 100,
+  "label_counts": {
+    "C": 75,
+    "B": 42,
+    "D": 75,
+    "A": 41,
+    "F": 75
+  },
+  "top_reason_counts": {
+    "def_words": 372,
+    "2nd_person": 353,
+    "many_quotes": 240,
+    "daily_story": 207,
+    "def_line": 157,
+    "concise": 140,
+    "slang_fillers": 67,
+    "coaching": 43,
+    "kb_terms": 19,
+    "questions": 14,
+    "exclamations": 5,
+    "too_long": 4,
+    "lists": 4
+  }
+}

@@ -1,6 +1,6 @@
 Структура папок
 Серийный номер тома: 4030-B7C4
-C:\Projects\superastro
+C:\Projects\superastro 
 |   .gitattributes
 |   .gitignore
 |   atomize_dryrun.json
@@ -21,6 +21,7 @@ C:\Projects\superastro
 |               nodeids
 |               
 +---astroprocessor
+|   |   a3.json
 |   |   archived_recheck.json
 |   |   astro.db
 |   |   atomize_dryrun.json
@@ -31,6 +32,9 @@ C:\Projects\superastro
 |   |   out.json
 |   |   pytest.ini
 |   |   recheck.json
+|   |   sources_diag.json
+|   |   t2.json
+|   |   t3.json
 |   |   структура.txt
 |   |   
 |   +---.pytest_cache
@@ -227,6 +231,7 @@ C:\Projects\superastro
 |   +---data
 |   |   |   knowledge.db
 |   |   |   knowledge.db-shm
+|   |   |   knowledge.db-wal
 |   |   |   knowledge.zip
 |   |   |   knowledge_items_01_elements_ip__ETALON.jsonl
 |   |   |   knowledge_items_02_planets__ETALON.jsonl
@@ -246,6 +251,11 @@ C:\Projects\superastro
 |   |   |   +---failed
 |   |   |   |   \---inbox
 |   |   |   +---inbox
+|   |   |   |       book_clean_formatted.docx
+|   |   |   |       
+|   |   |   +---inbox_norm
+|   |   |   |       book_clean_formatted.txt
+|   |   |   |       
 |   |   |   +---inbox__bak
 |   |   |   |       1_elements_integrals.txt
 |   |   |   |       2_planets.txt
@@ -255,38 +265,29 @@ C:\Projects\superastro
 |   |   |   |       6_aspects.txt
 |   |   |   |       7_aspect_configurations.txt
 |   |   |   |       Andreev_Pavel_Astrologia_Vse_tayny.fb2
+|   |   |   |       Andreev_Pavel_Astrologia_Vse_tayny.pdf
+|   |   |   |       Andreev_Pavel_Astrologia_Vse_tayny_karty.pdf
 |   |   |   |       Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.fb2
+|   |   |   |       Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.pdf
+|   |   |   |       book_ocr.pdf
+|   |   |   |       book_raw.txt
+|   |   |   |       extract_pdf_text.py
+|   |   |   |       Kniga_o_12_dome.pdf
 |   |   |   |       Pavel_Andreev_Astrologia_dlya_zhizni.fb2
+|   |   |   |       Pavel_Andreev_Astrologia_dlya_zhizni.pdf
+|   |   |   |       П. Андреев - Биоастрология.epub
+|   |   |   |       П. Андреев - Биоастрология.fb2
+|   |   |   |       П. Андреев - Биоастрология.pdf
 |   |   |   |       
 |   |   |   \---processed
 |   |   |       \---inbox
-|   |   |               1_elements_integrals.txt
-|   |   |               2_planets.txt
-|   |   |               3_signs.txt
-|   |   |               4_houses_and_rulers.txt
-|   |   |               5_house_space_and_cusps.txt
-|   |   |               6_aspects.txt
-|   |   |               7_aspect_configurations.txt
-|   |   |               Andreev_Pavel_Astrologia_Vse_tayny.fb2
-|   |   |               Andreev_Pavel_Astrologia_Vse_tayny.pdf
-|   |   |               Andreev_Pavel_Astrologia_Vse_tayny_karty.pdf
-|   |   |               Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.fb2
-|   |   |               Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.pdf
-|   |   |               Pavel_Andreev_Astrologia_dlya_zhizni.fb2
-|   |   |               Pavel_Andreev_Astrologia_dlya_zhizni.pdf
-|   |   |               П. Андреев - Биоастрология.epub
-|   |   |               П. Андреев - Биоастрология.fb2
-|   |   |               П. Андреев - Биоастрология.pdf
-|   |   |               
 |   |   +---staging
 |   |   |       staging.db
 |   |   |       
 |   |   \---uploads
 |   +---knowledge
 |   |   \---docs
-|   |           9e89913bdd229c62.md
-|   |           b8b5e2d2db0d95fd.md
-|   |           edfa41965ae5ddb5.md
+|   |           b756574bed91fa7a.md
 |   |           _import_manifest.json
 |   |           
 |   +---migrations
@@ -377,10 +378,13 @@ C:\Projects\superastro
 |   |           utils.cpython-312.pyc
 |   |           
 |   \---tools
+|       |   capture_cli_stdout.py
 |       |   import_jsonl_items.py
 |       |   kb.ps1
 |       |   make_keybuilder_clones.py
 |       |   migrate_add_sources.py
+|       |   normalize_inbox_ru.py
+|       |   normalize_text_ru.py
 |       |   
 |       +---experiments
 |       |       insert_version_sun_leo.py

@@ -1,0 +1,26 @@
+{
+  "fragments_total": 308,
+  "updated": 308,
+  "dry_run": false,
+  "min_score": 75,
+  "avg_score": 97.79220779220779,
+  "max_score": 100,
+  "label_counts": {
+    "A": 293,
+    "B": 13,
+    "C": 2
+  },
+  "top_reason_counts": {
+    "explain_markers": 366,
+    "2nd_person": 353,
+    "many_quotes": 240,
+    "daily_story_markers": 192,
+    "definitional": 156,
+    "slang_fillers": 67,
+    "questions": 26,
+    "too_long": 7,
+    "instructional": 5,
+    "exclamations": 5,
+    "lists": 4
+  }
+}

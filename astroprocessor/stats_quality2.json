@@ -1,0 +1,58 @@
+{
+  "fragments_total": 308,
+  "filters": {
+    "source_id": null,
+    "state": null
+  },
+  "min_score": 14,
+  "avg_score": 67.19155844155844,
+  "max_score": 100,
+  "label_counts": {
+    "C": 75,
+    "B": 42,
+    "D": 75,
+    "A": 41,
+    "F": 75
+  },
+  "state_counts": {
+    "enabled": 233,
+    "needs_review": 33,
+    "archived": 42
+  },
+  "label_by_state": {
+    "enabled": {
+      "C": 75,
+      "B": 42,
+      "D": 75,
+      "A": 41
+    },
+    "needs_review": {
+      "F": 33
+    },
+    "archived": {
+      "F": 42
+    }
+  },
+  "top_reason_counts": {
+    "def_words": 372,
+    "2nd_person": 353,
+    "many_quotes": 240,
+    "daily_story": 207,
+    "def_line": 157,
+    "concise": 140,
+    "slang_fillers": 67,
+    "coaching": 43,
+    "kb_terms": 19,
+    "questions": 14,
+    "exclamations": 5,
+    "too_long": 4,
+    "lists": 4
+  },
+  "score_buckets": {
+    "0-44": 42,
+    "45-54": 33,
+    "55-69": 75,
+    "70-84": 99,
+    "85-100": 59
+  }
+}
