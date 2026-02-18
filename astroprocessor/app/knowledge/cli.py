@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 from dataclasses import dataclass
 from app.knowledge.topic_gate_ru_natal import NatalTopicGate
-
+from collections import Counter
 
 @dataclass
 class GarbleInfo:
@@ -3670,6 +3670,37 @@ def cmd_atomize(args: argparse.Namespace) -> int:
     dump_topic_rejected = int(getattr(args, "dump_topic_rejected", 0) or 0)
     skipped_examples: list[dict[str, Any]] = []
     topic_rejected_examples: list[dict[str, Any]] = []
+    
+        # --- topic rejected aggregates (count ALL rejected, keep only N examples) ---
+    topic_rejected_total = 0
+    best_topic_ctr = Counter()
+    best_score_ctr = Counter()
+    best_topic_ctr: Counter[str] = Counter()
+    best_score_ctr: Counter[str] = Counter()
+
+    def _best_topic_and_score_from_scores(topic_scores: dict[str, Any] | None) -> tuple[str, int]:
+        s = topic_scores or {}
+        if not isinstance(s, dict) or not s:
+            return ("no_topic", 0)
+        t, sc = max(s.items(), key=lambda kv: kv[1])
+        try:
+            return (str(t), int(sc))
+        except Exception:
+            return ("no_topic", 0)
+
+    def _best_topic_and_score_from_gate(gr) -> tuple[str, int]:
+        s = getattr(gr, "topic_scores", None) or {}
+        if not s:
+            return ("no_topic", 0)
+        t, sc = max(s.items(), key=lambda kv: kv[1])
+        return (str(t), int(sc))
+    
+    def _best_topic_and_score(scores: dict[str, int] | None) -> tuple[str, int]:
+        s = scores or {}
+        if not s:
+            return ("no_topic", 0)
+        t, sc = max(s.items(), key=lambda kv: kv[1])
+        return (t, int(sc))
 
     min_len = int(getattr(args, "min_len", 120) or 120)
     max_len = int(getattr(args, "max_len", 1800) or 1800)
@@ -3694,6 +3725,9 @@ def cmd_atomize(args: argparse.Namespace) -> int:
     skipped_mode = 0
     skipped_reasons: dict[str, int] = {}
     skipped_topic_reasons: dict[str, int] = {"no_topic": 0}
+    best_topic_ctr: Counter[str] = Counter()
+    best_score_ctr: Counter[str] = Counter()
+    topic_rejected_total = 0
 
     if mode not in {"a", "b"}:
         print("ERROR: --mode must be 'a' or 'b'", file=sys.stderr)
@@ -3786,9 +3820,20 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                 gate_result = None
                 if gate is not None:
                     gate_result = gate.classify(atom_text)
+
                     if not gate_result.accepted:
                         skipped_topic += 1
-                        skipped_topic_reasons["no_topic"] += 1
+                        topic_rejected_total += 1
+
+                        # reason (у тебя сейчас почти всегда "no_topic", но оставим универсально)
+                        skipped_topic_reasons[gate_result.reason] = skipped_topic_reasons.get(gate_result.reason, 0) + 1
+
+                        # === NEW: best topic / best score stats ===
+                        bt, bsc = _best_topic_and_score(gate_result.topic_scores)
+                        best_topic_ctr[bt] += 1
+                        best_score_ctr[str(bsc)] += 1
+
+                        # examples (как и было) — только если попросили dump
                         if sid is not None and dump_topic_rejected > 0 and len(topic_rejected_examples) < dump_topic_rejected:
                             src = src_meta.get(sid, {})
                             topic_rejected_examples.append(
@@ -3807,6 +3852,7 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                                     "snippet": _snippet_for_report(atom_text, 240),
                                 }
                             )
+
                         continue
 
                 # 3) existing mode rule (addressing)
@@ -3920,6 +3966,23 @@ def cmd_atomize(args: argparse.Namespace) -> int:
         if not dry_run:
             conn.commit()
 
+        # ---- topic rejected aggregates (best topic / best score) ----
+        
+        def best_topic_and_score(ex: dict[str, Any]) -> tuple[str, int]:
+            s = ex.get("topic_scores") or {}
+            if not isinstance(s, dict) or not s:
+                return ("no_topic", 0)
+            t, sc = max(s.items(), key=lambda kv: kv[1])
+            try:
+                return (str(t), int(sc))
+            except Exception:
+                return ("no_topic", 0)
+
+        for ex in topic_rejected_examples:
+            t, sc = best_topic_and_score(ex)
+            best_topic_ctr[t] += 1
+            best_score_ctr[str(sc)] += 1
+
         report: dict[str, Any] = {
             "dry_run": dry_run,
             "mode": mode,
@@ -3936,8 +3999,17 @@ def cmd_atomize(args: argparse.Namespace) -> int:
             "topic_gate": "off" if gate is None else "ru_natal_v1",
             "topic_threshold": topic_threshold,
             "include_topics": include_topics,
+            "topic_rejected_examples": (topic_rejected_examples[:dump_topic_rejected] if dump_topic_rejected else []),
+            "topic_rejected_total": topic_rejected_total,
+            "topic_rejected_best_topic_counts": dict(best_topic_ctr),
+            "topic_rejected_best_score_counts": dict(best_score_ctr),
         }
+        report["topic_rejected_total"] = topic_rejected_total
+        report["topic_rejected_examples"] = topic_rejected_examples  # уже ограничен dump'ом
+        report["topic_rejected_best_topic_counts"] = dict(best_topic_ctr)
+        report["topic_rejected_best_score_counts"] = dict(best_score_ctr)
         
+
         if dump_skipped > 0:
             report["skipped_examples"] = skipped_examples
 

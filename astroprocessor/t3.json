@@ -15,5 +15,9 @@
   },
   "topic_gate": "ru_natal_v1",
   "topic_threshold": 3,
-  "include_topics": []
+  "include_topics": [],
+  "topic_rejected_examples": [],
+  "topic_rejected_total": 199,
+  "topic_rejected_best_topic_counts": {},
+  "topic_rejected_best_score_counts": {}
 }

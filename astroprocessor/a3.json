@@ -1,0 +1,829 @@
+{
+  "dry_run": true,
+  "mode": "b",
+  "inserted": 0,
+  "updated": 0,
+  "created": 0,
+  "skipped_existing": 308,
+  "skipped_mode": 0,
+  "skipped_garbled": 0,
+  "skipped_sanitation": 0,
+  "skipped_topic": 199,
+  "skipped_reasons": {},
+  "skipped_topic_reasons": {
+    "no_topic": 199
+  },
+  "topic_gate": "ru_natal_v1",
+  "topic_threshold": 3,
+  "include_topics": [],
+  "topic_rejected_examples": [
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 1,
+      "chunk_seq": 1,
+      "char_start": 0,
+      "char_end": 557,
+      "topics": [
+        "planets",
+        "signs"
+      ],
+      "topic_scores": {
+        "planets": 1,
+        "signs": 1
+      },
+      "total_score": 2,
+      "snippet": "Планета — элемент карты, обозначающий функцию психики человека («что делать?») или персону (мух, брат, дочь и т. п.). Знак — элемент карты, обозначающий внутреннюю мотивацию и условия включения функции планеты («зачем это делать, во имя че…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 1,
+      "chunk_seq": 1,
+      "char_start": 557,
+      "char_end": 1067,
+      "topics": [
+        "planets"
+      ],
+      "topic_scores": {
+        "planets": 1
+      },
+      "total_score": 1,
+      "snippet": "Получается, у каждого из нас некоторые функции психики сильнее, некоторые слабее, у кого-то они работают более агрессивно, у кого-то — более созидательно и эстетически, у кого-то они амбициозно-организационные, но, так или иначе, они по ум…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 1,
+      "chunk_seq": 1,
+      "char_start": 5426,
+      "char_end": 5843,
+      "topics": [
+        "planets",
+        "signs"
+      ],
+      "topic_scores": {
+        "planets": 1,
+        "signs": 1
+      },
+      "total_score": 2,
+      "snippet": "Ну и «делалка»: если я знаю, «кто я», «для чего я», «зачем я», тогда я автоматически что-то «хочу», я автоматически буду «делать», чтобы достичь этого «хочу». В принципе, мы описали так называемые личные планеты. Можно здесь подвести жирну…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 3,
+      "chunk_seq": 3,
+      "char_start": 0,
+      "char_end": 542,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Мы разобрали действующих актеров на сцене, осталось разобрать саму сцену. Если вы обратите внимание на реальную карту рождения — это кружок. Кружок, поделенный на несколько секторов. Самые хитрые могут заметить, что там кружок не один, а н…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 3,
+      "chunk_seq": 3,
+      "char_start": 1560,
+      "char_end": 2032,
+      "topics": [
+        "planets",
+        "signs"
+      ],
+      "topic_scores": {
+        "planets": 1,
+        "signs": 1
+      },
+      "total_score": 2,
+      "snippet": "А знак отвечает на вопросы «Во имя чего?», «Зачем?», каким образом можно на это ответить. Как и зачем? Какой смысл? Это внутренняя некая мотивация, внутренний мотив, который включает нас, как планету. Планета вкручивается в знак, как лампо…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 4,
+      "chunk_seq": 4,
+      "char_start": 4373,
+      "char_end": 4840,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "«Что там у моей бабушки?», «Что там у ребенка болит, не болит зуб?», «Что там у жены, что будет сегодня на ужин?» — здесь эмоция, но она работает в формате такого семейного оформительства, семейного выживания, своего гнезда и так далее. В …"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 5,
+      "chunk_seq": 5,
+      "char_start": 1032,
+      "char_end": 1515,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Здесь и фотография, и музыка, и философия, и научные открытия, и эмоция, которая сфокусирована не на семейных отношениях, не на том, как создать бабла с партнером здесь и сейчас, а на том, как сделать мир лучше, как его облагородить. Побла…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 5,
+      "chunk_seq": 5,
+      "char_start": 1984,
+      "char_end": 2473,
+      "topics": [
+        "houses_rulers",
+        "planets"
+      ],
+      "topic_scores": {
+        "planets": 1,
+        "houses_rulers": 1
+      },
+      "total_score": 2,
+      "snippet": "Чувствуете некое сходство? Здесь огромная кухня, можно разбирать много и много, но мы ограничимся этим стартовым материалом, изучайте и пользуйтесь. Дома Итак, вспоминаем, у нас был сформирован некий психологический фактор, когда актер-пла…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 5,
+      "chunk_seq": 5,
+      "char_start": 4532,
+      "char_end": 5038,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Поэтому лунарий, вроде Джеки Чана, он с Луной в первом доме, он несколько по-хорошему инфантилен. Или венерианец, человек с Венерой в первом доме (в асценденте), например у Анджелины Джоли и Джорджа Клуни, они будут просто симпатичны, вызы…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 5,
+      "chunk_seq": 5,
+      "char_start": 5038,
+      "char_end": 5288,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "По тому, как вы двигаетесь, такое складывается социальное впечатление о вас. Это некая социальная маска, если вы занимаетесь персональным брендингом, вам нужно особое внимание обратить на этот асцендент, потому что это то, что люди на авто…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 6,
+      "chunk_seq": 6,
+      "char_start": 487,
+      "char_end": 999,
+      "topics": [
+        "planets"
+      ],
+      "topic_scores": {
+        "planets": 1
+      },
+      "total_score": 1,
+      "snippet": "Ну, будет покер-фейс в кино, весь такой крутой, стоический и так далее. Кроме того, здесь дети, здесь все продукты объекта нашего творчества, здесь все романы, любовные связи, здесь риски, в том числе бизнес-риски, также в пятом доме небол…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 6,
+      "chunk_seq": 6,
+      "char_start": 999,
+      "char_end": 1733,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "Пятый дом, ну, творчество там, дети, романы, любовные дела. В первом и пятом домах мало этажей. У девятого дома этажей огромное количество. Что такое этаж? Это уровень энергии событийных сценариев, на которых работает дом. В зависимости от…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 6,
+      "chunk_seq": 6,
+      "char_start": 1733,
+      "char_end": 2249,
+      "topics": [
+        "houses_rulers",
+        "planets"
+      ],
+      "topic_scores": {
+        "planets": 1,
+        "houses_rulers": 1
+      },
+      "total_score": 2,
+      "snippet": "Получается, и первый, и пятый, и девятый — это огненные дома, они пытаются вытащить планеты из самого человека в яркость, в активность, публичность, но первый дом делает это тупо, пятый дом делает это творчески, девятый дом делает это по-у…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 6,
+      "chunk_seq": 6,
+      "char_start": 2249,
+      "char_end": 2716,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "Земные дома предполагают взаимодействие человека со всей материей. То, что мы можем потрогать, — и второй, и шестой, и десятый. Это все ситуации созидания, строительства конкретного. Второй дом связан с персональным кошельком человека, то,…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 6,
+      "chunk_seq": 6,
+      "char_start": 2716,
+      "char_end": 3172,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "По шестому дому пойдут коллеги, по шестому дому пойдут животные, по шестому дому пойдут болезни, например. Вот такая особенность. Ну, болезни и выздоровление, врачи, вся медицинская событийность, кроме там некоторых исключений, все это шес…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 6,
+      "chunk_seq": 6,
+      "char_start": 4343,
+      "char_end": 4808,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Десятый дом — это некие ситуации взлета, статуса и масштаба. Второй дом, обратите внимание, если брать по градации земной, он ни с какими статусами не связан, это просто ваше имущество. По второму идет и одежда, и все, что руками можете ун…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 6,
+      "chunk_seq": 6,
+      "char_start": 4808,
+      "char_end": 5349,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "Вот если вы едите не для выживания, а чтобы удовольствие какое-то получить, и секс для удовольствия получаете, то все это будет второй дом. Берем воздушные дома, они будут похитрее, там гораздо больше этажей, но я постараюсь сократить хара…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 7,
+      "chunk_seq": 7,
+      "char_start": 0,
+      "char_end": 629,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "Седьмой дом — это партнеры брачные, также это партнеры по транзакции; например, в вас врезались на улице, или вы заключили договор с риелтором, или на вас напал маньяк, то есть у вас форма взаимоотношений есть с какими-то людьми. Те, кто в…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 7,
+      "chunk_seq": 7,
+      "char_start": 629,
+      "char_end": 1094,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "То есть они как бы вблизи относительно вас, вы можете написать им, но они как бы и не кровные родственники, и нет с ними каких-то взаимоотношений в формате обязанностей и так далее. У третьего дома много этажей, если брать минусовые, то во…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 7,
+      "chunk_seq": 7,
+      "char_start": 1096,
+      "char_end": 1583,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "Одиннадцатый дом очень сложный, огромное количество этажей. Одиннадцатый дом связан, по сути, со всем человечеством абстрактно. Одиннадцатый дом работает по-разному, у творческих людей — это их аудитория; например, Брэд Питт — человек один…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 7,
+      "chunk_seq": 7,
+      "char_start": 1583,
+      "char_end": 2075,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Но это они не подписали договор о том, что они обязаны вместе грабить лотки, у них есть форма такого идеологического взаимодействия. Их кодекс понятий. Одиннадцатый дом может работать в формате политической партии. Это, опять же, более офи…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 7,
+      "chunk_seq": 7,
+      "char_start": 2075,
+      "char_end": 2551,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "е. у них общий интерес появился. Одиннадцатый дом связан со словом «интерес». Ну, если берем большие-большие-большие масштабы, то одиннадцатый дом — это все будущее, все планы. Ну, у большинства людей планов нет, и поэтому одиннадцатый дом…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 8,
+      "chunk_seq": 8,
+      "char_start": 1622,
+      "char_end": 2201,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Восьмой дом связан с чужими ресурсами, которые созданы либо совместными кооперациями, либо просто наследуются вами от других людей. Вы их покупаете за что-то, вы можете обменять свое тело на эти ресурсы, вы можете обменять свою энергию на …"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 8,
+      "chunk_seq": 8,
+      "char_start": 2201,
+      "char_end": 2691,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "И все ситуации магической такой трансформации: магия, Таро, ритуалы какие-то на кладбище, все это к восьмому дому пойдет. И наконец, двенадцатый дом, один из самых мистических, огромный дом, вообще масштабный, невероятное количество смысло…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 8,
+      "chunk_seq": 8,
+      "char_start": 2691,
+      "char_end": 3248,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "По двенадцатому дому вся заграница и такая иммиграция с корнями, она в том числе по двенадцатому дому идет. Девятый и двенадцатый дом — они определенным образом схожи в этом отношении. Двенадцатый дом связан с ситуациями, где нет вашего «я…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 8,
+      "chunk_seq": 8,
+      "char_start": 3248,
+      "char_end": 3855,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "Эта ситуация вранья, в лучшем случае на сцене, в худшем случае двенадцатый дом — это все ситуации обывательского вранья таких вот параллельных реальностей, это все оно. Ну, и вручие ситуации, болезни, которые не лечит традиционная медицина…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 8,
+      "chunk_seq": 8,
+      "char_start": 5963,
+      "char_end": 6474,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "И пятый дом, я один и кайфую от радости. Одиннадцатый дом, есть некий интерес, и он объединяет единомышленников. Все такие вот мысли, планы, проекты «я весь такой духовный творческий», это одиннадцатый и двенадцатый, они этим объединяются.…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 8,
+      "chunk_seq": 8,
+      "char_start": 6939,
+      "char_end": 7289,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "Шестой — это такая кредитная линия до получки, на почте по три тысячи рублей под двести процентов за месяц, вот это будет шестой дом. Восьмой дом — это кредитная линия, которую выдают вам под бизнес, бизнес-планы и так далее. Дома — это ос…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 10,
+      "chunk_seq": 10,
+      "char_start": 2194,
+      "char_end": 2651,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Минус такой определенный получился. При этом соединении человек получает изначально равную порцию: и хороший гимнаст, и ухо по земле. Человека это устраивает, нормально, пусть будет. Ну, представим, что это муж и жена, их взяли, посадили в…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 10,
+      "chunk_seq": 10,
+      "char_start": 6202,
+      "char_end": 6775,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Одна функция будет доминирующей, а другая будет работать как вспомогательный инструмент. Ну, вот представьте: муж и жена, они дерутся круглые сутки, прямо ненавидят друг друга, и нет ни участкового, ни брачного договора, но есть какая-то д…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 11,
+      "chunk_seq": 11,
+      "char_start": 3846,
+      "char_end": 4313,
+      "topics": [
+        "houses_rulers",
+        "planets"
+      ],
+      "topic_scores": {
+        "planets": 1,
+        "houses_rulers": 1
+      },
+      "total_score": 2,
+      "snippet": "Это если цель, например, стать начальником. Или если, например, человек молчун, и его сложно разговорить, и надо что-то с ним сделать, он ребенок, три годика, тогда мы его направляем, например, в театральный кружок, и там, на публике, он у…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 11,
+      "chunk_seq": 11,
+      "char_start": 5271,
+      "char_end": 5719,
+      "topics": [
+        "planets"
+      ],
+      "topic_scores": {
+        "planets": 1
+      },
+      "total_score": 1,
+      "snippet": "В седьмом доме, там, где есть муж, жена, партнер, публика и так далее. И при этом вот на эту птицу говоруна нахлобучена функция построения социального статуса, функция начальствования и так далее. Ну, и можно говорить, когда мы только откр…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 12,
+      "chunk_seq": 12,
+      "char_start": 1280,
+      "char_end": 1800,
+      "topics": [
+        "aspects",
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1,
+        "aspects": 1
+      },
+      "total_score": 2,
+      "snippet": "И дополнительно, вот эти две части соединим, тут публичный говорун, а тут некий государственный деятель, они берут и объединяются гармоничным аспектом тригон. И получается, я болтаю — и тогда гораздо лучше Сатурну, власть, вертикаль, иерар…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 12,
+      "chunk_seq": 12,
+      "char_start": 2722,
+      "char_end": 3208,
+      "topics": [
+        "houses_rulers"
+      ],
+      "topic_scores": {
+        "houses_rulers": 1
+      },
+      "total_score": 1,
+      "snippet": "Нет, здесь это сценарий. Если ты старый дед в отношениях с деньгами, тогда работает вся остальная штука с властью, иерархией. Или управитель второго дома стоит в десятом доме, в книжке или на заборе написано, что это значит, человек хочет …"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 13,
+      "chunk_seq": 13,
+      "char_start": 0,
+      "char_end": 538,
+      "topics": [
+        "planets"
+      ],
+      "topic_scores": {
+        "planets": 1
+      },
+      "total_score": 1,
+      "snippet": "Иньская водная планета, которая живет в Раке и плачет в Козероге. Умение чувствовать на вкус еду и жизнь в целом; проживать ощущения, а не плавать в концепциях. Лунный буфер: зона контакта с миром: принимаем и проживаем — все ок, сознатель…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 14,
+      "chunk_seq": 14,
+      "char_start": 5189,
+      "char_end": 5465,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Профессии: говорильный жанр и работники слова — журналисты, почтальоны, учителя, писатели + мелкая торговля, ритейл; транспорт. Сигнификатор Ш: внутреннее отношение (т.е. как мне хочется, чтобы было, мои внутренние представления и мотиваци…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 17,
+      "chunk_seq": 17,
+      "char_start": 1703,
+      "char_end": 2223,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Персонификация: отец, дед, бабушка, муж в Ж карте (если старше по возрасту), начальник, прокурор, представитель власти и закона. Профессии: строительство, чиновник, судья, менеджер (высшее звено), сторож, вахтер, риелтор, крановщик, альпин…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 17,
+      "chunk_seq": 17,
+      "char_start": 3481,
+      "char_end": 3966,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Поведенческий план: стремление к неповторимости и уникальности вплоть до экстравагантности, демонстрация девиантного поведения (очень четко работает при соединении с асцендентом), дружба, выпендреж, интеллектуальный труд. Событийный план: …"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 17,
+      "chunk_seq": 17,
+      "char_start": 3966,
+      "char_end": 4519,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Персоны/роли: друг, политик, учитель, компьютер (если человек не сидит на мейл.ру, а считает на нем траекторию спутника, программирует, дизайнит и т. п.), в прогностике очень часто автомобиль. Профессии: организаторские и политические, нау…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 18,
+      "chunk_seq": 18,
+      "char_start": 1627,
+      "char_end": 2178,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Персоны/роли: бабушка, любимый человек, психолог, эзотерик, асоциальные элементы. Профессии: музыка, кино («Голливуд — фабрика грез»), живопись, все виды искусства, все финансовые профессии (уровнем выше бухгалтера, главный бухгалтер как м…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 19,
+      "chunk_seq": 19,
+      "char_start": 488,
+      "char_end": 1004,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Я люблю цитировать фильм «Любой ценой», где двое грабили банк. Там все с драмой, с надрывом, один пожертвовал другим, а в конце, когда полицейский приходит к одному из грабителей, шикарный диалог: грабитель говорит, что бедность как зараза…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 19,
+      "chunk_seq": 19,
+      "char_start": 1004,
+      "char_end": 1515,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "д. Наше общество за этими деньгами все время бегает. Мы будем говорить про денежные законы. Первый закон — «деньги даются тому, кому они не нужны», как это ни печально, как ни парадоксально. Поэтому любить деньги, нуждаться в деньгах — бес…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 19,
+      "chunk_seq": 19,
+      "char_start": 1515,
+      "char_end": 2087,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Теперь у котенка комплекс. Он уже подрос, он уже зрелый Котейка, но у него до сих пор комплекс на тему еды: он пищит, визжит и несется за миской, сшибает все на свете, мамку расталкивает, всех расталкивает, съедает у себя, потом хищно прыг…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 19,
+      "chunk_seq": 19,
+      "char_start": 2087,
+      "char_end": 2582,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Мир чувствует этот сигнал и, соответственно, посылает такие события, чтобы у вас и дальше этого не было. Поэтому с такими желаниями будьте очень аккуратны. Мы эти желания дальше будем оформлять и постулировать. Например, есть такое желание…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 19,
+      "chunk_seq": 19,
+      "char_start": 2582,
+      "char_end": 3110,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Итак, желание и обладание — это разные вещи. В большинстве мотивирующих, визуализирующих видео очень часто красной линией идет тема: «Главное — захотеть, главное — помечтать». Я со своей астрологической стороны обрублю вам этот сук, потому…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 19,
+      "chunk_seq": 19,
+      "char_start": 3110,
+      "char_end": 3630,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Разные органы этим занимаются и в вашем теле, и в вашей голове. Хотельщиков очень много, и эти хотельщики гоняются за готовыми скриптами и алгоритмами. Если бы вы визуализировали и у вас были бы деньги, вы бы не читали сейчас этот текст. З…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 19,
+      "chunk_seq": 19,
+      "char_start": 3630,
+      "char_end": 3837,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Какие-то алгоритмы навязываются системой образования: школой, институтами и т. п., в том числе самый первый, самый базовый алгоритм — «много учиться, много работать». ОКРУЖАЮЩАЯ СРЕДА — ОПРЕДЕЛЯЮЩИЙ ФАКТОР"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 20,
+      "chunk_seq": 20,
+      "char_start": 0,
+      "char_end": 450,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Можно схему маленькую нарисовать. Те деньги, которые вы зарабатываете сейчас, являются продуктом действия, т. е. я что-то делаю, и денежки появляются. А почему я делаю, а потому, что есть такие возможности. И каждый из вас может четко про …"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 20,
+      "chunk_seq": 20,
+      "char_start": 450,
+      "char_end": 923,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "И почему вы это делаете — потому что есть такие возможности. А почему есть такие возможности, которые определяют действия? Ну, потому что такая среда, потому что у вас такой опыт, потому что вы получили такое образование, потому что таковы…"
+    },
+    {
+      "reason": "no_topic",
+      "source_id": 1,
+      "source_title": "book_clean_formatted",
+      "source_author": null,
+      "chunk_id": 20,
+      "chunk_seq": 20,
+      "char_start": 1472,
+      "char_end": 1990,
+      "topics": [],
+      "topic_scores": {},
+      "total_score": 0,
+      "snippet": "Когда в следующей части мы будем разбирать финансы, мы снова упремся в эту схему. И когда вы будете спрашивать: «Где мое бабло}», в конце концов мы упремся в то, как вы оказались на вашей нелюбимой текущей работе, с которой вы мечтаете уйт…"
+    }
+  ],
+  "topic_rejected_total": 199,
+  "topic_rejected_best_topic_counts": {
+    "planets": 10,
+    "no_topic": 29,
+    "houses_rulers": 11
+  },
+  "topic_rejected_best_score_counts": {
+    "1": 21,
+    "0": 29
+  }
+}
