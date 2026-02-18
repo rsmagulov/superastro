@@ -1414,41 +1414,183 @@ def _normalize_text(s: str) -> str:
     s = re.sub(r"[ \t]+", " ", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
     s = s.strip()
-    s = re.sub(r"^[©\u00a9]+\s*", "", s)  # лечим “©Далее…” → “Далее…”
-    s = s or ""
+    s = re.sub(r"^[©\u00a9]+\s*", "", s)  # “©Далее…” → “Далее…”
+    if not s:
+        return ""
+
     if _looks_like_mojibake(s):
-        s = _try_unmojibake_cp1251(s)
+        s2 = _try_unmojibake_cp866(s)
+        s = s2 if s2 != s else _try_unmojibake_cp1251(s)
+
     return s
+
+_GARBLE_HARD_CHARS_RE = re.compile(r"[\u2500-\u259F\u00A4\uFFFD]")  # box + '¤' + '�'
+_GARBLE_C1_CONTROLS_RE = re.compile(r"[\u0080-\u009F]")            # C1 control block
+
+_GARBLE_MOJIBAKE_RE = re.compile(
+    r"(?:"                    # any of:
+    r"[ÐÑ][\u0080-\u00FF]"     # UTF-8 bytes mis-decoded as latin1: "Ð¸", "Ñ", ...
+    r"|[РС][\u0080-\u00FF]"    # cp1251/latin1 artifacts: "Р°", "СЃ", ...
+    r"|â€[\u0080-\u00FF]"      # smart quotes/dash: "â€”", "â€œ", ...
+    r"|вЂ[\u0080-\u00FF]"     # same family: "вЂ”", "вЂњ", ...
+    r"|тА[^\s]"               # very common RU mojibake token family: "тАФ", "тАж", ...
+    r")"
+)
+_GARBLE_SOFT_BLOCKS_RE = re.compile(r"[╨╤╥╦╧╩╪╫╬]")
 
 # Маркеры битой декодировки (несколько популярных "семейств"):
 # 1) UTF-8 -> cp1251: "Р…/С…/вЂ…"
 # 2) UTF-8 -> latin1: "Ð…/Ñ…"
-# 3) UTF-8 -> cp866/koi8-r: частые "п²п╣п╦...", "О╩©", "Б─▌" и т.п.
+# 3) UTF-8 -> cp866/koi8-r: "╨╤…", "тАФ", "┬л", "О╩©", "Б─▌", "п╣п╦..." и т.п.
 _MOJIBAKE_RE = re.compile(
     r"(?:"
-    r"Р[А-Яа-яЁё]|С[А-Яа-яЁё]|вЂ[“”«»—–…]|Ð|Ñ"                 # cp1251/latin1
-    r"|О╩©"                                                   # часто в начале (BOM/служебное) при cp866/koi8-r
-    r"|Б─▌"                                                   # ABBYY/квадратики в cp866/koi8-r
-    r"|п[²³¹º»¼½¾¿]"                                          # 'п' + суперскрипты (типично для cp866-mojibake)
-    r"|п[╣╦╥╨╤]"                                              # 'п' + псевдографика/служебные (часто встречается)
+    r"[РС][\u0080-\u00FF]"          # e.g. "Р°", "СЃ" (cp1251/latin1 artifacts)
+    r"|[ÐÑ][\u0080-\u00FF]"         # e.g. "Ð¸", "Ñ" (UTF-8 decoded as latin1)
+    r"|â€[\u0080-\u00FF]"           # e.g. "â€”", "â€œ"
+    r"|вЂ[\u0080-\u00FF]"           # e.g. "вЂ”", "вЂњ"
+    r"|тАФ"                         # common RU mojibake token
+    r"|[╨╤╥╦╧╩╪╫╬]"                 # box-drawing-ish blocks often from cp866/koi8 leaks
     r")"
 )
-_MOJIBAKE_RS_RE = re.compile(r"[РС][А-Яа-яЁё]")
+
+_GLOSSARY_DEF_LINE_RE = re.compile(
+    r"^\s*[A-ZА-ЯЁ]{3,}(?:\s+[A-ZА-ЯЁ]{3,})*\s*[—\-:]\s+",
+    flags=re.UNICODE,
+)
 
 def _looks_like_mojibake(s: str) -> bool:
+    """
+    Heuristic mojibake detector.
+
+    Returns True only when there are strong signals of broken decoding.
+    Must NOT trigger on normal Russian text.
+    """
     if not s:
         return False
-    # Достаточно 2–3 маркеров на строку/абзац, чтобы считать это mojibake.
-    return len(_MOJIBAKE_RE.findall(s)) >= 2
+
+    # Quick pass: count strong markers
+    hits = len(_MOJIBAKE_RE.findall(s))
+
+    # If no markers — definitely not mojibake
+    if hits == 0:
+        return False
+
+    # Normalize by length; require enough density to avoid false positives.
+    # For typical clean RU text: hits should be 0.
+    # For mojibake blocks: hits is usually large.
+    density = hits / max(len(s), 1)
+
+    # Very short strings: require at least 2 hits to avoid random false positives
+    if len(s) < 80:
+        return hits >= 2
+
+    # Longer strings: require both absolute hits and density
+    return hits >= 3 and density >= 0.001
+
+
+def _garble_score(s: str) -> float:
+    """
+    Stable garble score in [0..1].
+
+    Principles:
+      - 0.0 for normal text (incl. Russian punctuation/quotes/dashes).
+      - Hard artifacts (box-drawing, '�', C1 controls) push score up quickly.
+      - Mojibake markers add score proportionally, but require more than a single случайный hit.
+      - Deterministic: score depends only on counts/ratios, no early magic returns.
+
+    Recommended thresholds:
+      - for chunks:   0.02 .. 0.05 (start conservative)
+      - for atoms:    0.05 .. 0.10 (atoms are shorter; allow more noise)
+    """
+    s = s or ""
+    if not s.strip():
+        return 0.0
+
+    n = len(s)
+
+    # --- count signals ---
+    hard = len(_GARBLE_HARD_CHARS_RE.findall(s))
+    c1   = len(_GARBLE_C1_CONTROLS_RE.findall(s))
+    moj  = len(_GARBLE_MOJIBAKE_RE.findall(s))
+    soft = len(_GARBLE_SOFT_BLOCKS_RE.findall(s))
+
+    # --- hard ratio: these are strong evidence of wrong decoding ---
+    hard_ratio = hard / n
+    c1_ratio   = c1 / n
+
+    # --- mojibake ratio: strong only if not a single случайность ---
+    # Ignore single mojibake hit in long text (common false positive guard).
+    if moj == 1 and n >= 200:
+        moj_eff = 0
+    else:
+        moj_eff = moj
+    moj_ratio = moj_eff / n
+
+    # --- soft blocks: contribute weakly (to avoid false positives) ---
+    soft_ratio = soft / n
+
+    # --- scoring (smooth, predictable) ---
+    # Weighting:
+    #  - hard artifacts dominate quickly
+    #  - C1 controls also strong
+    #  - mojibake medium-strong, but guarded by moj_eff logic
+    #  - soft blocks weak
+    score = 0.0
+    score += min(1.0, hard_ratio * 25.0)   # 1 hard per 100 chars => 0.25
+    score += min(1.0, c1_ratio   * 20.0)   # C1 controls are very suspicious
+    score += min(1.0, moj_ratio  * 30.0)   # mojibake density
+    score += min(1.0, soft_ratio * 5.0)    # weak hint
+
+    # Extra bump rules (still deterministic):
+    # - If there are many hard artifacts, clamp high.
+    if hard >= 3:
+        score = max(score, 0.7)
+    # - If mojibake hits are clearly multiple, ensure it's visible.
+    if moj_eff >= 3:
+        score = max(score, 0.25)
+
+    # clamp
+    if score < 0.0:
+        return 0.0
+    if score > 1.0:
+        return 1.0
+    return float(score)
+
+
+def _try_unmojibake_cp866(s: str) -> str:
+    """
+    UTF-8 bytes were decoded as cp866 -> reverse:
+    """
+    try:
+        fixed = s.encode("cp866", errors="strict").decode("utf-8", errors="strict")
+    except Exception:
+        return s
+
+    if len(_MOJIBAKE_RE.findall(fixed)) < len(_MOJIBAKE_RE.findall(s)):
+        return fixed
+    return s
+
+def _try_unmojibake_cp866(s: str) -> str:
+    # UTF-8 bytes were decoded as cp866 => reverse:
+    try:
+        fixed = s.encode("cp866", errors="strict").decode("utf-8", errors="strict")
+    except Exception:
+        return s
+
+    if len(_MOJIBAKE_RE.findall(fixed)) < len(_MOJIBAKE_RE.findall(s)):
+        return fixed
+    return s
+
 
 def _try_unmojibake_cp1251(s: str) -> str:
-    # UTF-8 bytes were decoded as cp1251 => reverse:
+    """
+    UTF-8 bytes were decoded as cp1251 -> reverse:
+    """
     try:
         fixed = s.encode("cp1251", errors="strict").decode("utf-8", errors="strict")
     except Exception:
         return s
 
-    # простой “скоринг”: стало ли меньше маркеров mojibake
     if len(_MOJIBAKE_RE.findall(fixed)) < len(_MOJIBAKE_RE.findall(s)):
         return fixed
     return s
@@ -1615,17 +1757,81 @@ def _starts_with_author_or_title(text: str, author: str | None, title: str | Non
     return False
 
 
+def _glossary_def_line_count(s: str) -> int:
+    """
+    Считает, сколько отдельных фрагментов выглядят как строки глоссария:
+      ТЕРМИН — определение
+    Фрагменты берём по переводам строк и по разделителю " / ".
+    """
+    if not s:
+        return 0
+
+    # Нормализуем разделители, чтобы одинаково работало на txt/docx-экспорте
+    parts = []
+    for line in s.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        # часто в исходнике глоссарий режут " / "
+        for p in line.split(" / "):
+            p = p.strip()
+            if p:
+                parts.append(p)
+
+    return sum(1 for p in parts if _GLOSSARY_DEF_LINE_RE.match(p))
+
 def _looks_like_glossary_caps_list(s: str) -> bool:
-    # блок “список терминов” обычно: много капслок-токенов и мало нормальных предложений
-    if _caps_token_ratio(s) >= 0.18 and _SENT_END_RE.search(s) is None:
-        return True
-    # OCR-склейки + капслок
-    if _BAD_OCR_RE.search(s) and _caps_token_ratio(s) >= 0.12:
-        return True
-    # много капслок-терминов подряд
-    if len(_CAPS_TOKEN_RE.findall(s)) >= 6 and _uppercase_ratio(s) >= 0.22:
-        return True
-    return False
+    """
+    Возвращает True только если текст ПРАВДА похож на капс-глоссарий/список заголовков.
+    Предсказуемо:
+      - если есть нормальное предложение => False
+      - иначе смотрим на долю капс-слов, долю заглавных букв и количество глоссарных строк
+    """
+    txt = (s or "").strip()
+    if not txt:
+        return False
+
+    # 1) Если есть хотя бы одно "реальное" предложение — это НЕ глоссарий.
+    #    (используем твой же хелпер; если он в файле выше — просто вызываем)
+    if _has_complete_sentence(txt, min_letters=40):
+        return False
+
+    # 2) Считаем токены и капс-токены (только слова длиной >= 4, чтобы не ловить "I", "V" и т.п.)
+    tokens = re.findall(r"\b[^\W_]+\b", txt, flags=re.UNICODE)
+    if not tokens:
+        return False
+
+    caps_tokens = [t for t in tokens if t.isalpha() and t.isupper() and len(t) >= 4]
+    caps_token_ratio = len(caps_tokens) / max(1, len(tokens))
+
+    # 3) Доля заглавных букв по буквам (не по символам)
+    letters = [ch for ch in txt if ch.isalpha()]
+    if letters:
+        upper_letters = sum(1 for ch in letters if ch.isupper())
+        upper_ratio = upper_letters / max(1, len(letters))
+    else:
+        upper_ratio = 0.0
+
+    # 4) Сколько “строк-определений” типа "ТЕРМИН — ..."
+    def_lines = _glossary_def_line_count(txt)
+
+    # --- Решение (строгие пороги) ---
+    #
+    # def_lines >= 3: реально список определений
+    # caps_token_ratio и upper_ratio — подстраховка, чтобы не ловить обычный текст,
+    # где пару раз встречается СОЛНЦЕ/ЛУНА/ЮПИТЕР капсом.
+    #
+    # Пороги подобраны так, чтобы пример вида:
+    #   "СОЛНЦЕ — ... ЛУНА — ... СОЛНЦЕ — ..."
+    # НЕ вылетал, если остальной текст нормальный.
+    #
+    looks_like_glossary = (
+        (def_lines >= 4 and caps_token_ratio >= 0.18) or
+        (def_lines >= 3 and (caps_token_ratio >= 0.28 or upper_ratio >= 0.55)) or
+        (caps_token_ratio >= 0.45 and upper_ratio >= 0.35)
+    )
+
+    return bool(looks_like_glossary)
 
 
 def _atom_garble_bad(s: str) -> bool:

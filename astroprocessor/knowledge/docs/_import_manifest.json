@@ -1,31 +1,31 @@
 {
   "entries": [
     {
-      "filename": "Andreev_Pavel_Astrologia_Vse_tayny.fb2",
-      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\Andreev_Pavel_Astrologia_Vse_tayny.fb2",
-      "ts": 1771340113,
+      "filename": "book_clean_formatted.docx",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\book_clean_formatted.docx",
+      "ts": 1771396799,
       "status": "ok",
-      "doc_id": "b8b5e2d2db0d95fd",
-      "title": "Andreev_Pavel_Astrologia_Vse_tayny",
-      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\b8b5e2d2db0d95fd.md"
+      "doc_id": "b756574bed91fa7a",
+      "title": "book_clean_formatted",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\b756574bed91fa7a.md"
     },
     {
-      "filename": "Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.fb2",
-      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.fb2",
-      "ts": 1771340113,
+      "filename": "book_clean_formatted.docx",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\book_clean_formatted.docx",
+      "ts": 1771397272,
       "status": "ok",
-      "doc_id": "9e89913bdd229c62",
-      "title": "Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo",
-      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\9e89913bdd229c62.md"
+      "doc_id": "b756574bed91fa7a",
+      "title": "book_clean_formatted",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\b756574bed91fa7a.md"
     },
     {
-      "filename": "Pavel_Andreev_Astrologia_dlya_zhizni.fb2",
-      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\Pavel_Andreev_Astrologia_dlya_zhizni.fb2",
-      "ts": 1771340113,
+      "filename": "book_clean_formatted.docx",
+      "src": "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge_sources\\inbox\\book_clean_formatted.docx",
+      "ts": 1771398082,
       "status": "ok",
-      "doc_id": "edfa41965ae5ddb5",
-      "title": "Pavel_Andreev_Astrologia_dlya_zhizni",
-      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\edfa41965ae5ddb5.md"
+      "doc_id": "b756574bed91fa7a",
+      "title": "book_clean_formatted",
+      "md_path": "C:\\Projects\\superastro\\astroprocessor\\knowledge\\docs\\b756574bed91fa7a.md"
     }
   ]
 }
