@@ -1,6 +1,6 @@
 Структура папок
 Серийный номер тома: 4030-B7C4
-C:\Projects\superastro 
+C:\Projects\superastro
 |   .gitattributes
 |   .gitignore
 |   atomize_dryrun.json
@@ -32,9 +32,26 @@ C:\Projects\superastro
 |   |   out.json
 |   |   pytest.ini
 |   |   recheck.json
+|   |   rerate.json
+|   |   rerate2.json
+|   |   rerate_3tier.json
+|   |   rerate_mark.json
+|   |   rerate_norm.json
+|   |   rr.json
+|   |   rr2.json
+|   |   rr3.json
+|   |   smart1.json
+|   |   smart2.json
+|   |   smart_change.json
+|   |   smart_norm.json
 |   |   sources_diag.json
+|   |   stats_quality.json
+|   |   stats_quality2.json
 |   |   t2.json
 |   |   t3.json
+|   |   t3_new.json
+|   |   t3_new2.json
+|   |   t3_new3.json
 |   |   структура.txt
 |   |   
 |   +---.pytest_cache
@@ -134,6 +151,7 @@ C:\Projects\superastro
 |   |   |   |   cli.py.old
 |   |   |   |   meta_schema.py
 |   |   |   |   models.py
+|   |   |   |   quality_rating_ru.py
 |   |   |   |   schema.py
 |   |   |   |   sql.py
 |   |   |   |   staging_schema.sql
@@ -144,6 +162,7 @@ C:\Projects\superastro
 |   |   |           builder.cpython-312.pyc
 |   |   |           cli.cpython-312.pyc
 |   |   |           meta_schema.cpython-312.pyc
+|   |   |           quality_rating_ru.cpython-312.pyc
 |   |   |           schema.cpython-312.pyc
 |   |   |           sql.cpython-312.pyc
 |   |   |           topic_gate_ru_natal.cpython-312.pyc

@@ -30,7 +30,7 @@ SuperAstro — это модульная система персональной
 пригодная для масштабирования, аудита и обучения собственной модели.
 
 2. Архитектура верхнего уровня (3 модуля)
-Telegram Bot  →  Astroprocessor  →  Knowledge DB
+Telegram Bot  →  Astroprocessor  →  Knowledge DB 
                     ↑
               Knowledge Builder (offline)
 
@@ -38,7 +38,7 @@ Telegram Bot  →  Astroprocessor  →  Knowledge DB
 3. Telegram Bot (UI / FSM-оболочка)
 Роль
 
-Минимальный, «тупой» интерфейс:
+Минимальный интерфейс:
 
 собирает данные пользователя,
 

@@ -7,6 +7,8 @@ import json
 import re
 import sqlite3
 import sys
+import contextlib
+import io
 import zipfile
 import xml.etree.ElementTree as ET
 import html
@@ -386,13 +388,47 @@ def _ensure_prod_schema(conn: sqlite3.Connection) -> None:
 # ----------------------------
 
 
-def _print_rows(rows: list[sqlite3.Row]) -> None:
+def _print_rows(
+    rows: list[sqlite3.Row],
+    *,
+    show_reasons: bool = False,
+    reasons_top: int = 5,
+) -> None:
     for r in rows:
-        print(
+        keys = set(r.keys())
+        q_score = int(r["quality_score"]) if "quality_score" in keys and r["quality_score"] is not None else None
+        q_label = str(r["quality_label"]) if "quality_label" in keys and r["quality_label"] is not None else None
+
+        line = (
             f"{int(r['id']):<8} {str(r['key']):<36} {str(r['topic_category']):<22} "
-            f"{str(r['locale']):<7} {str(r['tone']):<12} {str(r['abstraction_level']):<14} {str(r['state']):<10}"
+            f"{str(r['locale']):<7} {str(r['tone']):<12} {str(r['abstraction_level']):<14} {str(r['state']):<12}"
         )
+        if q_score is not None:
+            line += f" {q_score:>3} {q_label or ''}"
+        print(line)
         print(f"        {str(r['created_at'])}")
+
+        if not show_reasons:
+            continue
+        if "quality_reasons_json" not in keys:
+            continue
+
+        raw = (r["quality_reasons_json"] or "{}").strip()
+        try:
+            d = json.loads(raw) if raw else {}
+        except Exception:
+            d = {}
+        if not isinstance(d, dict) or not d:
+            continue
+
+        def _val(x: Any) -> float:
+            return float(x) if isinstance(x, (int, float)) else 0.0
+
+        items = sorted(d.items(), key=lambda kv: _val(kv[1]), reverse=True)[: max(1, int(reasons_top or 5))]
+        pretty = ", ".join([f"{k}:{v}" for k, v in items])
+        print(f"        reasons: {pretty}")
+
+
 
 
 def _print_prod_rows(rows: list[sqlite3.Row], *, with_text: bool = False, text_limit: int = 120) -> None:
@@ -3376,6 +3412,11 @@ def cmd_fragments_list(args: argparse.Namespace) -> int:
         q = (getattr(args, "q", "") or "").strip()
         limit = int(getattr(args, "limit", 50) or 50)
 
+        min_score = getattr(args, "min_score", None)
+        max_score = getattr(args, "max_score", None)
+        order = (getattr(args, "order", "") or "").strip().lower()
+        asc = bool(getattr(args, "asc", False))
+
         needs_rewrite_only = bool(getattr(args, "needs_rewrite_only", False))
         bot_ready_only = bool(getattr(args, "bot_ready_only", False))
 
@@ -3400,14 +3441,28 @@ def cmd_fragments_list(args: argparse.Namespace) -> int:
         if q:
             where.append("(key LIKE ? OR text LIKE ?)")
             params.extend([f"%{q}%", f"%{q}%"])
+        if min_score is not None:
+            where.append("quality_score >= ?")
+            params.append(int(min_score))
+        if max_score is not None:
+            where.append("quality_score <= ?")
+            params.append(int(max_score))
+
+
+        order_by = "id"
+        if order == "quality_score":
+            order_by = "quality_score"
+        direction = "ASC" if asc else "DESC"
 
         sql = f"""
-            SELECT id, key, topic_category, locale, tone, abstraction_level, state, created_at, meta_json, text
+            SELECT id, key, topic_category, locale, tone, abstraction_level, state, created_at,
+                meta_json, text, quality_score, quality_label, quality_reasons_json
             FROM kb_fragments
             WHERE {' AND '.join(where) if where else '1=1'}
-            ORDER BY id DESC
+            ORDER BY {order_by} {direction}, id DESC
             LIMIT ?
         """.strip()
+
         params.append(limit)
 
         rows = conn.execute(sql, params).fetchall()
@@ -3427,7 +3482,9 @@ def cmd_fragments_list(args: argparse.Namespace) -> int:
                 filtered.append(r)
             rows = filtered
 
-        _print_rows(rows)
+        show_reasons = bool(getattr(args, "show_reasons", False))
+        reasons_top = int(getattr(args, "reasons_top", 5) or 5)
+        _print_rows(rows, show_reasons=show_reasons, reasons_top=reasons_top)
         return 0
     finally:
         conn.close()
@@ -4403,6 +4460,66 @@ def cmd_atomize(args: argparse.Namespace) -> int:
         if not dry_run:
             conn.commit()
 
+                # ---- auto-rate pipeline (optional) ----
+        auto_rate = bool(getattr(args, "auto_rate", False))
+        if auto_rate and (not dry_run):
+            normalize_3 = bool(getattr(args, "auto_normalize_3", True))
+            reject_below = int(getattr(args, "auto_reject_below", 45) or 45)
+            review_below = int(getattr(args, "auto_review_below", 55) or 55)
+            state_rejected = (getattr(args, "auto_state_rejected", "archived") or "archived").strip()
+
+            rerate_ns = argparse.Namespace(
+                all=True,
+                source_id=0,
+                json=True,
+                compact=True,
+                include_distributions=True,
+                normalize_3=normalize_3,
+                reject_below=reject_below,
+                review_below=review_below,
+                state_rejected=state_rejected,
+            )
+
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_rerate = cmd_fragments_rerate(rerate_ns)
+
+            auto_rerate_report: dict[str, Any] = {"ok": rc_rerate == 0}
+            try:
+                auto_rerate_report.update(json.loads(buf.getvalue() or "{}"))
+            except Exception:
+                auto_rerate_report["raw"] = buf.getvalue()
+
+            # Pretty stats to stderr (always)
+            stats_pretty_ns = argparse.Namespace(
+                by_quality=True,
+                source_id=0,
+                state="",
+                json=False,
+                compact=False,
+            )
+            cmd_fragments_stats(stats_pretty_ns)
+
+            # JSON stats into atomize report (only when atomize --json)
+            auto_stats_report: dict[str, Any] = {}
+            if as_json:
+                buf2 = io.StringIO()
+                stats_json_ns = argparse.Namespace(
+                    by_quality=True,
+                    source_id=0,
+                    state="",
+                    json=True,
+                    compact=True,
+                )
+                with contextlib.redirect_stdout(buf2):
+                    rc_stats = cmd_fragments_stats(stats_json_ns)
+                try:
+                    auto_stats_report = json.loads(buf2.getvalue() or "{}")
+                    auto_stats_report["ok"] = rc_stats == 0
+                except Exception:
+                    auto_stats_report = {"ok": rc_stats == 0, "raw": buf2.getvalue()}
+
+
         # ---- topic rejected aggregates (best topic / best score) ----
         
         def best_topic_and_score(ex: dict[str, Any]) -> tuple[str, int]:
@@ -4449,6 +4566,11 @@ def cmd_atomize(args: argparse.Namespace) -> int:
         report["topic_rejected_best_score_counts"] = dict(best_score_ctr)
         report["topic_rejected_near_miss_total"] = int(sum(near_miss_ctr.values()))
         report["topic_rejected_near_miss_topic_counts"] = dict(near_miss_ctr)
+        if auto_rate and (not dry_run):
+            report["auto_rate"] = {
+                "rerate": auto_rerate_report,
+                "stats_by_quality": auto_stats_report,
+            }
 
         if dump_skipped > 0:
             report["skipped_examples"] = skipped_examples
@@ -4644,6 +4766,39 @@ def build_parser() -> argparse.ArgumentParser:
         default=40,
         help="sanitation: minimum letters in at least one finished sentence (default=40)",
     )
+    sp.add_argument(
+        "--auto-rate",
+        dest="auto_rate",
+        action="store_true",
+        help="after atomize: run fragments re-rate --normalize-3 + fragments stats --by-quality",
+    )
+    sp.add_argument(
+        "--auto-normalize-3",
+        dest="auto_normalize_3",
+        action="store_true",
+        default=True,
+        help="auto-rate: normalize state into enabled/needs_review/archived",
+    )
+    sp.add_argument(
+        "--auto-reject-below",
+        dest="auto_reject_below",
+        type=int,
+        default=45,
+        help="auto-rate: score < N => rejected state (default=45)",
+    )
+    sp.add_argument(
+        "--auto-review-below",
+        dest="auto_review_below",
+        type=int,
+        default=55,
+        help="auto-rate: score < N => needs_review (default=55)",
+    )
+    sp.add_argument(
+        "--auto-state-rejected",
+        dest="auto_state_rejected",
+        default="archived",
+        help="auto-rate: state to use for rejected (default=archived, because CHECK constraint forbids rejected)",
+    )
 
     sp.set_defaults(func=cmd_atomize)
 
@@ -4675,7 +4830,26 @@ def build_parser() -> argparse.ArgumentParser:
     sp3.add_argument("--key", default="")
     sp3.add_argument("--q", default="")
     sp3.add_argument("--limit", type=int, default=50)
-    
+    sp3.add_argument("--min-score", dest="min_score", type=int, default=None)
+    sp3.add_argument("--max-score", dest="max_score", type=int, default=None)
+    sp3.add_argument(
+        "--order",
+        default="id",
+        choices=["id", "quality_score"],
+        help="sort by id or quality_score (default=id)",
+    )
+    sp3.add_argument("--asc", action="store_true", help="ascending order (default desc)")
+    sp3.add_argument(
+        "--show-reasons",
+        action="store_true",
+        help="print top quality reasons for each fragment (from quality_reasons_json)",
+    )
+    sp3.add_argument(
+        "--reasons-top",
+        type=int,
+        default=5,
+        help="how many reasons to print per fragment (default=5)",
+    )
     sp3.set_defaults(func=cmd_fragments_list)
     sp4 = sub3.add_parser("sample", help="print sample fragments for review")
     sp4.add_argument("--source-id", type=int, required=True)
