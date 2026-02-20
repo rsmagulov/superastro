@@ -10,6 +10,7 @@ import json
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from sqlalchemy import text as sql_text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_knowledge_session, get_session
@@ -148,6 +149,122 @@ def _build_meta(*, place: dict[str, Any], locale: str, topics: list[str], button
 
 def _sorted_button_ids(buttons: dict[str, ButtonDefV2]) -> list[str]:
     return sorted(buttons.keys(), key=lambda bid: (buttons[bid].order, bid))
+
+def _build_debug_payload(
+    *,
+    topics: list[str],
+    cores_by_topic: dict[str, dict[str, Any]],
+    debug: int,
+    max_blocks: int = 12,
+    max_keys_per_block: int = 12,
+    max_hits: int = 30,
+) -> dict[str, Any]:
+    """
+    debug=1 -> counts only
+    debug=2 -> include small samples (candidate keys, hits)
+    """
+    out: dict[str, Any] = {"debug": int(debug), "topics": {}}
+
+    # global block stats (take from any topic core that has knowledge_blocks)
+    any_core = next((cores_by_topic.get(t) for t in topics if isinstance(cores_by_topic.get(t), dict)), None) or {}
+    kb_dump = any_core.get("knowledge_blocks") or []
+    out["blocks_total"] = len(kb_dump)
+
+    if int(debug) >= 2 and kb_dump:
+        sampled = kb_dump[: max(1, int(max_blocks))]
+        out["knowledge_blocks_sample"] = [
+            {
+                "id": b.get("id"),
+                "candidate_keys": list(b.get("candidate_keys") or [])[: max(1, int(max_keys_per_block))],
+                "meta": b.get("meta"),
+            }
+            for b in sampled
+        ]
+
+    for t in topics:
+        core = cores_by_topic.get(str(t), {}) or {}
+        trace = core.get("trace") or {}
+        hits = trace.get("hits") or []
+        raw_blocks_used = core.get("raw_blocks") or []
+        kb = core.get("knowledge_blocks") or kb_dump
+
+        found = len(hits)
+        used = len(raw_blocks_used)
+        blocks_total = len(kb) if isinstance(kb, list) else 0
+
+        topic_dbg: dict[str, Any] = {
+            "blocks_total": blocks_total,
+            "hits_found": found,
+            "blocks_used": used,
+            "filtered_out_by_budget": max(0, found - used),
+            "misses_no_hit": max(0, blocks_total - found),
+        }
+
+        if int(debug) >= 2:
+            topic_dbg["hits_sample"] = hits[: max(1, int(max_hits))]
+            topic_dbg["used_blocks_sample"] = [
+                {
+                    "block_id": b.get("block_id"),
+                    "knowledge_item_id": b.get("knowledge_item_id"),
+                    "key": b.get("key"),
+                    "priority": b.get("priority"),
+                    "created_at": b.get("created_at"),
+                }
+                for b in raw_blocks_used[: max(1, int(max_hits))]
+            ]
+
+            fm = core.get("final_meta") or {}
+            if fm:
+                topic_dbg["final_meta"] = fm
+
+        out["topics"][str(t)] = topic_dbg
+
+    return out
+
+async def _fetch_knowledge_texts_by_ids(
+    session: AsyncSession,
+    ids: list[int],
+) -> dict[int, str]:
+    if not ids:
+        return {}
+
+    uniq: list[int] = []
+    seen: set[int] = set()
+    for x in ids:
+        try:
+            i = int(x)
+        except Exception:
+            continue
+        if i > 0 and i not in seen:
+            seen.add(i)
+            uniq.append(i)
+
+    if not uniq:
+        return {}
+
+    params = {f"id{i}": uniq[i] for i in range(len(uniq))}
+    in_clause = ", ".join([f":id{i}" for i in range(len(uniq))])
+
+    # Try text first; if schema differs, fallback to content.
+    try:
+        res = await session.execute(
+            sql_text(f"SELECT id, text FROM knowledge_items WHERE id IN ({in_clause})"),
+            params,
+        )
+        rows = res.fetchall()
+        out: dict[int, str] = {int(r[0]): str(r[1] or "") for r in rows}
+        return out
+    except Exception:
+        res = await session.execute(
+            sql_text(f"SELECT id, content FROM knowledge_items WHERE id IN ({in_clause})"),
+            params,
+        )
+        rows = res.fetchall()
+        out: dict[int, str] = {int(r[0]): str(r[1] or "") for r in rows}
+        return out
+
+
+
 
 def _parse_ids_param(ids: list[str] | None) -> list[str]:
     """
@@ -357,6 +474,7 @@ async def interpret_v2(
     request: Request,
     req: InterpretV2Request,
     locale: str = Query("ru", min_length=2, max_length=32),
+    debug: int = Query(0, ge=0, le=2, description="0=off, 1=counts, 2=samples"),
     session: AsyncSession = Depends(get_session),
     knowledge_session: AsyncSession = Depends(get_knowledge_session),
 ) -> InterpretV2Response:
@@ -380,6 +498,10 @@ async def interpret_v2(
     }
 
     meta = _build_meta(place=place_payload, locale=locale, topics=topics, button_id=req.button_id)
+    meta["requested_locale"] = locale
+    meta["knowledge_locale_strategy"] = "locale = :locale OR locale LIKE :locale || '-%'"
+
+    
 
     if not place.ok or not place.tz_str:
         return InterpretV2Response(
@@ -403,18 +525,87 @@ async def interpret_v2(
         locale=locale,
     )
 
+    if int(debug) > 0:
+        meta["debug"] = _build_debug_payload(
+            topics=[str(t) for t in topics],
+            cores_by_topic=cores_by_topic,
+            debug=int(debug),
+        )
+
+
     topic_results: list[TopicResultV2] = []
     all_messages: list[str] = []
     coverages: list[str] = []
 
+    # Preload texts for fallback when final_text is empty but raw blocks exist.
+    fallback_ids: list[int] = []
     for t in topics:
-        core = cores_by_topic.get(str(t), {})
+        core = cores_by_topic.get(str(t), {}) or {}
+        text = (core.get("final_text") or "").strip()
+        if text:
+            continue
         raw_blocks = core.get("raw_blocks") or []
-        text = core.get("final_text") or ""
+        for b in raw_blocks:
+            if isinstance(b, dict) and b.get("knowledge_item_id"):
+                try:
+                    fallback_ids.append(int(b["knowledge_item_id"]))
+                except Exception:
+                    pass
+
+    fallback_texts_by_id = await _fetch_knowledge_texts_by_ids(knowledge_session, fallback_ids)
+    if int(debug) > 0:
+        dbg_rt = meta.setdefault("debug_runtime", {})
+        dbg_rt["fallback_ids_total"] = len(fallback_ids)
+        dbg_rt["fallback_ids_unique"] = len(set(fallback_ids))
+        dbg_rt["fallback_rows_returned"] = len(fallback_texts_by_id)
+        # show id=61 if present (your case)
+        if 61 in fallback_texts_by_id:
+            dbg_rt["id61_text_len"] = len((fallback_texts_by_id.get(61) or "").strip())
+        else:
+            dbg_rt["id61_text_len"] = None
+
+
+    for t in topics:
+        core = cores_by_topic.get(str(t), {}) or {}
+        raw_blocks = core.get("raw_blocks") or []
+
+        text = (core.get("final_text") or "").strip()
+        if int(debug) > 0:
+            meta.setdefault("debug_runtime", {}).setdefault("topics", {})[str(t)] = {
+                "final_text_len": len(text),
+                "raw_blocks_count": len(raw_blocks),
+            }
+        # Fallback: if renderer didn't produce final_text but we did select blocks,
+        # stitch together the actual knowledge_items.text by knowledge_item_id.
+        if (not text) and raw_blocks:
+            parts: list[str] = []
+            for b in raw_blocks:
+                if not isinstance(b, dict):
+                    continue
+                kid = b.get("knowledge_item_id")
+                if not kid:
+                    continue
+                try:
+                    kid_int = int(kid)
+                except Exception:
+                    continue
+                bt = (fallback_texts_by_id.get(kid_int) or "").strip()
+                if bt:
+                    parts.append(bt)
+            text = "\n\n".join(parts).strip()
+        if int(debug) > 0:
+            meta["debug_runtime"]["topics"][str(t)]["after_fallback_text_len"] = len((text or "").strip())
+
         messages = _split_to_messages(text)
+        if int(debug) > 0:
+            meta["debug_runtime"]["topics"][str(t)]["messages_count"] = len(messages)
 
         cov = topic_coverage_v2(ok=True, raw_blocks_used=len(raw_blocks))
         coverages.append(cov)
+
+        # If low but we actually have content, add a soft notice (not a replacement).
+        if cov == "low" and messages:
+            messages.append("ℹ️ Материалов пока немного — ответ будет расширяться по мере наполнения базы знаний.")
 
         all_messages.append(f"🧩 {t}")
         if messages:

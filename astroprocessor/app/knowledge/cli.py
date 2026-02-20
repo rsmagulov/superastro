@@ -96,6 +96,36 @@ def _json_load_dict(s: str | None) -> dict[str, Any]:
         return {}
     return obj if isinstance(obj, dict) else {}
 
+def _meta_preview(meta_json: str | None, *, max_len: int = 220) -> str:
+    """
+    Human-friendly one-line preview of meta_json for CLI lists.
+    Keeps only a small, useful subset when possible.
+    """
+    meta = _json_load_dict(meta_json)
+    if not meta:
+        return ""
+    # Prefer a small subset if present (topic gate / routing / diagnostics)
+    preferred_keys = [
+        "topic_gate",
+        "topic_reason",
+        "no_topic_reason",
+        "below_threshold_reason",
+        "best_topic",
+        "best_score",
+        "near_miss",
+        "near_miss_best_topic",
+        "near_miss_best_score",
+        "skipped_topic_reason",
+        "source_chunk_id",
+        "source_path",
+    ]
+    slim: dict[str, Any] = {k: meta[k] for k in preferred_keys if k in meta}
+    obj = slim if slim else meta
+    s = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    if len(s) > max_len:
+        s = s[:max_len] + "…"
+    return s
+
 
 def _merge_meta_json(existing: str | None, updates: dict[str, Any]) -> str:
     """Merge updates into existing meta_json, preserving other fields."""
@@ -329,6 +359,10 @@ def _ensure_staging_schema(conn: sqlite3.Connection) -> None:
         )
         conn.commit()
 
+def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
+    return {str(r["name"]) for r in rows}
+
 
 # ----------------------------
 # Production schema (minimal)
@@ -393,6 +427,9 @@ def _print_rows(
     *,
     show_reasons: bool = False,
     reasons_top: int = 5,
+    show_text: int = 0,
+    with_meta: bool = False,
+    meta_max: int = 220,
 ) -> None:
     for r in rows:
         keys = set(r.keys())
@@ -408,25 +445,34 @@ def _print_rows(
         print(line)
         print(f"        {str(r['created_at'])}")
 
-        if not show_reasons:
-            continue
-        if "quality_reasons_json" not in keys:
-            continue
+        if show_text and "text" in keys:
+            t = (r["text"] or "").replace("\r", " ").replace("\n", " ").strip()
+            if t:
+                n = max(1, int(show_text))
+                if len(t) > n:
+                    t = t[:n] + "…"
+                print(f"        text: {t}")
 
-        raw = (r["quality_reasons_json"] or "{}").strip()
-        try:
-            d = json.loads(raw) if raw else {}
-        except Exception:
-            d = {}
-        if not isinstance(d, dict) or not d:
-            continue
+        if with_meta and "meta_json" in keys:
+            mp = _meta_preview(r["meta_json"], max_len=int(meta_max or 220))
+            if mp:
+                print(f"        meta: {mp}")
 
-        def _val(x: Any) -> float:
-            return float(x) if isinstance(x, (int, float)) else 0.0
+        if show_reasons and "quality_reasons_json" in keys:
+            raw = (r["quality_reasons_json"] or "{}").strip()
+            try:
+                d = json.loads(raw) if raw else {}
+            except Exception:
+                d = {}
+            if isinstance(d, dict) and d:
+                def _val(x: Any) -> float:
+                    return float(x) if isinstance(x, (int, float)) else 0.0
 
-        items = sorted(d.items(), key=lambda kv: _val(kv[1]), reverse=True)[: max(1, int(reasons_top or 5))]
-        pretty = ", ".join([f"{k}:{v}" for k, v in items])
-        print(f"        reasons: {pretty}")
+                top_n = max(1, int(reasons_top or 5))
+                items = sorted(d.items(), key=lambda kv: _val(kv[1]), reverse=True)[:top_n]
+                pretty = ", ".join([f"{k}:{v}" for k, v in items])
+                print(f"        reasons: {pretty}")
+
 
 
 
@@ -451,6 +497,82 @@ def _print_prod_rows(rows: list[sqlite3.Row], *, with_text: bool = False, text_l
                 t = t[:text_limit] + "…"
             if t:
                 print("       " + t)
+
+def _collect_quality_metrics(conn: sqlite3.Connection) -> dict[str, Any]:
+    row = conn.execute(
+        """
+        SELECT
+          COUNT(*) AS fragments_total,
+          SUM(CASE WHEN state='enabled' THEN 1 ELSE 0 END) AS enabled_total,
+          SUM(CASE WHEN state='needs_review' THEN 1 ELSE 0 END) AS needs_review_total,
+          SUM(CASE WHEN state='archived' THEN 1 ELSE 0 END) AS archived_total,
+          MIN(quality_score) AS min_score,
+          AVG(quality_score) AS avg_score,
+          MAX(quality_score) AS max_score
+        FROM kb_fragments
+        """
+    ).fetchone()
+
+    labels = conn.execute(
+        "SELECT quality_label, COUNT(*) AS c FROM kb_fragments GROUP BY quality_label ORDER BY c DESC"
+    ).fetchall()
+    label_counts = {str(r["quality_label"]): int(r["c"]) for r in labels}
+
+    def bucket(score: int) -> str:
+        if score <= 44:
+            return "0-44"
+        if score <= 54:
+            return "45-54"
+        if score <= 69:
+            return "55-69"
+        if score <= 84:
+            return "70-84"
+        return "85-100"
+
+    buckets = Counter()
+    for r in conn.execute("SELECT quality_score FROM kb_fragments").fetchall():
+        buckets[bucket(int(r["quality_score"] or 0))] += 1
+
+    return {
+        "fragments_total": int(row["fragments_total"] or 0),
+        "enabled_total": int(row["enabled_total"] or 0),
+        "needs_review_total": int(row["needs_review_total"] or 0),
+        "archived_total": int(row["archived_total"] or 0),
+        "min_score": int(row["min_score"] or 0),
+        "avg_score": float(row["avg_score"] or 0.0),
+        "max_score": int(row["max_score"] or 0),
+        "labels": label_counts,
+        "buckets": dict(buckets),
+    }
+
+
+def _compare_metrics_with_baseline(current: dict[str, Any], baseline: dict[str, Any]) -> list[str]:
+    warns: list[str] = []
+
+    def _get(d: dict[str, Any], k: str, default: Any) -> Any:
+        return d.get(k, default)
+
+    # Simple deltas (tune thresholds later)
+    cur_enabled = int(_get(current, "enabled_total", 0))
+    base_enabled = int(_get(baseline, "enabled_total", 0))
+    if base_enabled and cur_enabled < int(base_enabled * 0.85):
+        warns.append(f"enabled_total_drop: {cur_enabled} vs baseline {base_enabled}")
+
+    cur_avg = float(_get(current, "avg_score", 0.0))
+    base_avg = float(_get(baseline, "avg_score", 0.0))
+    if base_avg and cur_avg < (base_avg - 3.0):
+        warns.append(f"avg_score_drop: {cur_avg:.2f} vs baseline {base_avg:.2f}")
+
+    # Bucket drift
+    cur_b = _get(current, "buckets", {}) or {}
+    base_b = _get(baseline, "buckets", {}) or {}
+    for k in sorted(set(cur_b) | set(base_b)):
+        c = int(cur_b.get(k, 0))
+        b = int(base_b.get(k, 0))
+        if b and abs(c - b) > max(10, int(b * 0.25)):
+            warns.append(f"bucket_drift[{k}]: {c} vs baseline {b}")
+
+    return warns
 
 
 # ----------------------------
@@ -951,6 +1073,152 @@ def cmd_validate(args: argparse.Namespace) -> int:
             log(f"✅ validate ok: checked={len(rows)} ok={len(ok_items)} updated={updated} bad={len(bad_items)}")
 
         return 0 if not bad_items else 1
+    finally:
+        conn.close()
+
+def cmd_validate_release(args: argparse.Namespace) -> int:
+    """
+    Release policy validation for staging DB before kb build.
+
+    Hard-fail:
+      - enabled must have quality_score >= min_enabled_score
+      - enabled must not contain label 'F'
+      - enabled must not contain forbidden patterns (safety lint)
+      - required topic_category coverage (min per category)
+
+    Optional:
+      - baseline comparison for regressions (warn or fail)
+    """
+    min_enabled_score = int(getattr(args, "min_enabled_score", 55) or 55)
+    min_per_topic = int(getattr(args, "min_per_topic", 3) or 3)
+    required_topics_raw = (getattr(args, "required_topics", "") or "").strip()
+    baseline_path = (getattr(args, "baseline", "") or "").strip()
+    write_baseline = bool(getattr(args, "write_baseline", False))
+    fail_on_warn = bool(getattr(args, "fail_on_warn", False))
+
+    # Default required topics: keep small and core; extend later.
+    required_topics = [t.strip() for t in required_topics_raw.split(",") if t.strip()]
+
+    # Simple RU safety lint (extend later)
+    forbidden_patterns = [
+        r"\b(ты\s+точно|тебе\s+предначертано|это\s+судьба)\b",
+        r"\b(обречен|обречена|обречены)\b",
+        r"\b(диагноз|псих(иатр|ическое)\s+расстройство)\b",
+        r"\b(умр(её|ешь|ет|ут)|смерть\s+скоро)\b",
+        r"\b(точно\s+развед(ешься|етесь)|точно\s+уйд(ёшь|ете))\b",
+        r"\b(гарантированно|неизбежно)\b",
+    ]
+    forbidden_re = re.compile("|".join(f"(?:{p})" for p in forbidden_patterns), re.IGNORECASE)
+
+    conn = _connect(_staging_db_path())
+    try:
+        _ensure_staging_schema(conn)
+
+        # 1) enabled score gate
+        bad_score = conn.execute(
+            """
+            SELECT COUNT(*) AS c
+            FROM kb_fragments
+            WHERE state='enabled' AND quality_score < ?
+            """,
+            (min_enabled_score,),
+        ).fetchone()["c"]
+
+        # 2) enabled no F
+        bad_f = conn.execute(
+            """
+            SELECT COUNT(*) AS c
+            FROM kb_fragments
+            WHERE state='enabled' AND quality_label='F'
+            """
+        ).fetchone()["c"]
+
+        # 3) forbidden patterns in enabled
+        enabled_texts = conn.execute(
+            "SELECT id, text FROM kb_fragments WHERE state='enabled'"
+        ).fetchall()
+        forbidden_hits = []
+        for r in enabled_texts:
+            t = (r["text"] or "").strip()
+            if t and forbidden_re.search(t):
+                forbidden_hits.append(int(r["id"]))
+        forbidden_count = len(forbidden_hits)
+
+        # 4) coverage guard
+        missing_topics: dict[str, int] = {}
+        if required_topics:
+            for topic in required_topics:
+                c = conn.execute(
+                    """
+                    SELECT COUNT(*) AS c
+                    FROM kb_fragments
+                    WHERE state='enabled' AND topic_category=?
+                    """,
+                    (topic,),
+                ).fetchone()["c"]
+                if int(c) < min_per_topic:
+                    missing_topics[topic] = int(c)
+
+
+        # Metrics snapshot
+        metrics = _collect_quality_metrics(conn)
+
+        hard_fail_reasons = []
+        if int(bad_score) > 0:
+            hard_fail_reasons.append(f"enabled_quality_below_{min_enabled_score}={bad_score}")
+        if int(bad_f) > 0:
+            hard_fail_reasons.append(f"enabled_label_F={bad_f}")
+        if forbidden_count > 0:
+            hard_fail_reasons.append(f"enabled_forbidden_text={forbidden_count}")
+        if missing_topics:
+            hard_fail_reasons.append(f"coverage_missing_topics={missing_topics}")
+
+        warns = []
+        baseline_obj = None
+        if baseline_path and (not write_baseline):
+            try:
+                baseline_obj = json.load(open(baseline_path, "r", encoding="utf-8-sig"))
+            except Exception as e:
+                warns.append(f"baseline_load_failed: {e}")
+
+
+        if baseline_obj:
+            warns.extend(_compare_metrics_with_baseline(metrics, baseline_obj))
+
+        if write_baseline:
+            out = baseline_path or "kb_validate_baseline.json"
+            with open(out, "w", encoding="utf-8") as f:
+                json.dump(metrics, f, ensure_ascii=False, indent=2)
+            print(f"baseline_written: {out}", file=sys.stderr)
+
+        # Report (json to stdout if requested)
+        report = {
+            "ok": not hard_fail_reasons and not (fail_on_warn and warns),
+            "hard_fail": hard_fail_reasons,
+            "warn": warns,
+            "min_enabled_score": min_enabled_score,
+            "required_topics": required_topics,
+            "min_per_topic": min_per_topic,
+            "forbidden_hits_sample": forbidden_hits[:20],
+            "metrics": metrics,
+        }
+
+        as_json = bool(getattr(args, "json", False))
+        if as_json:
+            print(json.dumps(report, ensure_ascii=False))
+        else:
+            if hard_fail_reasons:
+                print("VALIDATE RELEASE: FAIL", file=sys.stderr)
+                for x in hard_fail_reasons:
+                    print(f"  - {x}", file=sys.stderr)
+            else:
+                print("VALIDATE RELEASE: OK (hard checks)", file=sys.stderr)
+            if warns:
+                print("WARN:", file=sys.stderr)
+                for w in warns:
+                    print(f"  - {w}", file=sys.stderr)
+
+        return 0 if report["ok"] else 2
     finally:
         conn.close()
 
@@ -3484,10 +3752,152 @@ def cmd_fragments_list(args: argparse.Namespace) -> int:
 
         show_reasons = bool(getattr(args, "show_reasons", False))
         reasons_top = int(getattr(args, "reasons_top", 5) or 5)
-        _print_rows(rows, show_reasons=show_reasons, reasons_top=reasons_top)
+        show_text = int(getattr(args, "show_text", 0) or 0)
+        with_meta = bool(getattr(args, "with_meta", False))
+        meta_max = int(getattr(args, "meta_max", 220) or 220)
+
+        _print_rows(
+            rows,
+            show_reasons=show_reasons,
+            reasons_top=reasons_top,
+            show_text=show_text,
+            with_meta=with_meta,
+            meta_max=meta_max,
+        )
+
         return 0
     finally:
         conn.close()
+
+def cmd_fragments_show(args: argparse.Namespace) -> int:
+    """Show one staging fragment by id with optional meta/reasons/text.
+
+    Resilient to staging schema differences (columns may be missing).
+    """
+    fragment_id = int(getattr(args, "id", 0) or 0)
+    if not fragment_id:
+        print("ERROR: --id is required", file=sys.stderr)
+        return 2
+
+    show_reasons = bool(getattr(args, "show_reasons", False))
+    reasons_top = int(getattr(args, "reasons_top", 10) or 10)
+    with_meta = bool(getattr(args, "with_meta", False))
+    show_text = int(getattr(args, "show_text", 0) or 0)
+
+    conn = _connect(_staging_db_path())
+    try:
+        _ensure_staging_schema(conn)
+
+        cols = _table_columns(conn, "kb_fragments")
+
+        base_cols = [
+            "id",
+            "key",
+            "topic_category",
+            "locale",
+            "tone",
+            "abstraction_level",
+            "state",
+            "created_at",
+            "updated_at",
+            "author",
+            "source_id",
+            "quality_score",
+            "quality_label",
+            "quality_reasons_json",
+            "meta_json",
+            "factors_json",
+            "text",
+        ]
+
+        # Optional columns (may not exist in older DBs)
+        optional_cols = []
+        for c in ["source_chunk_id", "source_chunk_seq", "source_chunk_hash", "source_chunk_start", "source_chunk_end"]:
+            if c in cols:
+                optional_cols.append(c)
+
+        select_cols = [c for c in base_cols if c in cols] + optional_cols
+        sql = f"SELECT {', '.join(select_cols)} FROM kb_fragments WHERE id=?"
+
+        row = conn.execute(sql, (fragment_id,)).fetchone()
+        if not row:
+            print(f"NOT FOUND: fragment id={fragment_id}", file=sys.stderr)
+            return 1
+
+        keys = set(row.keys())
+
+        def _v(name: str, default: Any = None) -> Any:
+            return row[name] if name in keys else default
+
+        q_score = int(_v("quality_score", 0) or 0)
+        q_label = str(_v("quality_label", "") or "")
+
+        print(
+            f"{int(_v('id', 0)):<8} {str(_v('key', '')):<36} {str(_v('topic_category', '')):<22} "
+            f"{str(_v('locale', '')):<7} {str(_v('tone', '')):<12} {str(_v('abstraction_level', '')):<14} "
+            f"{str(_v('state', '')):<12} {q_score:>3} {q_label}"
+        )
+
+        created_at = str(_v("created_at", "") or "")
+        updated_at = str(_v("updated_at", "") or "")
+        print(f"        created: {created_at}   updated: {updated_at}")
+
+        author = str(_v("author", "") or "")
+        source_id = _v("source_id", None)
+        # These may be absent; if absent, they still might exist in meta_json as chunk_id/chunk_seq/etc.
+        source_chunk_id = _v("source_chunk_id", None)
+
+        line2 = f"        author: {author}   source_id: {source_id}"
+        if source_chunk_id is not None:
+            line2 += f"   source_chunk_id: {source_chunk_id}"
+        print(line2)
+
+        if show_reasons and "quality_reasons_json" in keys:
+            raw = (_v("quality_reasons_json", "{}") or "{}").strip()
+            try:
+                d = json.loads(raw) if raw else {}
+            except Exception:
+                d = {}
+            if isinstance(d, dict) and d:
+                def _val(x: Any) -> float:
+                    return float(x) if isinstance(x, (int, float)) else 0.0
+
+                items = sorted(d.items(), key=lambda kv: _val(kv[1]), reverse=True)[: max(1, reasons_top)]
+                pretty = ", ".join([f"{k}:{v}" for k, v in items])
+                print(f"        reasons: {pretty}")
+
+        if with_meta:
+            meta_raw = (_v("meta_json", "{}") or "{}").strip()
+            factors_raw = (_v("factors_json", "{}") or "{}").strip()
+            try:
+                meta = json.loads(meta_raw) if meta_raw else {}
+            except Exception:
+                meta = {}
+            try:
+                factors = json.loads(factors_raw) if factors_raw else {}
+            except Exception:
+                factors = {}
+
+            print("        meta_json:")
+            print(json.dumps(meta, ensure_ascii=False, indent=2))
+            print("        factors_json:")
+            print(json.dumps(factors, ensure_ascii=False, indent=2))
+
+        t = str(_v("text", "") or "").strip()
+        if t:
+            if show_text > 0:
+                t1 = t.replace("\r", " ").replace("\n", " ").strip()
+                if len(t1) > show_text:
+                    t1 = t1[:show_text] + "…"
+                print(f"        text: {t1}")
+            else:
+                print("        text:")
+                print(t)
+
+        return 0
+    finally:
+        conn.close()
+
 
 
 def cmd_fragments_purge(args: argparse.Namespace) -> int:
@@ -4587,6 +4997,195 @@ def cmd_atomize(args: argparse.Namespace) -> int:
     finally:
         conn.close()
 
+def cmd_pipeline(args: argparse.Namespace) -> int:
+    """
+    One-shot KB pipeline:
+      init -> ingest -> atomize --auto-rate -> validate release -> build
+
+    Notes:
+      - Designed for Windows-friendly stdout JSON (use cmd /c "... --json > out.json").
+      - Uses existing command handlers directly (no shell).
+    """
+    as_json = bool(getattr(args, "json", False))
+    compact = bool(getattr(args, "compact", False))
+
+    run_init = not bool(getattr(args, "no_init", False))
+    skip_ingest = bool(getattr(args, "skip_ingest", False))
+    skip_atomize = bool(getattr(args, "skip_atomize", False))
+    skip_validate = bool(getattr(args, "skip_validate", False))
+    skip_build = bool(getattr(args, "skip_build", False))
+
+    # ---- step: init ----
+    init_rc = 0
+    if run_init:
+        init_ns = argparse.Namespace()
+        init_rc = cmd_init(init_ns)
+        if init_rc != 0:
+            if as_json:
+                print(json.dumps({"ok": False, "step": "init", "rc": init_rc}, ensure_ascii=False))
+            return int(init_rc or 2)
+
+    # ---- step: ingest ----
+    ingest_rc = 0
+    ingest_report: dict[str, Any] = {}
+    if not skip_ingest:
+        ingest_ns = argparse.Namespace(
+            path=getattr(args, "path", ""),
+            locale=getattr(args, "locale", "ru-RU"),
+            chunk_size=getattr(args, "chunk_size", 6000),
+            dry_run=False,
+            json=as_json,
+            compact=True,  # keep nested JSON single-line when captured
+            force=bool(getattr(args, "force", False)),
+        )
+        if as_json:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                ingest_rc = cmd_ingest(ingest_ns)
+            try:
+                ingest_report = json.loads(buf.getvalue() or "{}")
+            except Exception:
+                ingest_report = {"raw": buf.getvalue()}
+        else:
+            ingest_rc = cmd_ingest(ingest_ns)
+
+        if ingest_rc != 0:
+            if as_json:
+                print(
+                    json.dumps(
+                        {"ok": False, "step": "ingest", "rc": ingest_rc, "ingest": ingest_report},
+                        ensure_ascii=False,
+                    )
+                )
+            return int(ingest_rc or 2)
+
+    # ---- step: atomize (always uses --auto-rate unless skipped) ----
+    atomize_rc = 0
+    atomize_report: dict[str, Any] = {}
+    if not skip_atomize:
+        atomize_ns = argparse.Namespace(
+            all=True,
+            source_id=0,
+            mode=getattr(args, "mode", "b"),
+            dry_run=False,
+            json=as_json,
+            compact=True,
+            # topic gate
+            topic_gate=getattr(args, "topic_gate", "ru_natal_v1"),
+            topic_threshold=int(getattr(args, "topic_threshold", 3) or 3),
+            # auto-rate (your implemented feature)
+            auto_rate=True,
+            auto_normalize_3=True,
+            auto_reject_below=int(getattr(args, "reject_below", 45) or 45),
+            auto_review_below=int(getattr(args, "review_below", 55) or 55),
+            auto_state_rejected=getattr(args, "state_rejected", "archived"),
+        )
+
+        if as_json:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                atomize_rc = cmd_atomize(atomize_ns)
+            try:
+                atomize_report = json.loads(buf.getvalue() or "{}")
+            except Exception:
+                atomize_report = {"raw": buf.getvalue()}
+        else:
+            atomize_rc = cmd_atomize(atomize_ns)
+
+        if atomize_rc != 0:
+            if as_json:
+                print(
+                    json.dumps(
+                        {"ok": False, "step": "atomize", "rc": atomize_rc, "atomize": atomize_report},
+                        ensure_ascii=False,
+                    )
+                )
+            return int(atomize_rc or 2)
+
+    # ---- step: validate release ----
+    validate_rc = 0
+    validate_report: dict[str, Any] = {}
+    if not skip_validate:
+        validate_ns = argparse.Namespace(
+            # validate release flags
+            min_enabled_score=int(getattr(args, "min_enabled_score", 55) or 55),
+            required_topics=(getattr(args, "required_topics", "") or "").strip(),
+            min_per_topic=int(getattr(args, "min_per_topic", 3) or 3),
+            baseline=(getattr(args, "baseline", "kb_baseline.json") or "kb_baseline.json").strip(),
+            write_baseline=bool(getattr(args, "write_baseline", False)),
+            fail_on_warn=bool(getattr(args, "fail_on_warn", False)),
+            json=as_json,
+        )
+
+        if as_json:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                validate_rc = cmd_validate_release(validate_ns)
+            try:
+                validate_report = json.loads(buf.getvalue() or "{}")
+            except Exception:
+                validate_report = {"raw": buf.getvalue()}
+        else:
+            validate_rc = cmd_validate_release(validate_ns)
+
+        if validate_rc != 0:
+            if as_json:
+                print(
+                    json.dumps(
+                        {"ok": False, "step": "validate_release", "rc": validate_rc, "validate": validate_report},
+                        ensure_ascii=False,
+                    )
+                )
+            return int(validate_rc or 2)
+
+    # ---- step: build ----
+    build_rc = 0
+    build_report: dict[str, Any] = {}
+    if not skip_build:
+        build_ns = argparse.Namespace(
+            dry_run=bool(getattr(args, "dry_run_build", False)),
+            json=as_json,
+            compact=True,
+        )
+
+        if as_json:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                build_rc = cmd_build(build_ns)
+            try:
+                build_report = json.loads(buf.getvalue() or "{}")
+            except Exception:
+                build_report = {"raw": buf.getvalue()}
+        else:
+            build_rc = cmd_build(build_ns)
+
+        if build_rc != 0:
+            if as_json:
+                print(
+                    json.dumps(
+                        {"ok": False, "step": "build", "rc": build_rc, "build": build_report},
+                        ensure_ascii=False,
+                    )
+                )
+            return int(build_rc or 2)
+
+    # ---- final report ----
+    if as_json:
+        out = {
+            "ok": True,
+            "steps": {
+                "init": {"rc": init_rc},
+                "ingest": {"rc": ingest_rc, **({"report": ingest_report} if ingest_report else {})},
+                "atomize": {"rc": atomize_rc, **({"report": atomize_report} if atomize_report else {})},
+                "validate_release": {"rc": validate_rc, **({"report": validate_report} if validate_report else {})},
+                "build": {"rc": build_rc, **({"report": build_report} if build_report else {})},
+            },
+        }
+        print(json.dumps(out, ensure_ascii=False, indent=None if compact else 2))
+    else:
+        print("PIPELINE: OK", file=sys.stderr)
+
+    return 0
 
 
 # ----------------------------
@@ -4640,18 +5239,22 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--note", default="")
     sp.set_defaults(func=cmd_state)
 
-    sp = sub.add_parser("validate", help="validate staging fragments and move to state=validated")
-    sp.add_argument("--key", default="", help="fragment key (optional)")
-    sp.add_argument("--verbose", action="store_true")
-    sp.add_argument("--locale", default=None)
-    sp.add_argument("--state", default=None)
-    sp.add_argument("--limit", type=int, default=1000)
-    sp.add_argument("--who", default="KB")
-    sp.add_argument("--note", default="validated")
-    sp.add_argument("--strict", action="store_true")
-    sp.add_argument("--recheck", action="store_true")
-    sp.add_argument("--json", action="store_true")
-    sp.set_defaults(func=cmd_validate)
+    sp = sub.add_parser("validate", help="validate knowledge base")
+    subv = sp.add_subparsers(dest="validate_cmd")
+
+    sp_rel = subv.add_parser("release", help="release-policy validation for staging before build")
+    sp_rel.add_argument("--min-enabled-score", type=int, default=55)
+    sp_rel.add_argument("--required-topics", default="")
+    sp_rel.add_argument("--min-per-topic", type=int, default=3)
+    sp_rel.add_argument("--baseline", default="")
+    sp_rel.add_argument("--write-baseline", action="store_true")
+    sp_rel.add_argument("--fail-on-warn", action="store_true")
+    sp_rel.add_argument("--json", action="store_true")
+    sp_rel.set_defaults(func=cmd_validate_release)
+
+    # (опционально) оставить старую validate как "validate basic"
+    sp_basic = subv.add_parser("basic", help="legacy/basic validate")
+    sp_basic.set_defaults(func=cmd_validate)  # если у тебя уже есть cmd_validate
 
     sp = sub.add_parser("list", help="list fragments in staging (default) or items in production (--prod)")
     sp.add_argument("--prod", action="store_true")
@@ -4700,6 +5303,45 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--json", action="store_true")
     sp.add_argument("--compact", action="store_true")
     sp.set_defaults(func=cmd_ingest)
+
+    sp = sub.add_parser("pipeline", help="one-shot pipeline: init->ingest->atomize --auto-rate->validate release->build")
+    sp.add_argument("--path", required=True, help="file or directory with new source texts")
+    sp.add_argument("--locale", default="ru-RU")
+    sp.add_argument("--chunk-size", dest="chunk_size", type=int, default=6000)
+    sp.add_argument("--force", action="store_true", help="re-import even if same sha exists")
+
+    # atomize
+    sp.add_argument("--mode", default="b", help="atomize mode (default=b)")
+    sp.add_argument("--topic-gate", dest="topic_gate", default="ru_natal_v1")
+    sp.add_argument("--topic-threshold", dest="topic_threshold", type=int, default=3)
+
+    # auto-rate normalize thresholds
+    sp.add_argument("--reject-below", dest="reject_below", type=int, default=45)
+    sp.add_argument("--review-below", dest="review_below", type=int, default=55)
+    sp.add_argument("--state-rejected", dest="state_rejected", default="archived")
+
+    # validate release
+    sp.add_argument("--baseline", default="kb_baseline.json")
+    sp.add_argument("--write-baseline", action="store_true")
+    sp.add_argument("--fail-on-warn", action="store_true")
+    sp.add_argument("--min-enabled-score", dest="min_enabled_score", type=int, default=55)
+    sp.add_argument("--required-topics", dest="required_topics", default="")
+    sp.add_argument("--min-per-topic", dest="min_per_topic", type=int, default=3)
+
+    # build
+    sp.add_argument("--dry-run-build", action="store_true")
+
+    # pipeline controls
+    sp.add_argument("--no-init", action="store_true")
+    sp.add_argument("--skip-ingest", action="store_true")
+    sp.add_argument("--skip-atomize", action="store_true")
+    sp.add_argument("--skip-validate", action="store_true")
+    sp.add_argument("--skip-build", action="store_true")
+
+    sp.add_argument("--json", action="store_true")
+    sp.add_argument("--compact", action="store_true")
+    sp.set_defaults(func=cmd_pipeline)
+
 
     sp = sub.add_parser("atomize", help="create candidate kb_fragments from ingested chunks")
     sp.add_argument("--skip-garbled", action="store_true", help="skip chunks that look garbled")
@@ -4850,7 +5492,38 @@ def build_parser() -> argparse.ArgumentParser:
         default=5,
         help="how many reasons to print per fragment (default=5)",
     )
+    sp3.add_argument(
+        "--show-text",
+        type=int,
+        default=0,
+        help="print fragment text truncated to N chars (default=0 = off)",
+    )
+    sp3.add_argument(
+        "--with-meta",
+        action="store_true",
+        help="print meta_json preview (topic gate / diagnostics) under each fragment",
+    )
+    sp3.add_argument(
+        "--meta-max",
+        type=int,
+        default=220,
+        help="max chars for meta preview (default=220)",
+    )
+
     sp3.set_defaults(func=cmd_fragments_list)
+    sp_show = sub3.add_parser("show", help="show one staging fragment by id")
+    sp_show.add_argument("--id", type=int, required=True)
+    sp_show.add_argument("--with-meta", action="store_true")
+    sp_show.add_argument("--show-reasons", action="store_true")
+    sp_show.add_argument("--reasons-top", type=int, default=10)
+    sp_show.add_argument(
+        "--show-text",
+        type=int,
+        default=0,
+        help="0 = print full text; N > 0 = truncate to N chars",
+    )
+    sp_show.set_defaults(func=cmd_fragments_show)
+
     sp4 = sub3.add_parser("sample", help="print sample fragments for review")
     sp4.add_argument("--source-id", type=int, required=True)
     sp4.add_argument("--state", default="")

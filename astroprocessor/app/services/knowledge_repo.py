@@ -120,10 +120,11 @@ class KnowledgeRepo:
                 text
             FROM knowledge_items
             WHERE
-                locale = :locale
+                (locale = :locale OR locale LIKE :locale || '-%')
                 AND is_active = 1
                 AND topic_category IN :topics
                 AND key IN :keys
+
             ORDER BY topic_category ASC, key ASC, priority DESC, id DESC
             """
         ).bindparams(

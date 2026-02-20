@@ -1,26 +1,31 @@
 {
-  "fragments_total": 308,
-  "updated": 308,
+  "fragments_total": 737,
+  "processed": 737,
+  "updated": 0,
   "dry_run": false,
-  "min_score": 75,
-  "avg_score": 97.79220779220779,
+  "min_score": 14,
+  "avg_score": 68.88738127544097,
   "max_score": 100,
   "label_counts": {
-    "A": 293,
-    "B": 13,
-    "C": 2
+    "C": 173,
+    "B": 118,
+    "D": 185,
+    "A": 106,
+    "F": 155
   },
   "top_reason_counts": {
-    "explain_markers": 366,
-    "2nd_person": 353,
-    "many_quotes": 240,
-    "daily_story_markers": 192,
-    "definitional": 156,
-    "slang_fillers": 67,
-    "questions": 26,
-    "too_long": 7,
-    "instructional": 5,
-    "exclamations": 5,
-    "lists": 4
+    "def_words": 929,
+    "2nd_person": 745,
+    "many_quotes": 568,
+    "daily_story": 478,
+    "def_line": 404,
+    "concise": 344,
+    "slang_fillers": 173,
+    "coaching": 85,
+    "kb_terms": 46,
+    "questions": 38,
+    "lists": 15,
+    "exclamations": 15,
+    "too_long": 10
   }
 }

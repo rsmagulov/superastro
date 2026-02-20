@@ -1,135 +1,135 @@
 {
   "dry_run": false,
   "mode": "b",
-  "inserted": 27,
+  "inserted": 402,
   "updated": 0,
-  "created": 27,
-  "skipped_existing": 170,
+  "created": 402,
+  "skipped_existing": 197,
   "skipped_mode": 0,
   "skipped_garbled": 0,
   "skipped_sanitation": 0,
-  "skipped_topic": 310,
+  "skipped_topic": 920,
   "skipped_reasons": {},
   "skipped_topic_reasons": {
-    "no_topic": 200,
-    "below_threshold": 110
+    "no_topic": 599,
+    "below_threshold": 321
   },
   "topic_gate": "ru_natal_v1",
   "topic_threshold": 3,
   "include_topics": [],
   "topic_rejected_examples": [],
-  "topic_rejected_total": 310,
+  "topic_rejected_total": 920,
   "topic_rejected_best_topic_counts": {
-    "planets": 56,
-    "no_topic": 200,
-    "elements_ip": 4,
-    "signs": 4,
-    "houses_rulers": 32,
-    "angles_space": 5,
-    "aspects": 8,
-    "aspect_configs": 1
+    "planets": 163,
+    "no_topic": 599,
+    "elements_ip": 11,
+    "signs": 13,
+    "houses_rulers": 93,
+    "angles_space": 14,
+    "aspects": 24,
+    "aspect_configs": 3
   },
   "topic_rejected_best_score_counts": {
-    "1": 90,
-    "2": 20,
-    "0": 200
+    "1": 265,
+    "2": 56,
+    "0": 599
   },
-  "topic_rejected_near_miss_total": 20,
+  "topic_rejected_near_miss_total": 56,
   "topic_rejected_near_miss_topic_counts": {
-    "planets": 13,
-    "elements_ip": 1,
-    "aspects": 3,
-    "houses_rulers": 3
+    "planets": 36,
+    "elements_ip": 2,
+    "aspects": 9,
+    "houses_rulers": 9
   },
   "auto_rate": {
     "rerate": {
       "ok": true,
-      "fragments_total": 335,
-      "processed": 335,
-      "updated": 27,
+      "fragments_total": 737,
+      "processed": 737,
+      "updated": 402,
       "dry_run": false,
       "min_score": 14,
-      "avg_score": 66.87761194029851,
+      "avg_score": 68.88738127544097,
       "max_score": 100,
       "label_counts": {
-        "C": 78,
-        "B": 45,
-        "D": 85,
-        "A": 44,
-        "F": 83
+        "C": 173,
+        "B": 118,
+        "D": 185,
+        "A": 106,
+        "F": 155
       },
       "top_reason_counts": {
-        "def_words": 401,
-        "2nd_person": 373,
-        "many_quotes": 278,
-        "daily_story": 225,
-        "def_line": 166,
-        "concise": 151,
-        "slang_fillers": 73,
-        "coaching": 46,
-        "kb_terms": 20,
-        "questions": 18,
-        "exclamations": 5,
-        "too_long": 4,
-        "lists": 4
+        "def_words": 929,
+        "2nd_person": 745,
+        "many_quotes": 568,
+        "daily_story": 478,
+        "def_line": 404,
+        "concise": 344,
+        "slang_fillers": 173,
+        "coaching": 85,
+        "kb_terms": 46,
+        "questions": 38,
+        "lists": 15,
+        "exclamations": 15,
+        "too_long": 10
       }
     },
     "stats_by_quality": {
-      "fragments_total": 335,
+      "fragments_total": 737,
       "filters": {
         "source_id": null,
         "state": null
       },
       "min_score": 14,
-      "avg_score": 66.87761194029851,
+      "avg_score": 68.88738127544097,
       "max_score": 100,
       "label_counts": {
-        "C": 78,
-        "B": 45,
-        "D": 85,
-        "A": 44,
-        "F": 83
+        "C": 173,
+        "B": 118,
+        "D": 185,
+        "A": 106,
+        "F": 155
       },
       "state_counts": {
-        "enabled": 252,
-        "needs_review": 38,
-        "archived": 45
+        "enabled": 582,
+        "needs_review": 72,
+        "archived": 83
       },
       "label_by_state": {
         "enabled": {
-          "C": 78,
-          "B": 45,
-          "D": 85,
-          "A": 44
+          "C": 173,
+          "B": 118,
+          "D": 185,
+          "A": 106
         },
         "needs_review": {
-          "F": 38
+          "F": 72
         },
         "archived": {
-          "F": 45
+          "F": 83
         }
       },
       "top_reason_counts": {
-        "def_words": 401,
-        "2nd_person": 373,
-        "many_quotes": 278,
-        "daily_story": 225,
-        "def_line": 166,
-        "concise": 151,
-        "slang_fillers": 73,
-        "coaching": 46,
-        "kb_terms": 20,
-        "questions": 18,
-        "exclamations": 5,
-        "too_long": 4,
-        "lists": 4
+        "def_words": 929,
+        "2nd_person": 745,
+        "many_quotes": 568,
+        "daily_story": 478,
+        "def_line": 404,
+        "concise": 344,
+        "slang_fillers": 173,
+        "coaching": 85,
+        "kb_terms": 46,
+        "questions": 38,
+        "lists": 15,
+        "exclamations": 15,
+        "too_long": 10
       },
       "score_buckets": {
-        "0-44": 45,
-        "45-54": 38,
-        "55-69": 85,
-        "70-84": 105,
-        "85-100": 62
+        "0-44": 83,
+        "45-54": 72,
+        "55-69": 185,
+        "70-84": 238,
+        "85-100": 159
       },
       "ok": true
     }
