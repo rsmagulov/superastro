@@ -124,6 +124,7 @@ class KnowledgeRepo:
                 AND is_active = 1
                 AND topic_category IN :topics
                 AND key IN :keys
+                AND text IS NOT NULL AND length(trim(text)) > 0
 
             ORDER BY topic_category ASC, key ASC, priority DESC, id DESC
             """

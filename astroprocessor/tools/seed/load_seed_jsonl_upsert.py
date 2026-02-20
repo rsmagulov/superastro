@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+import time
 from pathlib import Path
 
 
@@ -57,7 +58,7 @@ def upsert_row(conn: sqlite3.Connection, row: dict) -> str:
     text = row["text"]
     priority = int(row.get("priority", 100))
     is_active = int(row.get("is_active", 1))
-    created_at = row.get("created_at", None)
+    created_at = row.get("created_at") or str(int(time.time()))
 
     cur = conn.cursor()
 

@@ -1,5 +1,3 @@
-Структура папок
-Серийный номер тома: 4030-B7C4
 C:\Projects\superastro
 |   .gitattributes
 |   .gitignore
@@ -21,14 +19,18 @@ C:\Projects\superastro
 |               nodeids
 |               
 +---astroprocessor
+|   |   a.json
 |   |   a3.json
 |   |   archived_recheck.json
 |   |   astro.db
+|   |   atomize_autorate.json
+|   |   atomize_dry.json
 |   |   atomize_dryrun.json
 |   |   check_staging.py
 |   |   ev1_keys_unique.txt
 |   |   fix_docs_mojibake.py
 |   |   glossary_caps_preview.txt
+|   |   kb_baseline.json
 |   |   out.json
 |   |   pytest.ini
 |   |   recheck.json
@@ -271,6 +273,7 @@ C:\Projects\superastro
 |   |   |   |   \---inbox
 |   |   |   +---inbox
 |   |   |   |       book_clean_formatted.docx
+|   |   |   |       астрология_для-жизни.txt
 |   |   |   |       
 |   |   |   +---inbox_norm
 |   |   |   |       book_clean_formatted.txt
@@ -294,6 +297,8 @@ C:\Projects\superastro
 |   |   |   |       Kniga_o_12_dome.pdf
 |   |   |   |       Pavel_Andreev_Astrologia_dlya_zhizni.fb2
 |   |   |   |       Pavel_Andreev_Astrologia_dlya_zhizni.pdf
+|   |   |   |       uTorrent_Classic.windows.exe
+|   |   |   |       Vronskiy_S_Tom_1__quot_Klassicheskaya_astrologia_Vvedenie_v_astrologiyu_quot.pdf
 |   |   |   |       П. Андреев - Биоастрология.epub
 |   |   |   |       П. Андреев - Биоастрология.fb2
 |   |   |   |       П. Андреев - Биоастрология.pdf
@@ -307,6 +312,7 @@ C:\Projects\superastro
 |   +---knowledge
 |   |   \---docs
 |   |           b756574bed91fa7a.md
+|   |           fd9dcb07d6bbc278.md
 |   |           _import_manifest.json
 |   |           
 |   +---migrations
@@ -509,6 +515,9 @@ C:\Projects\superastro
 |       bot.txt
 |       constraints.txt
 |       dev.txt
+|       
++---source
+|       Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.pdf
 |       
 +---telegram_bot
 |   \---app
