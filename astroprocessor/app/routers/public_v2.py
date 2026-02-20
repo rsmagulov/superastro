@@ -1,10 +1,4 @@
-# ============================================================
-# File: astroprocessor/app/routers/public_v2.py  (PATCH)
-# - If-None-Match / ETag / 304
-# - richer /v2/buttons (label/order/icon/is_enabled)
-# ============================================================
 from __future__ import annotations
-
 import hashlib
 import json
 from typing import Any, Optional
@@ -433,20 +427,19 @@ def _dedupe_keep_order(items: list[str]) -> list[str]:
 def _count_unique_candidate_keys_from_kb_dump(
     knowledge_blocks_dump: list[dict[str, Any]],
     *,
-    max_blocks: int = 12,
-    max_keys_total: int = 600,
+    max_keys_total: int = 2000,
 ) -> int:
-    sampled = knowledge_blocks_dump[: max(1, int(max_blocks))]
     seen: set[str] = set()
-    for b in sampled:
-        for k in (b.get("candidate_keys") or [])[:50]:
-            ks = str(k)
-            if ks in seen:
+    for b in knowledge_blocks_dump or []:
+        for k in (b.get("candidate_keys") or []):
+            ks = str(k).strip()
+            if not ks:
                 continue
             seen.add(ks)
             if len(seen) >= int(max_keys_total):
                 return len(seen)
     return len(seen)
+
 
 
 def _parse_ids_sources(ids: list[str] | None, ids_csv: str | None) -> list[str]:
@@ -676,9 +669,9 @@ async def interpret_v2(
             max_unique = max(max_unique, int(topic_kd.get("candidate_keys_total_unique") or 0))
 
         dbg["keydiff"] = {
-            "candidate_keys_total_unique_max": max_unique,
-            "topics": keydiff_topics,
-            "limits": {"note": "computed per-topic from each core.knowledge_blocks"},
+           "candidate_keys_total_unique_max": max_unique,
+           "topics": keydiff_topics,
+           "limits": {"note": "computed per-topic from each core.knowledge_blocks"},
         }
 
 
@@ -727,20 +720,20 @@ async def interpret_v2(
         if int(debug) > 0:
             kb_dump_topic = core.get("knowledge_blocks") or []
             topic_rt = meta.setdefault("debug_runtime", {}).setdefault("topics", {}).setdefault(str(t), {})
+            topic_rt.update(
+                {
+                    "final_text_len": len(text),
+                    "raw_blocks_count": len(raw_blocks),
+                    "knowledge_blocks_count": len(kb_dump_topic) if isinstance(kb_dump_topic, list) else 0,
+                    # IMPORTANT: unique по ВСЕМ blocks данной темы, без сэмплинга
+                    "candidate_keys_total_unique": _count_unique_candidate_keys_from_kb_dump(
+                        kb_dump_topic,
+                        max_blocks=200,
+                        max_keys_total=5000,
+                    ),
+                }
+            )
 
-            # базовые счётчики
-            topic_rt["final_text_len"] = len(text)
-            topic_rt["raw_blocks_count"] = len(raw_blocks)
-            topic_rt["knowledge_blocks_count"] = len(kb_dump_topic) if isinstance(kb_dump_topic, list) else 0
-
-            # candidate_keys_total_unique (NO SQL): считаем уникальные candidate_keys по всем knowledge_blocks темы
-            seen: set[str] = set()
-            if isinstance(kb_dump_topic, list):
-                for blk in kb_dump_topic:
-                    for k in (blk.get("candidate_keys") or []):
-                        if k:
-                            seen.add(str(k))
-            topic_rt["candidate_keys_total_unique"] = len(seen)
 
 
         

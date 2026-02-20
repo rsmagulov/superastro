@@ -874,67 +874,55 @@ def _norm_house_value(v: Any) -> Optional[int]:
 
 def _extract_planets(natal_data: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """
-    Normalize planet structures to:
+    Normalize several possible planet structures to:
       {"sun": {"sign":"leo","house":1}, ...}
 
-    Supports:
-      - dict: {"sun": {"sign":"leo","house":1}, ...}
-      - dict with nested sign objects: {"sun": {"sign":{"key":"leo"}, "house":{"number":1}}, ...}
-      - list: [{"name":"Sun","sign":"Leo","house":1}, ...]
-      - list of pydantic/objects
+    Supported shapes:
+      1) natal_data["planets"] as dict or list
+      2) kerykeion-like: natal_data["subject"][<planet_key>] = {"sign": "...", "house": ...}
+         where <planet_key> is one of PLANETS (sun/moon/mercury/...)
     """
-    planets_raw = (
-        natal_data.get("planets")
-        or natal_data.get("points")
-        or natal_data.get("bodies")
-        or natal_data.get("objects")
-        or {}
-    )
     out: dict[str, dict[str, Any]] = {}
+
+    # --- (A) preferred: explicit planets container ---
+    planets_raw = natal_data.get("planets") or natal_data.get("points") or None
 
     items: list[tuple[Any, Any]] = []
     if isinstance(planets_raw, dict):
         items = list(planets_raw.items())
     elif isinstance(planets_raw, list):
         for it in planets_raw:
-            d = _as_dict(it) if not isinstance(it, dict) else it
-            if not isinstance(d, dict):
-                continue
-            name = _pick(d.get("name"), d.get("planet"), d.get("id"), d.get("key"))
-            items.append((name, d))
-    else:
-        # maybe object with .items()
-        d = _as_dict(planets_raw)
-        if isinstance(d, dict):
-            items = list(d.items())
+            if isinstance(it, dict):
+                name = it.get("name") or it.get("planet") or it.get("id")
+                items.append((name, it))
+
+    # --- (B) fallback: kerykeion-like planets inside subject ---
+    if not items:
+        subject = natal_data.get("subject") or {}
+        if isinstance(subject, dict):
+            for p in PLANETS:
+                node = subject.get(p)
+                if isinstance(node, dict):
+                    items.append((p, node))
 
     for k, v in items:
         p = _norm_token(k)
-        if p not in PLANETS:
-            # sometimes keys are "Sun" etc.
-            p2 = _norm_token(str(k))
-            if p2 in PLANETS:
-                p = p2
-            else:
-                continue
-
-        vd = v if isinstance(v, dict) else _as_dict(v)
-        if not isinstance(vd, dict):
+        if p not in PLANETS or not isinstance(v, dict):
             continue
 
-        sign = _norm_sign(_pick(vd.get("sign"), vd.get("sign_key"), vd.get("zodiac_sign"), vd.get("signInfo")))
-        if sign and sign not in SIGNS:
-            # try strict validation
-            try:
+        sign = _norm_token(v.get("sign") or v.get("sign_key") or v.get("zodiac_sign"))
+        house = v.get("house") or v.get("house_number")
+
+        try:
+            if sign:
                 sign = _require_in_set("sign", sign, SIGNS)
-            except Exception:
-                continue
-
-        house_i = _norm_house_value(_pick(vd.get("house"), vd.get("house_number"), vd.get("houseInfo")))
-
-        if not sign:
-            # without sign this planet is not useful for keygen
+        except KeyBuilderError:
             continue
+
+        try:
+            house_i = _norm_house(house)
+        except KeyBuilderError:
+            house_i = None
 
         out[p] = {"sign": sign, "house": house_i}
 
@@ -943,56 +931,72 @@ def _extract_planets(natal_data: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 
+
 def _extract_angles(natal_data: dict[str, Any]) -> dict[str, str]:
     """
     Normalize angles to: {"asc":"leo","mc":"taurus", ...}
 
-    Supports:
-      - {"asc":"leo","mc":"taurus"}
-      - {"asc":{"sign":"leo"}, "mc":{"sign":{"key":"taurus"}}}
-      - {"ascendant":..., "midheaven":...}
-      - objects/pydantic
+    Supported shapes:
+      1) natal_data["angles"] / ["axes"] as dict
+      2) kerykeion-like:
+         natal_data["subject"]["ascendant"] = {"sign": "..."}
+         natal_data["subject"]["medium_coeli"] = {"sign": "..."}
     """
-    angles_raw = natal_data.get("angles") or natal_data.get("axes") or natal_data.get("angle_points") or {}
     out: dict[str, str] = {}
 
-    d = angles_raw if isinstance(angles_raw, dict) else _as_dict(angles_raw)
-    if not isinstance(d, dict):
-        return out
-
-    for k, v in d.items():
-        ak = _norm_token(k)
-        if ak in {"asc", "ascendant"}:
-            a = "asc"
-        elif ak in {"mc", "midheaven"}:
-            a = "mc"
-        elif ak in {"dsc", "dc", "desc", "descendant"}:
-            a = "dsc"
-        elif ak in {"ic"}:
-            a = "ic"
-        else:
-            continue
-
-        if isinstance(v, dict):
-            sign = _norm_sign(_pick(v.get("sign"), v.get("sign_key"), v.get("key"), v.get("id")))
-        else:
-            vd = _as_dict(v)
-            if vd:
-                sign = _norm_sign(_pick(vd.get("sign"), vd.get("sign_key"), vd.get("key"), vd.get("id")))
+    # --- (A) explicit angles container ---
+    angles_raw = natal_data.get("angles") or natal_data.get("axes") or None
+    if isinstance(angles_raw, dict):
+        for k, v in angles_raw.items():
+            ak = _norm_token(k)
+            if ak in {"asc", "ascendant"}:
+                a = "asc"
+            elif ak in {"mc", "midheaven"}:
+                a = "mc"
+            elif ak in {"dsc", "dc", "desc", "descendant"}:
+                a = "dsc"
+            elif ak in {"ic"}:
+                a = "ic"
             else:
-                sign = _norm_sign(v)
-
-        if not sign:
-            continue
-        if sign not in SIGNS:
-            try:
-                sign = _require_in_set("sign", sign, SIGNS)
-            except Exception:
                 continue
 
-        out[a] = sign
+            sign = _norm_token(v.get("sign") if isinstance(v, dict) else v)
+            if not sign:
+                continue
+            try:
+                out[a] = _require_in_set("sign", sign, SIGNS)
+            except KeyBuilderError:
+                continue
+
+        if out:
+            return out
+
+    # --- (B) fallback: kerykeion-like inside subject ---
+    subject = natal_data.get("subject") or {}
+    if not isinstance(subject, dict):
+        return out
+
+    asc = subject.get("ascendant")
+    mc = subject.get("medium_coeli")
+
+    if isinstance(asc, dict):
+        s = _norm_token(asc.get("sign"))
+        if s:
+            try:
+                out["asc"] = _require_in_set("sign", s, SIGNS)
+            except KeyBuilderError:
+                pass
+
+    if isinstance(mc, dict):
+        s = _norm_token(mc.get("sign"))
+        if s:
+            try:
+                out["mc"] = _require_in_set("sign", s, SIGNS)
+            except KeyBuilderError:
+                pass
 
     return out
+
 
 
 
@@ -1274,6 +1278,8 @@ def build_knowledge_key_blocks(
     include_all_planets: bool = False,
     include_angles: bool = True,
     include_aspects: bool = True,
+    include_aspect_configs: bool = True,
+    include_integrals: bool = True,
     max_aspects: int = 18,
 ) -> List[KeyBlock]:
 
@@ -1297,7 +1303,7 @@ def build_knowledge_key_blocks(
         if tc not in TOPIC_CATEGORIES:
             raise KeyBuilderError(f"Invalid topic_category: '{topic_category}'")
 
-    profile = TOPIC_PROFILES.get(tc or "", TOPIC_PROFILES["personality_core"])
+    profile = TOPIC_PROFILES.get(tc or "personality_core", TOPIC_PROFILES["personality_core"])
 
 
     subject = natal_data.get("subject", {}) or {}
@@ -1394,13 +1400,13 @@ def build_knowledge_key_blocks(
 
 
     # 5) aspect configurations (optional)
-    if profile.include_aspect_configs:
+    if include_aspect_configs and profile.include_aspect_configs:
         for cfg in _extract_aspect_configs(natal_data):
             blk = _aspect_config_block(cfg=cfg, tone_namespace=tone_namespace)
             blocks.append(KeyBlock(id=blk.id, candidate_keys=_dedup_keep_order(blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]), meta=blk.meta))
 
     # 6) integrals (optional, only if provided by data)
-    if profile.include_integrals:
+    if include_integrals and profile.include_integrals:
         for b in _elements_integrals_blocks(natal_data, tone_namespace=tone_namespace):
             blocks.append(KeyBlock(id=b.id, candidate_keys=_dedup_keep_order(b.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]), meta=b.meta))
 
