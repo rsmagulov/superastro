@@ -430,6 +430,24 @@ def _dedupe_keep_order(items: list[str]) -> list[str]:
         out.append(x)
     return out
 
+def _count_unique_candidate_keys_from_kb_dump(
+    knowledge_blocks_dump: list[dict[str, Any]],
+    *,
+    max_blocks: int = 12,
+    max_keys_total: int = 600,
+) -> int:
+    sampled = knowledge_blocks_dump[: max(1, int(max_blocks))]
+    seen: set[str] = set()
+    for b in sampled:
+        for k in (b.get("candidate_keys") or [])[:50]:
+            ks = str(k)
+            if ks in seen:
+                continue
+            seen.add(ks)
+            if len(seen) >= int(max_keys_total):
+                return len(seen)
+    return len(seen)
+
 
 def _parse_ids_sources(ids: list[str] | None, ids_csv: str | None) -> list[str]:
     """
@@ -621,13 +639,13 @@ async def interpret_v2(
 
     birth = req.birth.to_birth_input().to_domain()
     natal_data = await _chart_service.build_natal(user_name=req.name, birth=birth, place=place)
-    blocks = _chart_service.build_knowledge_blocks(natal_data=natal_data, tone_namespace="natal")
-
-    cores_by_topic = await _chart_service.interpret_topics_with_blocks_batch(
-        session=knowledge_session,
-        knowledge_blocks=blocks,
+    
+    cores_by_topic = await _chart_service.interpret_topics_v2(
+        knowledge_session=knowledge_session,
+        natal_data=natal_data,
         topic_categories=topics,
         locale=locale,
+        tone_namespace="natal",
     )
 
     if int(debug) > 0:
@@ -637,19 +655,32 @@ async def interpret_v2(
             debug=int(debug),
         )
 
-        if int(debug) >= 2:
-            any_core = next(
-                (cores_by_topic.get(str(t)) for t in topics if isinstance(cores_by_topic.get(str(t)), dict)),
-                None,
-            ) or {}
-            kb_dump = any_core.get("knowledge_blocks") or []
+    # debug=2: keydiff must be topic-aware (use each topic's own knowledge_blocks)
+    if int(debug) >= 2:
+        keydiff_topics: dict[str, Any] = {}
+        max_unique = 0
 
-            dbg["keydiff"] = await _debug_keydiff_for_topics(
+        for t in [str(x) for x in topics]:
+            core = cores_by_topic.get(t, {}) or {}
+            kb_dump = core.get("knowledge_blocks") or []
+            kd = await _debug_keydiff_for_topics(
                 knowledge_session=knowledge_session,
-                topics=[str(t) for t in topics],
+                topics=[t],                 # IMPORTANT: per-topic query
                 locale=locale,
                 knowledge_blocks_dump=kb_dump,
             )
+            # _debug_keydiff_for_topics returns {candidate_keys_total_unique, topics:{t:{...}}, limits:{...}}
+            # unwrap per topic for compactness
+            topic_kd = (kd.get("topics") or {}).get(t, {})
+            keydiff_topics[t] = topic_kd
+            max_unique = max(max_unique, int(topic_kd.get("candidate_keys_total_unique") or 0))
+
+        dbg["keydiff"] = {
+            "candidate_keys_total_unique_max": max_unique,
+            "topics": keydiff_topics,
+            "limits": {"note": "computed per-topic from each core.knowledge_blocks"},
+        }
+
 
         meta["debug"] = dbg
 
@@ -694,10 +725,25 @@ async def interpret_v2(
 
         text = (core.get("final_text") or "").strip()
         if int(debug) > 0:
-            meta.setdefault("debug_runtime", {}).setdefault("topics", {})[str(t)] = {
-                "final_text_len": len(text),
-                "raw_blocks_count": len(raw_blocks),
-            }
+            kb_dump_topic = core.get("knowledge_blocks") or []
+            topic_rt = meta.setdefault("debug_runtime", {}).setdefault("topics", {}).setdefault(str(t), {})
+
+            # базовые счётчики
+            topic_rt["final_text_len"] = len(text)
+            topic_rt["raw_blocks_count"] = len(raw_blocks)
+            topic_rt["knowledge_blocks_count"] = len(kb_dump_topic) if isinstance(kb_dump_topic, list) else 0
+
+            # candidate_keys_total_unique (NO SQL): считаем уникальные candidate_keys по всем knowledge_blocks темы
+            seen: set[str] = set()
+            if isinstance(kb_dump_topic, list):
+                for blk in kb_dump_topic:
+                    for k in (blk.get("candidate_keys") or []):
+                        if k:
+                            seen.add(str(k))
+            topic_rt["candidate_keys_total_unique"] = len(seen)
+
+
+        
         # Fallback: if renderer didn't produce final_text but we did select blocks,
         # stitch together the actual knowledge_items.text by knowledge_item_id.
         if (not text) and raw_blocks:

@@ -32,6 +32,7 @@ C:\Projects\superastro
 |   |   glossary_caps_preview.txt
 |   |   kb_baseline.json
 |   |   out.json
+|   |   payload.json
 |   |   pytest.ini
 |   |   recheck.json
 |   |   rerate.json
@@ -338,6 +339,8 @@ C:\Projects\superastro
 |   |   |   test_kb_sources_diagnose.py
 |   |   |   test_kb_validator_profile_ru_v1.py
 |   |   |   test_kb_validator_profile_ru_v1_state_stdout.py
+|   |   |   test_key_builder_include_all_planets.py
+|   |   |   test_knowledge_repo_filters_empty_text.py
 |   |   |   test_project_integrity_smoke.py
 |   |   |   test_public_v2.py
 |   |   |   test_public_v2_buttons_enabled_only.py
@@ -357,9 +360,12 @@ C:\Projects\superastro
 |   |   |   test_public_v2_buttons_strict_1.py
 |   |   |   test_public_v2_button_id.py
 |   |   |   test_public_v2_button_map_settings.py
+|   |   |   test_public_v2_debug2_keydiff.py
+|   |   |   test_public_v2_debug_runtime_db_path.py
 |   |   |   test_public_v2_locale.py
 |   |   |   test_public_v2_perf.py
 |   |   |   test_structured_errors_flag.py
+|   |   |   test_tools_post_json.py
 |   |   |   utils.py
 |   |   |   
 |   |   \---__pycache__
@@ -377,7 +383,9 @@ C:\Projects\superastro
 |   |           test_kb_sources_diagnose.cpython-312-pytest-9.0.2.pyc
 |   |           test_kb_validator_profile_ru_v1.cpython-312-pytest-9.0.2.pyc
 |   |           test_kb_validator_profile_ru_v1_state_stdout.cpython-312-pytest-9.0.2.pyc
+|   |           test_key_builder_include_all_planets.cpython-312-pytest-9.0.2.pyc
 |   |           test_knowledge_builder_mvp.cpython-312-pytest-9.0.2.pyc
+|   |           test_knowledge_repo_filters_empty_text.cpython-312-pytest-9.0.2.pyc
 |   |           test_project_integrity_smoke.cpython-312-pytest-9.0.2.pyc
 |   |           test_public_v2.cpython-312-pytest-9.0.2.pyc
 |   |           test_public_v2_buttons_enabled_only.cpython-312-pytest-9.0.2.pyc
@@ -397,9 +405,12 @@ C:\Projects\superastro
 |   |           test_public_v2_buttons_strict_1.cpython-312-pytest-9.0.2.pyc
 |   |           test_public_v2_button_id.cpython-312-pytest-9.0.2.pyc
 |   |           test_public_v2_button_map_settings.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_debug2_keydiff.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_debug_runtime_db_path.cpython-312-pytest-9.0.2.pyc
 |   |           test_public_v2_locale.cpython-312-pytest-9.0.2.pyc
 |   |           test_public_v2_perf.cpython-312-pytest-9.0.2.pyc
 |   |           test_structured_errors_flag.cpython-312-pytest-9.0.2.pyc
+|   |           test_tools_post_json.cpython-312-pytest-9.0.2.pyc
 |   |           utils.cpython-312.pyc
 |   |           
 |   \---tools
@@ -417,6 +428,12 @@ C:\Projects\superastro
 |       |       test_priority.py
 |       |       update_sun_leo_text.py
 |       |       
+|       +---http
+|       |   |   post_json.py
+|       |   |   
+|       |   \---__pycache__
+|       |           post_json.cpython-312.pyc
+|       |           
 |       +---import
 |       |       import_knowledge_layer_b.py
 |       |       knowledge_importer.py
@@ -489,7 +506,9 @@ C:\Projects\superastro
 |       |       ev1_seed_any_ru.jsonl
 |       |       load_seed_jsonl.py
 |       |       load_seed_jsonl_upsert.py
+|       |       seed_generic_all_topics.sql
 |       |       seed_knowledge_84.jsonl
+|       |       seed_personality_core_generic.sql
 |       |       
 |       +---tests
 |       |       conftest.py
@@ -515,9 +534,6 @@ C:\Projects\superastro
 |       bot.txt
 |       constraints.txt
 |       dev.txt
-|       
-+---source
-|       Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.pdf
 |       
 +---telegram_bot
 |   \---app
