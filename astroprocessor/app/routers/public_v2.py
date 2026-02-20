@@ -12,6 +12,8 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import text as sql_text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import bindparam
+from pathlib import Path
 
 from app.db import get_knowledge_session, get_session
 from app.schemas.public_v2 import (
@@ -220,6 +222,109 @@ def _build_debug_payload(
         out["topics"][str(t)] = topic_dbg
 
     return out
+
+async def _debug_keydiff_for_topics(
+    *,
+    knowledge_session: AsyncSession,
+    topics: list[str],
+    locale: str,
+    knowledge_blocks_dump: list[dict[str, Any]],
+    max_blocks: int = 12,
+    max_keys_total: int = 600,
+    max_sample: int = 60,
+) -> dict[str, Any]:
+    """
+    Для debug=2:
+    - candidate_keys_missing_any: ключи, которых нет в DB вообще для (topic, locale*)
+    - candidate_keys_no_active_nonempty: ключи есть, но нет active+nonempty text
+    """
+
+    sampled_blocks = knowledge_blocks_dump[: max(1, int(max_blocks))]
+    keys: list[str] = []
+    seen: set[str] = set()
+
+    for b in sampled_blocks:
+        for k in (b.get("candidate_keys") or [])[:50]:
+            ks = str(k)
+            if ks in seen:
+                continue
+            seen.add(ks)
+            keys.append(ks)
+            if len(keys) >= int(max_keys_total):
+                break
+        if len(keys) >= int(max_keys_total):
+            break
+
+    if not keys or not topics:
+        return {
+            "candidate_keys_total_unique": len(keys),
+            "topics": {},
+            "limits": {
+                "max_blocks": int(max_blocks),
+                "max_keys_total": int(max_keys_total),
+                "max_sample": int(max_sample),
+            },
+        }
+
+    stmt = sql_text(
+        """
+        SELECT
+          topic_category AS topic,
+          key AS key,
+          COUNT(*) AS rows_total,
+          SUM(
+            CASE
+              WHEN is_active = 1 AND text IS NOT NULL AND LENGTH(TRIM(text)) > 0 THEN 1
+              ELSE 0
+            END
+          ) AS rows_active_nonempty
+        FROM knowledge_items
+        WHERE topic_category IN :topics
+          AND key IN :keys
+          AND (locale = :locale OR locale LIKE :locale || '-%')
+        GROUP BY topic_category, key
+        """
+    ).bindparams(
+        bindparam("topics", expanding=True),
+        bindparam("keys", expanding=True),
+    )
+
+    rows = (await knowledge_session.execute(stmt, {"topics": topics, "keys": keys, "locale": locale})).mappings().all()
+
+    # index: topic -> key -> stats
+    present: dict[str, dict[str, dict[str, int]]] = {t: {} for t in topics}
+    for r in rows:
+        t = str(r["topic"])
+        k = str(r["key"])
+        present.setdefault(t, {})[k] = {
+            "rows_total": int(r["rows_total"] or 0),
+            "rows_active_nonempty": int(r["rows_active_nonempty"] or 0),
+        }
+
+    out_topics: dict[str, Any] = {}
+    for t in topics:
+        pmap = present.get(t, {}) or {}
+        missing_any = [k for k in keys if k not in pmap]
+        no_active_nonempty = [k for k in keys if (k in pmap and (pmap[k]["rows_active_nonempty"] <= 0))]
+
+        out_topics[t] = {
+            "candidate_keys_total_unique": len(keys),
+            "candidate_keys_missing_any_count": len(missing_any),
+            "candidate_keys_missing_any_sample": missing_any[: int(max_sample)],
+            "candidate_keys_no_active_nonempty_count": len(no_active_nonempty),
+            "candidate_keys_no_active_nonempty_sample": no_active_nonempty[: int(max_sample)],
+        }
+
+    return {
+        "candidate_keys_total_unique": len(keys),
+        "topics": out_topics,
+        "limits": {
+            "max_blocks": int(max_blocks),
+            "max_keys_total": int(max_keys_total),
+            "max_sample": int(max_sample),
+        },
+    }
+
 
 async def _fetch_knowledge_texts_by_ids(
     session: AsyncSession,
@@ -526,11 +631,27 @@ async def interpret_v2(
     )
 
     if int(debug) > 0:
-        meta["debug"] = _build_debug_payload(
+        dbg = _build_debug_payload(
             topics=[str(t) for t in topics],
             cores_by_topic=cores_by_topic,
             debug=int(debug),
         )
+
+        if int(debug) >= 2:
+            any_core = next(
+                (cores_by_topic.get(str(t)) for t in topics if isinstance(cores_by_topic.get(str(t)), dict)),
+                None,
+            ) or {}
+            kb_dump = any_core.get("knowledge_blocks") or []
+
+            dbg["keydiff"] = await _debug_keydiff_for_topics(
+                knowledge_session=knowledge_session,
+                topics=[str(t) for t in topics],
+                locale=locale,
+                knowledge_blocks_dump=kb_dump,
+            )
+
+        meta["debug"] = dbg
 
 
     topic_results: list[TopicResultV2] = []
@@ -558,11 +679,13 @@ async def interpret_v2(
         dbg_rt["fallback_ids_total"] = len(fallback_ids)
         dbg_rt["fallback_ids_unique"] = len(set(fallback_ids))
         dbg_rt["fallback_rows_returned"] = len(fallback_texts_by_id)
+        dbg_rt["knowledge_db_path"] = str(Path(settings.knowledge_db_path).resolve())
         # show id=61 if present (your case)
         if 61 in fallback_texts_by_id:
             dbg_rt["id61_text_len"] = len((fallback_texts_by_id.get(61) or "").strip())
         else:
             dbg_rt["id61_text_len"] = None
+    
 
 
     for t in topics:

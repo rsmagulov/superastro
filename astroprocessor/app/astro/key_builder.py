@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence
 
 # --- строгие словари нормализации ---
 
@@ -34,8 +34,6 @@ SIGNS = {
     "pisces",
 }
 
-ANGLES = {"asc", "mc"}
-
 ASPECTS = {"conjunction", "sextile", "square", "trine", "opposition"}
 
 
@@ -52,7 +50,7 @@ class KeyBlock:
 
     id: str
     candidate_keys: List[str]
-    meta: Dict[str, Any]  # удобно для дебага/логов, но не обязательно использовать
+    meta: Dict[str, Any]
 
 
 def _norm_token(x: Any) -> str:
@@ -87,11 +85,9 @@ def _planet_sign_block(
     unknown_time: bool,
     tone_namespace: str = "natal",
 ) -> KeyBlock:
-    # Базовый ключ
     base = f"{tone_namespace}.planet.{planet}.sign.{sign}"
 
     keys: List[str] = []
-    # Дома только если время известно
     if not unknown_time and house is not None:
         keys.append(f"{base}.house.{house}")
         keys.append(f"{base}.house.any")
@@ -113,12 +109,7 @@ def _planet_sign_block(
     )
 
 
-def _angle_block(
-    *,
-    angle: str,
-    sign: str,
-    tone_namespace: str = "natal",
-) -> KeyBlock:
+def _angle_block(*, angle: str, sign: str, tone_namespace: str = "natal") -> KeyBlock:
     base = f"{tone_namespace}.angle.{angle}.sign.{sign}"
     keys = [
         base,
@@ -133,14 +124,7 @@ def _angle_block(
     )
 
 
-def _aspect_block(
-    *,
-    p1: str,
-    aspect: str,
-    p2: str,
-    tone_namespace: str = "natal",
-) -> KeyBlock:
-    # Симметрия: чтобы sun-square-moon и moon-square-sun давали один и тот же ключ
+def _aspect_block(*, p1: str, aspect: str, p2: str, tone_namespace: str = "natal") -> KeyBlock:
     a, b = sorted([p1, p2])
     base = f"{tone_namespace}.aspect.{a}.{aspect}.{b}"
     keys = [
@@ -157,6 +141,19 @@ def _aspect_block(
     )
 
 
+def _ordered_planets(
+    normalized_planets: Dict[str, Dict[str, Any]],
+    *,
+    planets_order: Sequence[str],
+    include_all_planets: bool,
+) -> List[str]:
+    base = [p for p in planets_order if p in normalized_planets]
+    if not include_all_planets:
+        return base
+    tail = sorted([p for p in normalized_planets.keys() if p not in set(base)])
+    return base + tail
+
+
 def build_knowledge_key_blocks(
     natal_data: Dict[str, Any],
     *,
@@ -165,11 +162,13 @@ def build_knowledge_key_blocks(
     include_angles: bool = True,
     include_aspects: bool = True,
     max_aspects: int = 3,
+    include_all_planets: bool = False,
 ) -> List[KeyBlock]:
     """
     Чистая функция: на вход нормализуемые астроданные, на выход блоки ключей.
 
     Ожидаемый natal_data (пример):
+
     {
       "subject": {"unknown_time": false},
       "planets": {
@@ -187,64 +186,53 @@ def build_knowledge_key_blocks(
 
     # --- планеты ---
     planets_raw: Dict[str, Any] = natal_data.get("planets", {}) or {}
-    # приводим ключи планет к lowercase-канону
     normalized_planets: Dict[str, Dict[str, Any]] = {}
 
     for k, v in planets_raw.items():
         pk = _norm_token(k)
-        # допускаем вход Sun/Moon и т.п.
-        if pk in PLANETS:
-            planet = pk
-        else:
-            # часто приходит "Sun" -> "sun"
-            planet = pk
-            if planet not in PLANETS:
-                raise KeyBuilderError(f"Unknown planet key: '{k}'")
+        planet = pk
+        if planet not in PLANETS:
+            raise KeyBuilderError(f"Unknown planet key: '{k}'")
         if not isinstance(v, dict):
             raise KeyBuilderError(f"Planet value must be dict for '{k}'")
 
-        sign = _norm_token(v.get("sign"))
-        sign = _require_in_set("sign", sign, SIGNS)
+        sign = _require_in_set("sign", _norm_token(v.get("sign")), SIGNS)
         house = _norm_house(v.get("house"))
         normalized_planets[planet] = {"sign": sign, "house": house}
 
-    # строим блоки в заданном порядке (можно менять)
-    for planet in planets_order:
-        if planet in normalized_planets:
-            sign = normalized_planets[planet]["sign"]
-            house = normalized_planets[planet]["house"]
-            blocks.append(
-                _planet_sign_block(
-                    planet=planet,
-                    sign=sign,
-                    house=house,
-                    unknown_time=unknown_time,
-                    tone_namespace=tone_namespace,
-                )
+    for planet in _ordered_planets(
+        normalized_planets,
+        planets_order=planets_order,
+        include_all_planets=include_all_planets,
+    ):
+        sign = normalized_planets[planet]["sign"]
+        house = normalized_planets[planet]["house"]
+        blocks.append(
+            _planet_sign_block(
+                planet=planet,
+                sign=sign,
+                house=house,
+                unknown_time=unknown_time,
+                tone_namespace=tone_namespace,
             )
+        )
 
     # --- углы ---
     if include_angles:
         angles_raw: Dict[str, Any] = natal_data.get("angles", {}) or {}
-        # ожидаем ASC/MC, но нормализуем
         for k, v in angles_raw.items():
             ak = _norm_token(k)
-            # "ASC" -> "asc"
             if ak in {"ascendant", "asc"}:
                 angle = "asc"
             elif ak in {"mc", "midheaven"}:
-                # ✅ MC только если время известно
                 if unknown_time:
                     continue
                 angle = "mc"
             else:
                 continue
 
-            sign = _norm_token(v)
-            sign = _require_in_set("sign", sign, SIGNS)
-            blocks.append(
-                _angle_block(angle=angle, sign=sign, tone_namespace=tone_namespace)
-            )
+            sign = _require_in_set("sign", _norm_token(v), SIGNS)
+            blocks.append(_angle_block(angle=angle, sign=sign, tone_namespace=tone_namespace))
 
     # --- аспекты ---
     if include_aspects:
@@ -252,7 +240,6 @@ def build_knowledge_key_blocks(
         if aspects_raw and not isinstance(aspects_raw, list):
             raise KeyBuilderError("aspects must be a list")
 
-        # берём первые max_aspects (детерминированно)
         count = 0
         for a in aspects_raw:
             if count >= max_aspects:
@@ -262,19 +249,11 @@ def build_knowledge_key_blocks(
             p1 = _norm_token(a.get("p1"))
             p2 = _norm_token(a.get("p2"))
             asp = _norm_token(a.get("aspect"))
-
-            # допускаем вход "Sun" -> "sun"
-            if p1 not in PLANETS or p2 not in PLANETS:
+            if p1 not in PLANETS or p2 not in PLANETS or asp not in ASPECTS:
                 continue
-            if asp not in ASPECTS:
-                continue
-
-            blocks.append(
-                _aspect_block(p1=p1, aspect=asp, p2=p2, tone_namespace=tone_namespace)
-            )
+            blocks.append(_aspect_block(p1=p1, aspect=asp, p2=p2, tone_namespace=tone_namespace))
             count += 1
 
-    # --- общий блок только если вообще ничего не получилось ---
     if not blocks:
         blocks.append(
             KeyBlock(

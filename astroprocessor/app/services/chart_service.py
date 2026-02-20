@@ -1,7 +1,4 @@
-# ============================================================
-# File: astroprocessor/app/services/chart_service.py  (REPLACE)
-# (всё совместимо с v1 и v2; v2 сможет использовать multi-topic batch)
-# ============================================================
+# astroprocessor/app/services/chart_service.py
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.astro.kerykeion_adapter import BirthData, KerykeionAdapter
 from app.astro.key_builder import build_knowledge_key_blocks
 from app.schemas.natal import InterpretRequest
-from app.schemas.place import PlaceResolved
 from app.schemas.place_out import PlaceResolvedOut
 from app.services.geocode import resolve_place
 from app.services.knowledge_repo import KnowledgeHit, KnowledgeRepo
@@ -40,7 +36,7 @@ class ChartService:
         self.k = KerykeionAdapter(ephemeris_path=ephe)
         self.repo = KnowledgeRepo()
 
-    async def build_natal(self, *, user_name: str, birth: BirthData, place: PlaceResolved) -> dict:
+    async def build_natal(self, *, user_name: str, birth: BirthData, place) -> dict:
         place.require_ready()
 
         houses_id = "A" if birth.time_unknown else "P"
@@ -50,7 +46,7 @@ class ChartService:
                 name=user_name,
                 year=birth.year,
                 month=birth.month,
-               day=birth.day,
+                day=birth.day,
                 place=place,
             )
             birth = BirthData(
@@ -68,12 +64,17 @@ class ChartService:
             place=place,
             houses_system_identifier=houses_id,
         )
-
         natal_data_raw = self.k.natal_chart_data(subject)
         return to_plain_natal_data(natal_data_raw)
 
     def build_knowledge_blocks(self, *, natal_data: dict, tone_namespace: str = "natal") -> list[Any]:
-        return list(build_knowledge_key_blocks(natal_data, tone_namespace=tone_namespace))
+        return list(
+            build_knowledge_key_blocks(
+                natal_data,
+                tone_namespace=tone_namespace,
+                include_all_planets=True,
+            )
+        )
 
     def _build_selection_trace(self, knowledge_blocks: Sequence[Any]) -> list[dict]:
         return [
@@ -91,13 +92,7 @@ class ChartService:
         max_blocks: int = 50,
         max_chars: int = 30_000,
     ) -> dict[str, Dict[str, Any]]:
-        """
-        1 SQL for ALL topics in this request.
-
-        Returns mapping: topic_category -> core dict like interpret_topic_with_blocks().
-        """
         selection_trace = self._build_selection_trace(knowledge_blocks)
-
         block_specs: list[tuple[str, Sequence[str]]] = [
             (kb.id, list(kb.candidate_keys)) for kb in knowledge_blocks
         ]
@@ -180,14 +175,17 @@ class ChartService:
             ]
 
             out[topic] = {
-                "knowledge_blocks": knowledge_blocks_dump,
+                "topic_category": topic,
                 "final_text": final_text,
                 "raw_blocks": raw_blocks_dicts,
-                "final_meta": final_meta,
+                "knowledge_blocks": knowledge_blocks_dump,
                 "trace": {"selection": selection_trace, "hits": hits_trace},
+                "final_meta": final_meta,
             }
 
         return out
+
+    # --------- Backward-compatible wrappers (tests + /v1) ---------
 
     async def interpret_topic_with_blocks(
         self,
@@ -199,9 +197,6 @@ class ChartService:
         max_blocks: int = 50,
         max_chars: int = 30_000,
     ) -> Dict[str, Any]:
-        """
-        Compatibility wrapper for single topic.
-        """
         result = await self.interpret_topics_with_blocks_batch(
             session=session,
             knowledge_blocks=knowledge_blocks,
@@ -211,6 +206,27 @@ class ChartService:
             max_chars=max_chars,
         )
         return result.get(str(topic_category), {"final_text": "", "raw_blocks": [], "trace": {"selection": [], "hits": []}})
+
+    async def interpret_topic_with_natal_data(
+        self,
+        *,
+        session: AsyncSession,
+        natal_data: dict,
+        topic_category: str,
+        locale: str,
+        tone_namespace: str = "natal",
+        max_blocks: int = 50,
+        max_chars: int = 30_000,
+    ) -> Dict[str, Any]:
+        blocks = self.build_knowledge_blocks(natal_data=natal_data, tone_namespace=tone_namespace)
+        return await self.interpret_topic_with_blocks(
+            session=session,
+            knowledge_blocks=blocks,
+            topic_category=topic_category,
+            locale=locale,
+            max_blocks=max_blocks,
+            max_chars=max_chars,
+        )
 
     async def interpret_natal_api(
         self,
@@ -224,7 +240,7 @@ class ChartService:
         place = await resolve_place(req.birth.place_query, locale, session)
         place_payload = PlaceResolvedOut.dump_from_domain(place=place, query=req.birth.place_query)
 
-        if not place.ok or not place.tz_str:
+        if not getattr(place, "ok", False) or not getattr(place, "tz_str", None):
             return {
                 "request_id": request_id,
                 "ok": False,
@@ -236,7 +252,7 @@ class ChartService:
                 "place": place_payload,
                 "raw_blocks": [],
                 "meta": {"reason": "place_not_resolved"},
-                "error": place.error or "place_not_resolved",
+                "error": getattr(place, "error", None) or "place_not_resolved",
             }
 
         birth: BirthData = req.birth.to_birth_input().to_domain()

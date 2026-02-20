@@ -2379,14 +2379,16 @@ def _sanitation_reason_v1(
     source_title: str | None = None,
     *,
     min_sent_letters: int = 40,
+    min_len: int = 120,
+    max_len: int = 2600,
 ) -> str | None:
     s = (text or "").strip()
     if not s:
         return "empty"
 
-    if len(s) < 120:
+    if len(s) < int(min_len):
         return "too_short"
-    if len(s) > 2600:
+    if len(s) > int(max_len):
         return "too_long"
 
     if "```" in s:
@@ -4613,7 +4615,9 @@ def cmd_atomize(args: argparse.Namespace) -> int:
     skip_garbled = bool(getattr(args, "skip_garbled", False))
     garble_threshold = float(getattr(args, "garble_threshold", 0.20) or 0.20)
 
-    topic_gate_name = (getattr(args, "topic_gate", "ru_natal_v1") or "ru_natal_v1").strip().lower()
+    topic_gate_name = (getattr(args, "topic_gate", "off") or "off").strip().lower()
+    if topic_gate_name in {"off", "none", "0", ""}:
+        topic_gate_name = "off"
     topic_threshold = int(getattr(args, "topic_threshold", 3) or 3)
     include_topics_raw = (getattr(args, "include_topics", "") or "").strip()
     include_topics = [t.strip() for t in include_topics_raw.split(",") if t.strip()] if include_topics_raw else []
@@ -4695,6 +4699,8 @@ def cmd_atomize(args: argparse.Namespace) -> int:
                     source_author=src.get("author") or None,
                     source_title=src.get("title") or None,
                     min_sent_letters=min_sent_letters,
+                    min_len=min_len,
+                    max_len=max_len,
                 )
 
                 if reason is not None:
