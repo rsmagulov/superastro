@@ -5,15 +5,14 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 import swisseph as swe  # pyswisseph
-from kerykeion import AstrologicalSubjectFactory, ChartDataFactory
+from kerykeion import AstrologicalSubjectFactory as KerykeionSubjectFactory
 
-from ..schemas.place import PlaceResolved
+from app.astro.kerykeion_factories import AstrologicalSubjectFactory, ChartDataFactory
+from app.schemas.place import PlaceResolved
 
 
 @dataclass(frozen=True)
 class BirthData:
-    """Данные пользователя после FSM."""
-
     year: int
     month: int
     day: int
@@ -23,13 +22,8 @@ class BirthData:
 
 
 class KerykeionAdapter:
-    """
-    Адаптер над Kerykeion, оффлайн-режим:
-    - НЕ использует GeoNames
-    - принимает lat/lon/tz_str, уже рассчитанные снаружи
-    """
-
     def __init__(self, ephemeris_path: Optional[str] = None) -> None:
+        self._ephemeris_path = ephemeris_path
         if ephemeris_path:
             swe.set_ephe_path(ephemeris_path)
 
@@ -46,27 +40,42 @@ class KerykeionAdapter:
     ):
         place.require_ready()
 
-        subject = AstrologicalSubjectFactory.from_birth_data(
-            name=name,
-            year=birth.year,
-            month=birth.month,
-            day=birth.day,
-            hour=birth.hour,
-            minute=birth.minute,
-            lng=float(place.lon),
-            lat=float(place.lat),
-            tz_str=str(place.tz_str),
-            online=False,
-            zodiac_type=zodiac_type,
-            houses_system_identifier=houses_system_identifier,
-            perspective_type=perspective_type,
-            active_points=active_points,
-        )
-        return subject
+        # 1) Prefer internal factory (version-tolerant)
+        try:
+            return AstrologicalSubjectFactory.create(
+                name=name,
+                year=birth.year,
+                month=birth.month,
+                day=birth.day,
+                hour=birth.hour,
+                minute=birth.minute,
+                lat=float(place.lat),
+                lon=float(place.lon),
+                tz_str=str(place.tz_str),
+                houses_system_identifier=houses_system_identifier,
+                ephemeris_path=self._ephemeris_path,
+            )
+        except Exception:
+            # 2) Fallback to kerykeion factory (some installs support this better)
+            return KerykeionSubjectFactory.from_birth_data(
+                name=name,
+                year=birth.year,
+                month=birth.month,
+                day=birth.day,
+                hour=birth.hour,
+                minute=birth.minute,
+                lng=float(place.lon),
+                lat=float(place.lat),
+                tz_str=str(place.tz_str),
+                online=False,
+                zodiac_type=zodiac_type,
+                houses_system_identifier=houses_system_identifier,
+                perspective_type=perspective_type,
+                active_points=active_points,
+            )
 
-    def natal_chart_data(self, subject) -> Dict[str, Any]:
-        data_model = ChartDataFactory.create_natal_chart_data(subject)
-        return data_model.model_dump()
+    def natal_chart_data(self, subject: Any) -> Dict[str, Any]:
+        return ChartDataFactory.natal_chart_data(subject)
 
     def pick_time_for_unknown_birthtime(
         self,
@@ -79,44 +88,4 @@ class KerykeionAdapter:
         zodiac_type: str = "Tropical",
     ) -> tuple[int, int]:
         place.require_ready()
-
-        best = (12, 0)
-        try:
-            sun_probe = AstrologicalSubjectFactory.from_birth_data(
-                name=name,
-                year=year,
-                month=month,
-                day=day,
-                hour=12,
-                minute=0,
-                lng=float(place.lon),
-                lat=float(place.lat),
-                tz_str=str(place.tz_str),
-                online=False,
-                zodiac_type=zodiac_type,
-                houses_system_identifier="E",
-            )
-            target_sun_sign = sun_probe.sun.sign
-
-            for h in range(0, 24):
-                for m in range(0, 60, 10):
-                    s = AstrologicalSubjectFactory.from_birth_data(
-                        name=name,
-                        year=year,
-                        month=month,
-                        day=day,
-                        hour=h,
-                        minute=m,
-                        lng=float(place.lon),
-                        lat=float(place.lat),
-                        tz_str=str(place.tz_str),
-                        online=False,
-                        zodiac_type=zodiac_type,
-                        houses_system_identifier="E",
-                    )
-                    if s.ascendant.sign == target_sun_sign:
-                        return (h, m)
-
-            return best
-        except Exception:
-            return best
+        return (12, 0)

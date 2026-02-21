@@ -157,7 +157,10 @@ def _build_debug_payload(
 ) -> dict[str, Any]:
     """
     debug=1 -> counts only
-    debug=2 -> include small samples (candidate keys, hits)
+    debug=2 -> include samples:
+      - global knowledge_blocks_sample (one topic)
+      - per-topic knowledge_blocks_sample (each topic)
+      - per-topic hits_sample / used_blocks_sample
     """
     out: dict[str, Any] = {"debug": int(debug), "topics": {}}
 
@@ -166,7 +169,7 @@ def _build_debug_payload(
     kb_dump = any_core.get("knowledge_blocks") or []
     out["blocks_total"] = len(kb_dump)
 
-    if int(debug) >= 2 and kb_dump:
+    if int(debug) >= 2 and isinstance(kb_dump, list) and kb_dump:
         sampled = kb_dump[: max(1, int(max_blocks))]
         out["knowledge_blocks_sample"] = [
             {
@@ -182,7 +185,7 @@ def _build_debug_payload(
         trace = core.get("trace") or {}
         hits = trace.get("hits") or []
         raw_blocks_used = core.get("raw_blocks") or []
-        kb = core.get("knowledge_blocks") or kb_dump
+        kb = core.get("knowledge_blocks") or []
 
         found = len(hits)
         used = len(raw_blocks_used)
@@ -196,22 +199,18 @@ def _build_debug_payload(
             "misses_no_hit": max(0, blocks_total - found),
         }
 
-        if int(debug) >= 2:
-            topic_dbg["hits_sample"] = hits[: max(1, int(max_hits))]
-            topic_dbg["used_blocks_sample"] = [
+        if int(debug) >= 2 and isinstance(kb, list) and kb:
+            sampled = kb[: max(1, int(max_blocks))]
+            topic_dbg["knowledge_blocks_sample"] = [
                 {
-                    "block_id": b.get("block_id"),
-                    "knowledge_item_id": b.get("knowledge_item_id"),
-                    "key": b.get("key"),
-                    "priority": b.get("priority"),
-                    "created_at": b.get("created_at"),
+                    "id": b.get("id"),
+                    "candidate_keys": list(b.get("candidate_keys") or [])[: max(1, int(max_keys_per_block))],
+                    "meta": b.get("meta"),
                 }
-                for b in raw_blocks_used[: max(1, int(max_hits))]
+                for b in sampled
             ]
-
-            fm = core.get("final_meta") or {}
-            if fm:
-                topic_dbg["final_meta"] = fm
+            topic_dbg["hits_sample"] = hits[: max(1, int(max_hits))]
+            topic_dbg["used_blocks_sample"] = raw_blocks_used[: max(1, int(max_hits))]
 
         out["topics"][str(t)] = topic_dbg
 

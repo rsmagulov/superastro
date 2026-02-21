@@ -1,0 +1,49 @@
+﻿{
+    "fallback_ids_total":  0,
+    "fallback_ids_unique":  0,
+    "fallback_rows_returned":  0,
+    "knowledge_db_path":  "C:\\Projects\\superastro\\astroprocessor\\data\\knowledge.db",
+    "id61_text_len":  null,
+    "topics":  {
+                   "personality_core":  {
+                                            "final_text_len":  369,
+                                            "raw_blocks_count":  4,
+                                            "knowledge_blocks_count":  4,
+                                            "candidate_keys_total_unique":  17,
+                                            "after_fallback_text_len":  369,
+                                            "messages_count":  1
+                                        },
+                   "career":  {
+                                  "final_text_len":  716,
+                                  "raw_blocks_count":  8,
+                                  "knowledge_blocks_count":  8,
+                                  "candidate_keys_total_unique":  28,
+                                  "after_fallback_text_len":  716,
+                                  "messages_count":  1
+                              },
+                   "money":  {
+                                 "final_text_len":  398,
+                                 "raw_blocks_count":  5,
+                                 "knowledge_blocks_count":  5,
+                                 "candidate_keys_total_unique":  20,
+                                 "after_fallback_text_len":  398,
+                                 "messages_count":  1
+                             },
+                   "love_intimacy":  {
+                                         "final_text_len":  718,
+                                         "raw_blocks_count":  8,
+                                         "knowledge_blocks_count":  8,
+                                         "candidate_keys_total_unique":  28,
+                                         "after_fallback_text_len":  718,
+                                         "messages_count":  1
+                                     },
+                   "talents":  {
+                                   "final_text_len":  767,
+                                   "raw_blocks_count":  9,
+                                   "knowledge_blocks_count":  9,
+                                   "candidate_keys_total_unique":  30,
+                                   "after_fallback_text_len":  767,
+                                   "messages_count":  1
+                               }
+               }
+}

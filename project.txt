@@ -1,3 +1,5 @@
+Структура папок
+Серийный номер тома: 4030-B7C4
 C:\Projects\superastro
 |   .gitattributes
 |   .gitignore
@@ -43,6 +45,9 @@ C:\Projects\superastro
 |   |   rr.json
 |   |   rr2.json
 |   |   rr3.json
+|   |   seed_house_rulers.sql
+|   |   seed_min.sql
+|   |   seed_ruler_aspects.sql
 |   |   smart1.json
 |   |   smart2.json
 |   |   smart_change.json
@@ -514,7 +519,9 @@ C:\Projects\superastro
 |       |       ev1_seed_any_ru.jsonl
 |       |       load_seed_jsonl.py
 |       |       load_seed_jsonl_upsert.py
+|       |       seed_angles_upsert.sql
 |       |       seed_generic_all_topics.sql
+|       |       seed_house_rulers.py
 |       |       seed_knowledge_84.jsonl
 |       |       seed_personality_core_generic.sql
 |       |       seed_topic_generic_all_topics.sql

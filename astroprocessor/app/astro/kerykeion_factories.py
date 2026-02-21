@@ -7,42 +7,22 @@ from typing import Any, Optional
 
 
 def _try_set_swisseph_path(ephemeris_path: str | None) -> None:
-    """
-    Best-effort Swiss Ephemeris path setup.
-
-    Kerykeion uses Swiss Ephemeris (pyswisseph) under the hood.
-    If ephemeris files are not present, Kerykeion may still work in some setups,
-    but for reproducibility we set ephe path when provided.
-    """
     if not ephemeris_path:
         return
-
     p = Path(str(ephemeris_path))
     if not p.is_absolute():
-        # allow relative path from current working dir; do not resolve against project root here
         p = p.resolve()
-
     if not p.exists():
-        # Don't crash hard: tests/dev setups may not ship se files
         return
-
     try:
         import swisseph as swe  # type: ignore
 
         swe.set_ephe_path(str(p))
     except Exception:
-        # Optional dependency / environment differences
         return
 
 
 def _import_kerykeion_subject_class():
-    """
-    Supports multiple Kerykeion versions.
-
-    Common import paths:
-    - from kerykeion import AstrologicalSubject
-    - from kerykeion.AstrologicalSubject import AstrologicalSubject
-    """
     try:
         from kerykeion import AstrologicalSubject  # type: ignore
 
@@ -62,12 +42,6 @@ def _import_kerykeion_subject_class():
 
 
 def _safe_obj_to_dict(obj: Any) -> Any:
-    """
-    Convert Kerykeion objects to JSON-like structures.
-
-    Goal: produce a stable, serialization-friendly dict without depending
-    on a specific Kerykeion internal schema.
-    """
     if obj is None:
         return None
     if isinstance(obj, (str, int, float, bool)):
@@ -79,7 +53,6 @@ def _safe_obj_to_dict(obj: Any) -> Any:
     if is_dataclass(obj):
         return {k: _safe_obj_to_dict(v) for k, v in asdict(obj).items()}
 
-    # Some Kerykeion objects may expose .dict()/.model_dump()
     for meth in ("model_dump", "dict"):
         m = getattr(obj, meth, None)
         if callable(m):
@@ -88,27 +61,26 @@ def _safe_obj_to_dict(obj: Any) -> Any:
             except Exception:
                 pass
 
-    # Fallback: public attrs
-    if hasattr(obj, "__dict__"):
+    d = getattr(obj, "__dict__", None)
+    if isinstance(d, dict) and d:
         out: dict[str, Any] = {}
-        for k, v in obj.__dict__.items():
-            if k.startswith("_"):
+        for k, v in d.items():
+            if str(k).startswith("_"):
                 continue
             try:
                 out[str(k)] = _safe_obj_to_dict(v)
             except Exception:
-                # best-effort only
                 continue
         if out:
             return out
 
-    # last resort: string representation
     return str(obj)
 
 
 class AstrologicalSubjectFactory:
     """
-    One place to build Kerykeion AstrologicalSubject with deterministic config.
+    Internal subject factory that tolerates multiple kerykeion versions
+    by trying different ctor kwargs (lng/lon/timezone).
     """
 
     @staticmethod
@@ -126,20 +98,10 @@ class AstrologicalSubjectFactory:
         houses_system_identifier: str = "P",
         ephemeris_path: str | None = None,
     ) -> Any:
-        """
-        Build a Kerykeion AstrologicalSubject.
-
-        Parameters are kept simple/primitives so the rest of the project
-        doesn't depend on Kerykeion-specific types.
-        """
         _try_set_swisseph_path(ephemeris_path)
-
         Subject = _import_kerykeion_subject_class()
 
-        # Kerykeion versions differ slightly by argument names.
-        # We try the most common constructor signatures.
         kwargs_variants: list[dict[str, Any]] = [
-            # Variant A (most common in recent versions)
             {
                 "name": name,
                 "year": year,
@@ -152,7 +114,6 @@ class AstrologicalSubjectFactory:
                 "tz_str": tz_str,
                 "houses_system_identifier": houses_system_identifier,
             },
-            # Variant B (some versions use "lon" not "lng")
             {
                 "name": name,
                 "year": year,
@@ -165,7 +126,6 @@ class AstrologicalSubjectFactory:
                 "tz_str": tz_str,
                 "houses_system_identifier": houses_system_identifier,
             },
-            # Variant C (older style: "timezone" key)
             {
                 "name": name,
                 "year": year,
@@ -193,65 +153,209 @@ class AstrologicalSubjectFactory:
 
 class ChartDataFactory:
     """
-    Produces a stable natals dict used downstream by key-builder and API.
-
-    Contract: returned dict MUST contain:
+    Key-builder contract (MUST be present):
       - chart_type: "Natal"
-
-    Everything else is best-effort enrichment.
+      - planets: dict
+      - angles: dict
+      - houses: dict
+      - aspects: list
+      - subject: dict
+      - __probe: debug info to see what kerykeion реально отдаёт
     """
+
+    PLANETS = (
+        "sun",
+        "moon",
+        "mercury",
+        "venus",
+        "mars",
+        "jupiter",
+        "saturn",
+        "uranus",
+        "neptune",
+        "pluto",
+        "chiron",
+        "north_node",
+        "south_node",
+        "lilith",
+    )
+
+    ANGLE_ATTRS = {
+        "asc": ("ascendant", "asc", "ascendant_point"),
+        "mc": ("medium_coeli", "mc", "midheaven"),
+        "dsc": ("descendant", "dsc", "dc"),
+        "ic": ("imum_coeli", "ic"),
+    }
+
+    @staticmethod
+    def _get_attr(subject: Any, *names: str) -> Any:
+        for n in names:
+            if hasattr(subject, n):
+                try:
+                    return getattr(subject, n)
+                except Exception:
+                    continue
+        return None
+
+    @staticmethod
+    def _pick_sign(node: Any) -> str | None:
+        d = node if isinstance(node, dict) else _safe_obj_to_dict(node)
+        if not isinstance(d, dict):
+            return None
+        s = d.get("sign") or d.get("sign_key") or d.get("zodiac_sign") or d.get("zodiac")
+        if isinstance(s, dict):
+            s = s.get("key") or s.get("name") or s.get("sign")
+        return str(s).lower() if s else None
+
+    @staticmethod
+    def _pick_house(node: Any) -> int | None:
+        d = node if isinstance(node, dict) else _safe_obj_to_dict(node)
+        if not isinstance(d, dict):
+            return None
+        h = d.get("house") or d.get("house_number") or d.get("house_num")
+        try:
+            return int(h)
+        except Exception:
+            return None
 
     @staticmethod
     def natal_chart_data(subject: Any) -> dict[str, Any]:
-        """
-        Compute natal chart data from subject.
-
-        Kerykeion may precompute data lazily. We try to trigger calculations
-        by accessing common attributes if they exist.
-        """
-        # Try to trigger internal computations (different versions)
-        for attr in (
-            "planets",
-            "houses",
-            "aspects",
-            "json",
-            "to_json",
-            "get_chart",
+        # 0) Force lazy computations (differs by kerykeion version)
+        for meth in (
+            "get_planets",
+            "get_houses",
+            "get_aspects",
+            "get_all_aspects",
             "make_chart",
+            "calculate_chart",
+            "calc_chart",
+            "build_chart",
         ):
-            v = getattr(subject, attr, None)
-            try:
-                if callable(v):
-                    _ = v()
-                else:
-                    _ = v
-            except Exception:
-                # ignore; we still can serialize subject state
-                pass
+            fn = getattr(subject, meth, None)
+            if callable(fn):
+                try:
+                    fn()
+                except Exception:
+                    pass
 
-        out: dict[str, Any] = {
-            "chart_type": "Natal",
-            "subject": _safe_obj_to_dict(subject),
+        # 1) Prefer JSON dumps if present (often contains planets/houses)
+        def _try_json_dump() -> dict[str, Any] | None:
+            import json as _json
+
+            for meth in ("to_json", "json"):
+                fn = getattr(subject, meth, None)
+                if callable(fn):
+                    try:
+                        raw = fn()
+                        if isinstance(raw, str):
+                            parsed = _json.loads(raw)
+                            return parsed if isinstance(parsed, dict) else None
+                        if isinstance(raw, dict):
+                            return raw
+                    except Exception:
+                        pass
+            return None
+
+        subject_dump = _safe_obj_to_dict(subject)
+        json_dump = _try_json_dump()
+        if isinstance(json_dump, dict) and json_dump:
+            if isinstance(subject_dump, dict):
+                merged = dict(subject_dump)
+                merged.update(json_dump)
+                subject_dump = merged
+            else:
+                subject_dump = json_dump
+
+        dump_planets = dump_houses = dump_aspects = dump_angles = None
+        if isinstance(subject_dump, dict):
+            dump_planets = subject_dump.get("planets") or subject_dump.get("planets_dict")
+            dump_houses = subject_dump.get("houses") or subject_dump.get("houses_dict") or subject_dump.get("houses_cusps")
+            dump_aspects = subject_dump.get("aspects") or subject_dump.get("aspects_list")
+            dump_angles = subject_dump.get("angles")
+
+        # 2) Normalize planets (ALWAYS include key in return, even if empty)
+        planets_out: dict[str, dict[str, Any]] = {}
+        for p in ChartDataFactory.PLANETS:
+            node = ChartDataFactory._get_attr(subject, p)
+            if node is None and isinstance(subject_dump, dict):
+                node = subject_dump.get(p)
+            if node is None and isinstance(dump_planets, dict):
+                node = dump_planets.get(p)
+            if node is None:
+                continue
+            planets_out[p] = {"sign": ChartDataFactory._pick_sign(node), "house": ChartDataFactory._pick_house(node)}
+
+        planets_container = ChartDataFactory._get_attr(subject, "planets", "planets_list") or dump_planets
+        pc = _safe_obj_to_dict(planets_container)
+        if isinstance(pc, dict):
+            for k, v in pc.items():
+                pk = str(k).lower()
+                if pk and pk not in planets_out:
+                    planets_out[pk] = {"sign": ChartDataFactory._pick_sign(v), "house": ChartDataFactory._pick_house(v)}
+
+        # 3) angles
+        angles_out: dict[str, dict[str, Any]] = {}
+        for a, attrs in ChartDataFactory.ANGLE_ATTRS.items():
+            node = ChartDataFactory._get_attr(subject, *attrs)
+            if node is None and isinstance(subject_dump, dict):
+                for cand in attrs:
+                    if cand in subject_dump:
+                        node = subject_dump.get(cand)
+                        break
+            if node is None and isinstance(dump_angles, dict):
+                node = dump_angles.get(a)
+            if node is None:
+                continue
+            angles_out[a] = {"sign": ChartDataFactory._pick_sign(node)}
+
+        # 4) houses (cusps)
+        houses_out: dict[str, dict[str, Any]] = {}
+        houses_container = ChartDataFactory._get_attr(subject, "houses", "houses_list", "house") or dump_houses
+        hc = _safe_obj_to_dict(houses_container)
+        if isinstance(hc, dict):
+            for k, v in hc.items():
+                try:
+                    hk = str(int(k))
+                except Exception:
+                    continue
+                houses_out[hk] = {"sign": ChartDataFactory._pick_sign(v)}
+
+        # 5) aspects
+        aspects_out: list[dict[str, Any]] = []
+        aspects_container = ChartDataFactory._get_attr(subject, "aspects", "aspects_list") or dump_aspects
+        ac = _safe_obj_to_dict(aspects_container)
+        if isinstance(ac, list):
+            for it in ac:
+                d = it if isinstance(it, dict) else _safe_obj_to_dict(it)
+                if not isinstance(d, dict):
+                    continue
+                p1 = d.get("p1") or d.get("planet1") or d.get("first") or d.get("from")
+                p2 = d.get("p2") or d.get("planet2") or d.get("second") or d.get("to")
+                asp = d.get("aspect") or d.get("type") or d.get("name")
+                if not (p1 and p2 and asp):
+                    continue
+                aspects_out.append(
+                    {"p1": str(p1).lower(), "p2": str(p2).lower(), "aspect": str(asp).lower(), "orb": d.get("orb")}
+                )
+
+        # Probe: покажет, что реально есть у subject и subject_dump
+        probe = {
+            "subject_type": str(type(subject)),
+            "has_attr_planets": hasattr(subject, "planets"),
+            "has_attr_sun": hasattr(subject, "sun"),
+            "subject_dump_is_dict": isinstance(subject_dump, dict),
+            "subject_dump_keys_sample": list(subject_dump.keys())[:40] if isinstance(subject_dump, dict) else [],
+            "dump_planets_type": str(type(dump_planets)),
+            "dump_houses_type": str(type(dump_houses)),
+            "dump_aspects_type": str(type(dump_aspects)),
         }
 
-        # Add common “nice-to-have” fields if present
-        for key, candidate_attrs in {
-            "name": ("name",),
-            "datetime": ("utc_datetime", "local_datetime", "datetime", "date_time"),
-            "tz_str": ("tz_str", "timezone"),
-            "lat": ("lat",),
-            "lon": ("lng", "lon"),
-            "houses_system_identifier": ("houses_system_identifier", "houses_system", "hsys"),
-            "planets": ("planets", "planets_list"),
-            "houses": ("houses", "houses_list", "house"),
-            "aspects": ("aspects", "aspects_list"),
-        }.items():
-            for attr in candidate_attrs:
-                if hasattr(subject, attr):
-                    try:
-                        out[key] = _safe_obj_to_dict(getattr(subject, attr))
-                        break
-                    except Exception:
-                        continue
-
-        return out
+        return {
+            "chart_type": "Natal",
+            "planets": planets_out,
+            "angles": angles_out,
+            "houses": houses_out,
+            "aspects": aspects_out,
+            "subject": subject_dump if isinstance(subject_dump, dict) else {"value": subject_dump},
+            "__probe": probe,
+        }
