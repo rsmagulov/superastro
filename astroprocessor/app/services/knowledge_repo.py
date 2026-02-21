@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,11 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 class KnowledgeHit:
     id: int
     key: str
+    topic_category: str
     priority: int
     created_at: str | None
     is_active: bool
     text: str
-    topic_category: str
 
 
 class KnowledgeRepo:
@@ -75,34 +75,33 @@ class KnowledgeRepo:
         locale: str,
     ) -> dict[str, dict[str, KnowledgeHit | None]]:
         """
-        1 query for all topics + all keys.
+        One query for all topics + all keys.
 
-        Returns:
-            {
-              "<topic_category>": {"<block_id>": KnowledgeHit|None, ...},
-              ...
-            }
+        Resolution order per candidate key:
+        1) topic-specific (topic_category == requested topic)
+        2) global (topic_category == '' or NULL)
         """
-        # Normalize topics
+        # normalize topics
         topics: list[str] = []
         seen_topics: set[str] = set()
         for t in topic_categories:
+            t = str(t or "").strip()
             if not t or t in seen_topics:
                 continue
             seen_topics.add(t)
-            topics.append(str(t))
+            topics.append(t)
 
-        # Normalize keys
+        # normalize keys
         all_keys: list[str] = []
         seen_keys: set[str] = set()
         for _, keys in blocks:
             for k in keys:
+                k = str(k or "").strip()
                 if not k or k in seen_keys:
                     continue
                 seen_keys.add(k)
-                all_keys.append(str(k))
+                all_keys.append(k)
 
-        # Fast paths
         if not topics:
             return {}
         if not all_keys:
@@ -122,10 +121,9 @@ class KnowledgeRepo:
             WHERE
                 (locale = :locale OR locale LIKE :locale || '-%')
                 AND is_active = 1
-                AND topic_category IN :topics
                 AND key IN :keys
+                AND (topic_category IN :topics OR topic_category = '' OR topic_category IS NULL)
                 AND text IS NOT NULL AND length(trim(text)) > 0
-
             ORDER BY topic_category ASC, key ASC, priority DESC, id DESC
             """
         ).bindparams(
@@ -133,22 +131,23 @@ class KnowledgeRepo:
             bindparam("keys", expanding=True),
         )
 
-        res = await session.execute(
-            stmt,
-            {"locale": locale, "topics": topics, "keys": all_keys},
-        )
+        res = await session.execute(stmt, {"locale": locale, "topics": topics, "keys": all_keys})
         rows = res.fetchall()
 
-        # Best hit per (topic, key). Because ORDER BY has priority/id desc,
-        # the first encountered per pair is the best.
+        def norm_topic(x: Any) -> str:
+            return str(x or "").strip()
+
+        # best per topic/key
         best_by_topic_key: dict[tuple[str, str], KnowledgeHit] = {}
+        # best global per key
+        best_by_global_key: dict[str, KnowledgeHit] = {}
+
+        # due to ORDER BY (priority desc, id desc), first seen is best per bucket
         for r in rows:
-            t = str(r.topic_category)
+            t = norm_topic(r.topic_category)
             k = str(r.key)
-            pair = (t, k)
-            if pair in best_by_topic_key:
-                continue
-            best_by_topic_key[pair] = KnowledgeHit(
+
+            hit = KnowledgeHit(
                 id=int(r.id),
                 key=k,
                 topic_category=t,
@@ -158,7 +157,15 @@ class KnowledgeRepo:
                 text=str(r.text or ""),
             )
 
-        # Resolve per topic + block by candidate_keys order
+            if t == "":
+                if k not in best_by_global_key:
+                    best_by_global_key[k] = hit
+                continue
+
+            pair = (t, k)
+            if pair not in best_by_topic_key:
+                best_by_topic_key[pair] = hit
+
         out: dict[str, dict[str, KnowledgeHit | None]] = {
             t: {block_id: None for block_id, _ in blocks} for t in topics
         }
@@ -166,11 +173,14 @@ class KnowledgeRepo:
         for t in topics:
             per_block = out[t]
             for block_id, candidate_keys in blocks:
-                hit = None
+                chosen: KnowledgeHit | None = None
                 for k in candidate_keys:
-                    hit = best_by_topic_key.get((t, str(k)))
-                    if hit is not None:
+                    ks = str(k)
+                    chosen = best_by_topic_key.get((t, ks))
+                    if chosen is None:
+                        chosen = best_by_global_key.get(ks)
+                    if chosen is not None:
                         break
-                per_block[block_id] = hit
+                per_block[block_id] = chosen
 
         return out

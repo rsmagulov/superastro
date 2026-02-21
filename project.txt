@@ -330,6 +330,9 @@ C:\Projects\superastro
 |   |   |   test_admin_ui.py
 |   |   |   test_api_smoke.py
 |   |   |   test_contract_natal_data.py
+|   |   |   test_e2e_v2_debug_runtime_candidate_keys_growth.py
+|   |   |   test_e2e_v2_interpret_prefers_topic_generic_over_global_generic.py
+|   |   |   test_e2e_v2_interpret_topic_generic_fallbacks.py
 |   |   |   test_error_contract_404.py
 |   |   |   test_error_contract_500.py
 |   |   |   test_kb_build_managed_only.py
@@ -364,6 +367,7 @@ C:\Projects\superastro
 |   |   |   test_public_v2_debug_runtime_db_path.py
 |   |   |   test_public_v2_locale.py
 |   |   |   test_public_v2_perf.py
+|   |   |   test_seed_topic_generic_all_topics.py
 |   |   |   test_structured_errors_flag.py
 |   |   |   test_tools_post_json.py
 |   |   |   utils.py
@@ -374,6 +378,9 @@ C:\Projects\superastro
 |   |           test_admin_ui.cpython-312-pytest-9.0.2.pyc
 |   |           test_api_smoke.cpython-312-pytest-9.0.2.pyc
 |   |           test_contract_natal_data.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_debug_runtime_candidate_keys_growth.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_interpret_prefers_topic_generic_over_global_generic.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_interpret_topic_generic_fallbacks.cpython-312-pytest-9.0.2.pyc
 |   |           test_error_contract_404.cpython-312-pytest-9.0.2.pyc
 |   |           test_error_contract_500.cpython-312-pytest-9.0.2.pyc
 |   |           test_kb_build_managed_only.cpython-312-pytest-9.0.2.pyc
@@ -409,6 +416,7 @@ C:\Projects\superastro
 |   |           test_public_v2_debug_runtime_db_path.cpython-312-pytest-9.0.2.pyc
 |   |           test_public_v2_locale.cpython-312-pytest-9.0.2.pyc
 |   |           test_public_v2_perf.cpython-312-pytest-9.0.2.pyc
+|   |           test_seed_topic_generic_all_topics.cpython-312-pytest-9.0.2.pyc
 |   |           test_structured_errors_flag.cpython-312-pytest-9.0.2.pyc
 |   |           test_tools_post_json.cpython-312-pytest-9.0.2.pyc
 |   |           utils.cpython-312.pyc
@@ -509,6 +517,7 @@ C:\Projects\superastro
 |       |       seed_generic_all_topics.sql
 |       |       seed_knowledge_84.jsonl
 |       |       seed_personality_core_generic.sql
+|       |       seed_topic_generic_all_topics.sql
 |       |       
 |       +---tests
 |       |       conftest.py

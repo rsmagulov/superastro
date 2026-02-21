@@ -427,10 +427,21 @@ def _dedupe_keep_order(items: list[str]) -> list[str]:
 def _count_unique_candidate_keys_from_kb_dump(
     knowledge_blocks_dump: list[dict[str, Any]],
     *,
+    max_blocks: int = 200,
     max_keys_total: int = 2000,
 ) -> int:
+    """Count unique candidate_keys inside a knowledge_blocks dump.
+
+    SQL-free: считаем строго по dump’у knowledge_blocks этой темы.
+    """
     seen: set[str] = set()
-    for b in knowledge_blocks_dump or []:
+    blocks = knowledge_blocks_dump or []
+    if not isinstance(blocks, list):
+        return 0
+
+    for b in blocks[: max(0, int(max_blocks))]:
+        if not isinstance(b, dict):
+            continue
         for k in (b.get("candidate_keys") or []):
             ks = str(k).strip()
             if not ks:
@@ -438,6 +449,7 @@ def _count_unique_candidate_keys_from_kb_dump(
             seen.add(ks)
             if len(seen) >= int(max_keys_total):
                 return len(seen)
+
     return len(seen)
 
 

@@ -1,5 +1,4 @@
 from __future__ import annotations
-import profile
 import re
 """
 Topic-aware natal knowledge key generation.
@@ -282,25 +281,25 @@ def _aspect_class(aspect: str) -> str:
 TOPIC_PROFILES: dict[str, TopicProfile] = {
     "personality_core": TopicProfile(
         topic="personality_core",
-        focus_planets=("sun", "moon", "mercury", "venus", "mars"),
+        focus_planets=("sun", "moon"),
         focus_angles=("asc",),
         focus_houses=(1,),
         include_integrals=True,
         include_aspects=True,
-        include_aspect_configs=True,
+        include_aspect_configs=False,
     ),
     "psychology": TopicProfile(
         topic="psychology",
         focus_planets=("moon", "neptune", "pluto"),
         focus_angles=("ic",),
-        focus_houses=(4, 8, 12),
+        focus_houses=(12, 8, 4),
         include_integrals=True,
         include_aspects=True,
         include_aspect_configs=True,
     ),
     "talents": TopicProfile(
         topic="talents",
-        focus_planets=("mercury", "uranus", "jupiter", "venus"),
+        focus_planets=("mercury", "uranus", "jupiter"),
         focus_angles=(),
         focus_houses=(3, 5, 9, 11),
         include_integrals=True,
@@ -309,16 +308,16 @@ TOPIC_PROFILES: dict[str, TopicProfile] = {
     ),
     "strengths_weaknesses": TopicProfile(
         topic="strengths_weaknesses",
-        focus_planets=("sun", "moon", "mars", "saturn"),
-        focus_angles=("asc", "mc"),
-        focus_houses=(1, 6, 10, 12),
+        focus_planets=(),
+        focus_angles=(),
+        focus_houses=(),
         include_integrals=True,
         include_aspects=True,
-        include_aspect_configs=True,
+        include_aspect_configs=False,
     ),
     "purpose_path": TopicProfile(
         topic="purpose_path",
-        focus_planets=("north_node", "saturn", "jupiter"),
+        focus_planets=("north_node", "jupiter", "saturn"),
         focus_angles=("mc",),
         focus_houses=(9, 10, 12),
         include_integrals=True,
@@ -327,24 +326,22 @@ TOPIC_PROFILES: dict[str, TopicProfile] = {
     ),
     "career": TopicProfile(
         topic="career",
-        focus_planets=("saturn", "jupiter", "sun"),
+        focus_planets=("saturn", "jupiter"),
         focus_angles=("mc",),
-        focus_houses=(10, 6, 2, 11),
+        focus_houses=(10, 6, 2),
         include_integrals=True,
         include_aspects=True,
         include_aspect_configs=True,
     ),
-
     "money": TopicProfile(
         topic="money",
-        focus_planets=("venus", "jupiter", "saturn"),
+        focus_planets=("venus", "jupiter"),
         focus_angles=(),
-        focus_houses=(2, 8, 11),
+        focus_houses=(2, 8),
         include_integrals=True,
         include_aspects=True,
         include_aspect_configs=True,
     ),
-
     "love_intimacy": TopicProfile(
         topic="love_intimacy",
         focus_planets=("venus", "mars", "moon"),
@@ -354,10 +351,9 @@ TOPIC_PROFILES: dict[str, TopicProfile] = {
         include_aspects=True,
         include_aspect_configs=True,
     ),
-
     "partnership_marriage": TopicProfile(
         topic="partnership_marriage",
-        focus_planets=("venus", "saturn"),
+        focus_planets=("saturn",),
         focus_angles=("dsc",),
         focus_houses=(7,),
         include_integrals=False,
@@ -377,7 +373,7 @@ TOPIC_PROFILES: dict[str, TopicProfile] = {
         topic="past_lives_symbolic",
         focus_planets=("south_node", "saturn", "lilith"),
         focus_angles=(),
-        focus_houses=(12, 8),
+        focus_houses=(8, 12),
         include_integrals=False,
         include_aspects=True,
         include_aspect_configs=True,
@@ -393,7 +389,7 @@ TOPIC_PROFILES: dict[str, TopicProfile] = {
     ),
     "how_others_see_me": TopicProfile(
         topic="how_others_see_me",
-        focus_planets=("sun", "moon", "venus", "mars"),
+        focus_planets=(),
         focus_angles=("asc",),
         focus_houses=(1,),
         include_integrals=False,
@@ -402,7 +398,7 @@ TOPIC_PROFILES: dict[str, TopicProfile] = {
     ),
     "self_esteem": TopicProfile(
         topic="self_esteem",
-        focus_planets=("sun", "saturn"),
+        focus_planets=("sun",),
         focus_angles=("asc",),
         focus_houses=(2, 1),
         include_integrals=True,
@@ -411,7 +407,7 @@ TOPIC_PROFILES: dict[str, TopicProfile] = {
     ),
     "creativity": TopicProfile(
         topic="creativity",
-        focus_planets=("venus", "neptune", "sun"),
+        focus_planets=("venus", "neptune"),
         focus_angles=(),
         focus_houses=(5,),
         include_integrals=False,
@@ -420,7 +416,7 @@ TOPIC_PROFILES: dict[str, TopicProfile] = {
     ),
     "ancestral_topics": TopicProfile(
         topic="ancestral_topics",
-        focus_planets=("moon", "saturn"),
+        focus_planets=("moon",),
         focus_angles=("ic",),
         focus_houses=(4,),
         include_integrals=False,
@@ -517,9 +513,36 @@ def _norm_house_value(value: Any) -> Optional[int]:
 
 
 def _norm_token(x: Any) -> str:
+    """Normalize token-like values coming from nested dumps (kerykeion/pydantic).
+
+    Examples we must handle:
+      {"name": "Leo"} / {"key": "leo"} / {"sign": {"name": "Leo"}} / ["Leo", ...]
+    """
     if x is None:
         return ""
-    return str(x).strip().lower()
+
+    if isinstance(x, dict):
+        # common leaf keys
+        for k in ("key", "id", "name", "slug", "value", "sign", "planet", "point", "type"):
+            if k in x and x.get(k) is not None:
+                return _norm_token(x.get(k))
+        # fallback: first scalar value
+        for v in x.values():
+            if isinstance(v, (str, int, float, bool)):
+                return str(v).strip().lower()
+        return ""
+
+    if isinstance(x, (list, tuple)) and x:
+        for v in x:
+            s = _norm_token(v)
+            if s:
+                return s
+        return ""
+
+    try:
+        return str(x).strip().lower()
+    except Exception:
+        return ""
 
 
 def _require_in_set(name: str, value: str, allowed: set[str]) -> str:
@@ -648,10 +671,28 @@ def _aspect_block(*, a: str, aspect: str, b: str, tone_namespace: str) -> KeyBlo
         f"{tone_namespace}.aspect.any.{aspect}.any",
         f"{tone_namespace}.aspect",
     ]
+
+    angle_set = {"asc", "dsc", "mc", "ic"}
+    angle = None
+    if left in angle_set:
+        angle = left
+    elif right in angle_set:
+        angle = right
+
+    if angle:
+        keys.extend(
+            [
+                f"{tone_namespace}.aspect.{left}.{aspect}.with.angle.{angle}",
+                f"{tone_namespace}.aspect.any.{aspect}.with.angle.{angle}",
+                f"{tone_namespace}.aspect.with.angle.{angle}",
+                f"{tone_namespace}.aspect.with.angle.any",
+            ]
+        )
+
     return KeyBlock(
         id=f"aspect:{left}:{aspect}:{right}",
         candidate_keys=_dedup_keep_order(keys),
-        meta={"a": left, "aspect": aspect, "b": right, "class": cls},
+        meta={"a": left, "aspect": aspect, "b": right, "class": cls, "with_angle": angle},
     )
 
 
@@ -1163,7 +1204,126 @@ def _house_ruler_blocks(
 
     return out
 
+def _house_ruler_aspect_blocks(
+    *,
+    house: int,
+    cusp_sign: str,
+    planets: dict[str, dict[str, Any]],
+    aspects: list[dict[str, str]],
+    tone_namespace: str,
+    unknown_time: bool,
+    focus_set: set[str],
+    max_ruler_aspects: int = 8,
+) -> list[KeyBlock]:
+    """
+    House ruler aspects (ruler ↔ other planet/angle) as topic-aware high-signal keys.
 
+    Emits keys like:
+      natal.house.10.ruler.saturn.aspect.square.moon
+      natal.house.10.ruler.saturn.aspect.any.with.angle.mc
+      natal.house.10.ruler.aspect.class.tense
+    """
+    if unknown_time or not aspects:
+        return []
+
+    primary, alt = SIGN_RULERS.get(cusp_sign, (None, None))
+    rulers = [r for r in (primary, alt) if r and r in PLANETS]
+    if not rulers:
+        return []
+
+    angle_set = set(ANGLES)
+    hard = {"square", "opposition"}
+
+    def _score(it: dict[str, str], ruler: str) -> int:
+        other = it["b"] if it["a"] == ruler else it["a"]
+        sc = 0
+        sc += 3 if it["aspect"] in hard else 0
+        sc += 2 if other in focus_set else 0
+        sc += 2 if other in angle_set else 0
+        sc += 1 if other in PLANETS else 0
+        return sc
+
+    out: list[KeyBlock] = []
+
+    for r in rulers:
+        rel = [it for it in aspects if it.get("a") == r or it.get("b") == r]
+        if not rel:
+            continue
+
+        rel.sort(key=lambda it: _score(it, r), reverse=True)
+        rel = rel[: max(0, int(max_ruler_aspects))]
+
+        # marker: ruler has aspects (useful generic hook)
+        out.append(
+            KeyBlock(
+                id=f"house:{house}:ruler:{r}:aspects:present",
+                candidate_keys=_dedup_keep_order(
+                    [
+                        f"{tone_namespace}.house.{house}.ruler.{r}.aspects.present",
+                        f"{tone_namespace}.house.{house}.ruler.aspects.present",
+                        f"{tone_namespace}.house.ruler.{r}.aspects.present",
+                        f"{tone_namespace}.house.ruler.aspects.present",
+                    ]
+                ),
+                meta={"house": house, "ruler": r, "cusp_sign": cusp_sign},
+            )
+        )
+
+        for it in rel:
+            aspect = it["aspect"]
+            other = it["b"] if it["a"] == r else it["a"]
+            cls = _aspect_class(aspect)
+
+            keys: list[str] = [
+                f"{tone_namespace}.house.{house}.ruler.{r}.aspect.{aspect}.{other}",
+                f"{tone_namespace}.house.{house}.ruler.{r}.aspect.{aspect}.any",
+                f"{tone_namespace}.house.{house}.ruler.{r}.aspect.any.{other}",
+                f"{tone_namespace}.house.{house}.ruler.{r}.aspect.class.{cls}",
+                f"{tone_namespace}.house.{house}.ruler.{r}.aspect.any.any",
+                # ruler-any ladders (still house-scoped)
+                f"{tone_namespace}.house.{house}.ruler.aspect.{aspect}.{other}",
+                f"{tone_namespace}.house.{house}.ruler.aspect.{aspect}.any",
+                f"{tone_namespace}.house.{house}.ruler.aspect.class.{cls}",
+                f"{tone_namespace}.house.{house}.ruler.aspect.any.any",
+                # cross-topic planet hook (sometimes useful)
+                f"{tone_namespace}.planet.{r}.aspect.{aspect}.{other}",
+            ]
+
+            # with-angle ladders
+            if other in angle_set:
+                keys.extend(
+                    [
+                        f"{tone_namespace}.house.{house}.ruler.{r}.aspect.{aspect}.with.angle.{other}",
+                        f"{tone_namespace}.house.{house}.ruler.{r}.aspect.any.with.angle.{other}",
+                        f"{tone_namespace}.house.{house}.ruler.aspect.with.angle.{other}",
+                    ]
+                )
+
+            # hard-present ladders (house+ruler scoped)
+            if aspect in hard:
+                keys.extend(
+                    [
+                        f"{tone_namespace}.house.{house}.ruler.{r}.aspect.hard.present",
+                        f"{tone_namespace}.house.{house}.ruler.aspect.hard.present",
+                    ]
+                )
+
+            out.append(
+                KeyBlock(
+                    id=f"house:{house}:ruler:{r}:aspect:{aspect}:{other}",
+                    candidate_keys=_dedup_keep_order(keys),
+                    meta={
+                        "house": house,
+                        "ruler": r,
+                        "cusp_sign": cusp_sign,
+                        "aspect": aspect,
+                        "other": other,
+                        "class": cls,
+                    },
+                )
+            )
+
+    return out
 
 def _planets_in_house_blocks(
     *,
@@ -1309,24 +1469,48 @@ def build_knowledge_key_blocks(
     subject = natal_data.get("subject", {}) or {}
     unknown_time = bool(subject.get("unknown_time", False))
 
-    profile = TOPIC_PROFILES.get(tc) or TOPIC_PROFILES["personality_core"]
-
     planets = _extract_planets(natal_data)
     angles = _extract_angles(natal_data)
     houses_cusps = _extract_houses_cusps(natal_data)
 
     blocks: list[KeyBlock] = []
+    # aspects must exist before topic_generic meta.extract_stats
+    aspects: list[dict[str, str]] = []
+    if include_aspects and (not unknown_time) and profile.include_aspects:
+        aspects = _extract_aspects(natal_data)
 
     # 0) topic generic fallback as first block
     if tc is not None:
         blocks.append(
             KeyBlock(
                 id="topic_generic",
-                candidate_keys=[
-                    _topic_generic_key(tone_namespace=tone_namespace, topic_category=tc),
-                    _global_generic_key(tone_namespace=tone_namespace),
-                ],
-                meta={"topic_category": tc, "unknown_time": unknown_time},
+                candidate_keys=(
+                    [
+                        _topic_generic_key(tone_namespace=tone_namespace, topic_category=tc),
+                        _global_generic_key(tone_namespace=tone_namespace),
+                        f"{tone_namespace}.{tc}.budget.base",
+                    ]
+                    + (
+                        [
+                            f"{tone_namespace}.{tc}.budget.all_planets",
+                            f"{tone_namespace}.{tc}.budget.rich",
+                        ]
+                        if include_all_planets
+                        else [
+                            f"{tone_namespace}.{tc}.budget.core",
+                        ]
+                    )
+                ),
+                meta={
+                    "topic_category": tc,
+                    "unknown_time": unknown_time,
+                    "extract_stats": {
+                        "planets": len(planets) if isinstance(planets, dict) else 0,
+                        "angles": len(angles) if isinstance(angles, dict) else 0,
+                        "houses_cusps": len(houses_cusps) if isinstance(houses_cusps, dict) else 0,
+                        "aspects": len(aspects) if isinstance(aspects, list) else 0,
+                    },
+                }
             )
         )
 
@@ -1350,54 +1534,210 @@ def build_knowledge_key_blocks(
             unknown_time=unknown_time,
             tone_namespace=tone_namespace,
         )
-        blk_keys = blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]
-        blocks.append(KeyBlock(id=blk.id, candidate_keys=_dedup_keep_order(blk_keys), meta=blk.meta))
+        blk_keys = _dedup_keep_order(blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)])
 
-    # 2) angles
+        # NEW: keep old id AND add *_core alias for tests/compat
+        blocks.append(KeyBlock(id=f"{p}_core", candidate_keys=blk_keys, meta=blk.meta))
+        blocks.append(KeyBlock(id=blk.id, candidate_keys=blk_keys, meta=blk.meta))
+
+    
+    # 2) angles (works even if sign missing)
     if include_angles:
         for a in _dedup_keep_order(profile.focus_angles):
             if a == "mc" and unknown_time:
                 continue
+
             sign = angles.get(a)
-            if sign:
-                blk = _angle_block(angle=a, sign=sign, tone_namespace=tone_namespace)
-                blk_keys = blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]
-                blocks.append(KeyBlock(id=blk.id, candidate_keys=_dedup_keep_order(blk_keys), meta=blk.meta))
 
-
-
-
-    # 3) houses: cusp + ruler + planets-in-house (if data exists)
-    if not unknown_time and profile.focus_houses:
-        for h in profile.focus_houses:
-            cusp_sign = houses_cusps.get(h)
-            if cusp_sign:
-                blk = _house_cusp_block(house=h, cusp_sign=cusp_sign, tone_namespace=tone_namespace)
-                blocks.append(KeyBlock(id=blk.id, candidate_keys=_dedup_keep_order(blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]), meta=blk.meta))
-                for rb in _house_ruler_blocks(house=h, cusp_sign=cusp_sign, planets=planets, tone_namespace=tone_namespace, unknown_time=unknown_time):
-                    blocks.append(KeyBlock(id=rb.id, candidate_keys=_dedup_keep_order(rb.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]), meta=rb.meta))
-            for pib in _planets_in_house_blocks(house=h, planets=planets, unknown_time=unknown_time, tone_namespace=tone_namespace):
-                blocks.append(KeyBlock(id=pib.id, candidate_keys=_dedup_keep_order(pib.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]), meta=pib.meta))
-
-    # 4) aspects (prioritize those that touch focus planets/angles)
-    if include_aspects and profile.include_aspects:
-        aspects = _extract_aspects(natal_data)
-        focus_set = set(profile.focus_planets) | set(profile.focus_angles)
-
-        def score(it: dict[str, str]) -> int:
-            return int(it["a"] in focus_set) + int(it["b"] in focus_set)
-
-        aspects.sort(key=score, reverse=True)
-        for it in aspects[: max(0, int(max_aspects))]:
-            blk = _aspect_block(a=it["a"], aspect=it["aspect"], b=it["b"], tone_namespace=tone_namespace)
+            # Always emit skeleton so DB can hit *.sign.any seeds
             blocks.append(
                 KeyBlock(
-                    id=blk.id,
-                    candidate_keys=_dedup_keep_order(blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]),
-                    meta=blk.meta,
+                    id=f"angle:{a}:any",
+                    candidate_keys=_dedup_keep_order(
+                        [
+                            f"{tone_namespace}.angle.{a}.sign.any",
+                            f"{tone_namespace}.angle.{a}",
+                            f"{tone_namespace}.angle",
+                            _global_generic_key(tone_namespace=tone_namespace),
+                        ]
+                    ),
+                    meta={"angle": a, "sign": sign or None, "skeleton": True},
                 )
             )
 
+            # If sign exists, emit full ladder
+            if sign:
+                blk = _angle_block(angle=a, sign=sign, tone_namespace=tone_namespace)
+                blocks.append(
+                    KeyBlock(
+                        id=blk.id,
+                        candidate_keys=_dedup_keep_order(
+                            blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]
+                        ),
+                        meta=blk.meta,
+                    )
+                )
+
+
+    # 3) houses: cusp + ruler + planets-in-house (works even if cusp_sign missing)
+    if (not unknown_time) and profile.focus_houses:
+        for h in profile.focus_houses:
+            cusp_sign = houses_cusps.get(h)
+
+            # Always emit a minimal house-cusp ladder so DB can hit *.cusp.sign.any seeds
+            skeleton_cusp_keys = _dedup_keep_order(
+                [
+                    f"{tone_namespace}.house.{h}.cusp.sign.any",
+                    f"{tone_namespace}.house.{h}.cusp",
+                    f"{tone_namespace}.house.{h}",
+                    f"{tone_namespace}.house.cusp.core",
+                    f"{tone_namespace}.house.boundary",
+                    f"{tone_namespace}.house",
+                ]
+            )
+            blocks.append(
+                KeyBlock(
+                    id=f"house:{h}:cusp:any",
+                    candidate_keys=_dedup_keep_order(
+                        skeleton_cusp_keys + [_global_generic_key(tone_namespace=tone_namespace)]
+                    ),
+                    meta={"house": h, "cusp_sign": cusp_sign or None, "skeleton": True},
+                )
+            )
+
+            # If we do have a real cusp sign, emit the full cusp ladder + ruler ladders
+            if cusp_sign:
+                blk = _house_cusp_block(house=h, cusp_sign=cusp_sign, tone_namespace=tone_namespace)
+                blocks.append(
+                    KeyBlock(
+                        id=blk.id,
+                        candidate_keys=_dedup_keep_order(
+                            blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]
+                        ),
+                        meta=blk.meta,
+                    )
+                )
+
+                for rb in _house_ruler_blocks(
+                    house=h,
+                    cusp_sign=cusp_sign,
+                    planets=planets,
+                    tone_namespace=tone_namespace,
+                    unknown_time=unknown_time,
+                ):
+                    blocks.append(
+                        KeyBlock(
+                            id=rb.id,
+                            candidate_keys=_dedup_keep_order(
+                                rb.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]
+                            ),
+                            meta=rb.meta,
+                        )
+                    )
+
+            # Always emit a minimal ruler-any ladder as a fallback (matches your seeds)
+            skeleton_ruler_keys = _dedup_keep_order(
+                [
+                    f"{tone_namespace}.house.{h}.ruler.any",
+                    f"{tone_namespace}.house.{h}.ruler",
+                    f"{tone_namespace}.house.ruler.core",
+                    f"{tone_namespace}.house.ruler.boundary",
+                    f"{tone_namespace}.house",
+                ]
+            )
+            blocks.append(
+                KeyBlock(
+                    id=f"house:{h}:ruler:any",
+                    candidate_keys=_dedup_keep_order(
+                        skeleton_ruler_keys + [_global_generic_key(tone_namespace=tone_namespace)]
+                    ),
+                    meta={"house": h, "cusp_sign": cusp_sign or None, "skeleton": True},
+                )
+            )
+
+            # planets in house (only works if houses exist in natal_data, but harmless otherwise)
+            for pib in _planets_in_house_blocks(
+                house=h,
+                planets=planets,
+                unknown_time=unknown_time,
+                tone_namespace=tone_namespace,
+            ):
+                blocks.append(
+                    KeyBlock(
+                        id=pib.id,
+                        candidate_keys=_dedup_keep_order(
+                            pib.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]
+                        ),
+                        meta=pib.meta,
+                    )
+                )
+
+    # 4) aspects (prioritize those that touch focus planets/angles)
+        if include_aspects and (not unknown_time) and profile.include_aspects and aspects:
+            # strengths_weaknesses: signal that hard aspects exist (square/opposition)
+            if tc == "strengths_weaknesses":
+                hard = {"square", "opposition"}
+                if any((it.get("aspect") in hard) for it in aspects):
+                    blocks.append(
+                        KeyBlock(
+                            id="aspects:hard:present",
+                            candidate_keys=_dedup_keep_order(
+                                [
+                                    f"{tone_namespace}.aspect.hard.present",
+                                    f"{tone_namespace}.aspect.square.present",
+                                    f"{tone_namespace}.aspect.opposition.present",
+                                    f"{tone_namespace}.aspect.class.tense",
+                                    _global_generic_key(tone_namespace=tone_namespace),
+                                ]
+                            ),
+                            meta={"topic_category": tc, "hard_present": True},
+                        )
+                    )
+
+            focus_set = set(profile.focus_planets) | set(profile.focus_angles)
+
+            def score(it: dict[str, str]) -> int:
+                return int(it["a"] in focus_set) + int(it["b"] in focus_set)
+
+            aspects.sort(key=score, reverse=True)
+
+            for it in aspects[: max(0, int(max_aspects))]:
+                blk = _aspect_block(a=it["a"], aspect=it["aspect"], b=it["b"], tone_namespace=tone_namespace)
+                blocks.append(
+                    KeyBlock(
+                        id=blk.id,
+                        candidate_keys=_dedup_keep_order(
+                            blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]
+                        ),
+                        meta=blk.meta,
+                    )
+                )
+
+            # House ruler aspects (ruler ↔ planets/angles) for focus houses
+            if profile.focus_houses:
+                for h in profile.focus_houses:
+                    cusp_sign = houses_cusps.get(h)
+                    if not cusp_sign:
+                        continue
+                    for rb in _house_ruler_aspect_blocks(
+                        house=h,
+                        cusp_sign=cusp_sign,
+                        planets=planets,
+                        aspects=aspects,
+                        tone_namespace=tone_namespace,
+                        unknown_time=unknown_time,
+                        focus_set=focus_set,
+                        max_ruler_aspects=8,
+                    ):
+                        blocks.append(
+                            KeyBlock(
+                                id=rb.id,
+                                candidate_keys=_dedup_keep_order(
+                                    rb.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]
+                                ),
+                                meta=rb.meta,
+                            )
+                        )
 
     # 5) aspect configurations (optional)
     if include_aspect_configs and profile.include_aspect_configs:

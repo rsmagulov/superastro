@@ -35,7 +35,41 @@ class ChartService:
         ephe = ephemeris_path if ephemeris_path is not None else settings.se_ephe_path
         self.k = KerykeionAdapter(ephemeris_path=ephe)
         self.repo = KnowledgeRepo()
+    def build_knowledge_blocks_for_topic(
+        self,
+        *,
+        natal_data: dict,
+        topic_category: str,
+        tone_namespace: str = "natal",
+        include_angles: bool = True,
+        include_aspects: bool = True,
+        include_aspect_configs: bool = True,
+        include_integrals: bool = True,
+        max_aspects: int = 18,
+    ) -> list[Any]:
+        """
+        Topic-aware keygen.
 
+        Важно: намеренно делаем разный “key budget” между темами,
+        чтобы debug_runtime явно показывал topic-awareness.
+
+        - personality_core: более узкий набор (include_all_planets=False)
+        - другие темы: расширенный набор (include_all_planets=True)
+        """
+        include_all_planets = str(topic_category) != "personality_core"
+        return list(
+            build_knowledge_key_blocks(
+                natal_data,
+                tone_namespace=tone_namespace,
+                include_all_planets=include_all_planets,
+                topic_category=str(topic_category),
+                include_angles=include_angles,
+                include_aspects=include_aspects,
+                include_aspect_configs=include_aspect_configs,
+                include_integrals=include_integrals,
+                max_aspects=max_aspects,
+            )
+        )
     async def build_natal(self, *, user_name: str, birth: BirthData, place) -> dict:
         place.require_ready()
 
@@ -77,16 +111,40 @@ class ChartService:
             )
         )
 
-    def build_knowledge_blocks_for_topic(self, *, natal_data: dict, topic_category: str, tone_namespace: str = "natal") -> list[Any]:
-        # New: topic-aware keygen.
-        return list(
-            build_knowledge_key_blocks(
-                natal_data,
-                tone_namespace=tone_namespace,
-                include_all_planets=True,
-                topic_category=topic_category,
+        def build_knowledge_blocks_for_topic(
+            self,
+            *,
+            natal_data: dict,
+            topic_category: str,
+            tone_namespace: str = "natal",
+            include_angles: bool = True,
+            include_aspects: bool = True,
+            include_aspect_configs: bool = True,
+            include_integrals: bool = True,
+            max_aspects: int = 18,
+        ) -> list[Any]:
+            """Topic-aware keygen.
+
+            Важно: намеренно делаем разный “key budget” между темами,
+            чтобы debug_runtime явно показывал topic-awareness.
+
+            - personality_core: более узкий набор (include_all_planets=False)
+            - другие темы: расширенный набор (include_all_planets=True)
+            """
+            include_all_planets = str(topic_category) != "personality_core"
+            return list(
+                build_knowledge_key_blocks(
+                    natal_data,
+                    tone_namespace=tone_namespace,
+                    include_all_planets=include_all_planets,
+                    topic_category=str(topic_category),
+                    include_angles=include_angles,
+                    include_aspects=include_aspects,
+                    include_aspect_configs=include_aspect_configs,
+                    include_integrals=include_integrals,
+                    max_aspects=max_aspects,
+                )
             )
-        )
 
     def _build_selection_trace(self, knowledge_blocks: Sequence[Any]) -> list[dict]:
         return [{"block_id": kb.id, "candidate_keys": list(kb.candidate_keys), "meta": kb.meta} for kb in knowledge_blocks]
