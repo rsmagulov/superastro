@@ -119,5 +119,8 @@ def normalize_for_keybuilder(
         "subject": {"unknown_time": bool(unknown_time)},
         "planets": planets,
         "angles": angles,
-        # "aspects": ...
+        "houses": natal_data_raw.get("houses") or {},
+        "aspects": natal_data_raw.get("aspects") or [],
+        "__probe": natal_data_raw.get("__probe") or {},
+        "__sentinel": natal_data_raw.get("__sentinel") or "missing",
     }

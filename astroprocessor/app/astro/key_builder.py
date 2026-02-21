@@ -427,6 +427,23 @@ TOPIC_PROFILES: dict[str, TopicProfile] = {
 
 # --- helpers to normalize various natal_data shapes (dicts, pydantic, objects) ---
 
+def _append_unique_block(blocks: list["KeyBlock"], new_block: "KeyBlock", *, dedupe_by_keys: bool = True) -> None:
+    """
+    Dedupe blocks to avoid wasting max_blocks on aliases producing identical key ladders.
+    - Always dedupe by id
+    - Optionally dedupe by candidate_keys tuple
+    """
+    if any(b.id == new_block.id for b in blocks):
+        return
+
+    if dedupe_by_keys:
+        nk = tuple(new_block.candidate_keys or [])
+        for b in blocks:
+            if tuple(b.candidate_keys or []) == nk:
+                return
+
+    blocks.append(new_block)
+
 def _as_dict(x: Any) -> dict[str, Any]:
     """
     Accept dict-like, pydantic models, dataclasses, simple objects.
@@ -637,6 +654,7 @@ def _angle_block(*, angle: str, sign: str, tone_namespace: str) -> KeyBlock:
     mod = SIGN_TO_MODALITY.get(sign, "")
 
     keys: list[str] = []
+    # Most specific
     keys.append(f"{tone_namespace}.angle.{angle}.sign.{sign}")
 
     if el:
@@ -649,11 +667,15 @@ def _angle_block(*, angle: str, sign: str, tone_namespace: str) -> KeyBlock:
         keys.append(f"{tone_namespace}.angle.{angle}.modality.{mod}")
         keys.append(f"{tone_namespace}.angle.any.modality.{mod}")
 
-    keys.append(f"{tone_namespace}.angle.{angle}.sign.any")
+    # IMPORTANT: do NOT include *.sign.any here to avoid duplicating skeleton hits
     keys.append(f"{tone_namespace}.angle.{angle}")
     keys.append(f"{tone_namespace}.angle")
 
-    return KeyBlock(id=f"angle:{angle}", candidate_keys=_dedup_keep_order(keys), meta={"angle": angle, "sign": sign})
+    return KeyBlock(
+        id=f"angle:{angle}",
+        candidate_keys=_dedup_keep_order(keys),
+        meta={"angle": angle, "sign": sign},
+    )
 
 
 
@@ -1537,8 +1559,12 @@ def build_knowledge_key_blocks(
         blk_keys = _dedup_keep_order(blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)])
 
         # NEW: keep old id AND add *_core alias for tests/compat
-        blocks.append(KeyBlock(id=f"{p}_core", candidate_keys=blk_keys, meta=blk.meta))
-        blocks.append(KeyBlock(id=blk.id, candidate_keys=blk_keys, meta=blk.meta))
+        # Keep *_core alias ONLY for planets_order (default: sun/moon/mercury/venus/mars)
+        # This preserves legacy behavior for core planets, but avoids doubling every planet.
+        _append_unique_block(blocks, KeyBlock(id=blk.id, candidate_keys=blk_keys, meta=blk.meta))
+
+        if p in set(planets_order):
+            _append_unique_block(blocks, KeyBlock(id=f"{p}_core", candidate_keys=blk_keys, meta=blk.meta))
 
     
     # 2) angles (works even if sign missing)
@@ -1565,18 +1591,20 @@ def build_knowledge_key_blocks(
                 )
             )
 
-            # If sign exists, emit full ladder
+            # If sign exists, emit full ladder ONLY if it adds specificity beyond *.sign.any
             if sign:
                 blk = _angle_block(angle=a, sign=sign, tone_namespace=tone_namespace)
-                blocks.append(
-                    KeyBlock(
-                        id=blk.id,
-                        candidate_keys=_dedup_keep_order(
-                            blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)]
-                        ),
-                        meta=blk.meta,
-                    )
-                )
+                full_keys = _dedup_keep_order(blk.candidate_keys + [_global_generic_key(tone_namespace=tone_namespace)])
+
+                # Skip when full ladder degenerates to the same top key as skeleton.
+                # (Typical when KB has only *.sign.any, so both blocks resolve to the same item.)
+                skeleton_top = f"{tone_namespace}.angle.{a}.sign.any"
+                full_top = f"{tone_namespace}.angle.{a}.sign.{sign}"
+
+                # full block is only valuable if it contains the specific sign key
+                # (otherwise it’s effectively the same as skeleton)
+                if full_top in full_keys and full_top != skeleton_top:
+                    blocks.append(KeyBlock(id=blk.id, candidate_keys=full_keys, meta=blk.meta))
 
 
     # 3) houses: cusp + ruler + planets-in-house (works even if cusp_sign missing)

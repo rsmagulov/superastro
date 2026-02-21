@@ -34,6 +34,9 @@ class InterpretV2Response(BaseModel):
     messages: list[str] = Field(default_factory=list)
     topics: list[TopicResultV2] = Field(default_factory=list)
 
+    # NEW: allow surfacing natal_data for debug/diagnostics
+    natal_data: Optional[dict[str, Any]] = None
+
     meta: dict[str, Any] = Field(default_factory=dict)
     error: Optional[str] = None
 

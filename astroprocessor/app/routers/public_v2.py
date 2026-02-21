@@ -789,13 +789,14 @@ async def interpret_v2(
         topic_results.append(TopicResultV2(topic_category=t, coverage=cov, messages=messages))
 
     overall = aggregate_coverage_v2(coverages)
-
+    natal_data_public = natal_data if int(debug) >= 2 else None
     return InterpretV2Response(
         request_id=request_id,
         ok=True,
         coverage=overall,
         messages=all_messages,
         topics=topic_results,
+        natal_data=natal_data_public,
         meta=meta,
         error=None,
     )

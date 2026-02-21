@@ -1,5 +1,4 @@
-Структура папок
-Серийный номер тома: 4030-B7C4
+
 C:\Projects\superastro
 |   .gitattributes
 |   .gitignore
@@ -29,6 +28,7 @@ C:\Projects\superastro
 |   |   atomize_dry.json
 |   |   atomize_dryrun.json
 |   |   check_staging.py
+|   |   debug_runtime.json
 |   |   ev1_keys_unique.txt
 |   |   fix_docs_mojibake.py
 |   |   glossary_caps_preview.txt
@@ -139,13 +139,16 @@ C:\Projects\superastro
 |   |   |               
 |   |   +---astro
 |   |   |   |   kerykeion_adapter.py
+|   |   |   |   kerykeion_adapter.py.old.py
 |   |   |   |   kerykeion_factories.py
+|   |   |   |   kerykeion_factories.py.old.py
 |   |   |   |   key_builder.py
 |   |   |   |   natal_normalizer.py
 |   |   |   |   __init__.py
 |   |   |   |   
 |   |   |   \---__pycache__
 |   |   |           kerykeion_adapter.cpython-312.pyc
+|   |   |           kerykeion_factories.cpython-312.pyc
 |   |   |           key_builder.cpython-312.pyc
 |   |   |           natal_normalizer.cpython-312.pyc
 |   |   |           __init__.cpython-312.pyc
@@ -522,8 +525,11 @@ C:\Projects\superastro
 |       |       seed_angles_upsert.sql
 |       |       seed_generic_all_topics.sql
 |       |       seed_house_rulers.py
+|       |       seed_house_ruler_aspects_cleanup.sql
+|       |       seed_house_ruler_aspects_scaffold.sql
 |       |       seed_knowledge_84.jsonl
 |       |       seed_personality_core_generic.sql
+|       |       seed_planet_sign_any_topics.sql
 |       |       seed_topic_generic_all_topics.sql
 |       |       
 |       +---tests
@@ -563,4 +569,3 @@ C:\Projects\superastro
 |   \---tests
 |           regress_knowledge_pick.ps1
 |           
- 

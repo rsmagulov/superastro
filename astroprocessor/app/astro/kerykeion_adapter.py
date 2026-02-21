@@ -40,9 +40,34 @@ class KerykeionAdapter:
     ):
         place.require_ready()
 
-        # 1) Prefer internal factory (version-tolerant)
+        def _subject_has_aspects(subj: Any) -> bool:
+            # Prefer quick check via json() (works in your probe)
+            try:
+                raw = getattr(subj, "json", None)
+                if callable(raw):
+                    import json as _json
+
+                    parsed = _json.loads(raw())
+                    if isinstance(parsed, dict):
+                        # aspects may be stored under these keys depending on version
+                        if parsed.get("aspects") or parsed.get("aspects_list"):
+                            return True
+            except Exception:
+                pass
+
+            # Fallback: attribute presence
+            try:
+                if hasattr(subj, "aspects") or hasattr(subj, "aspects_list"):
+                    return True
+            except Exception:
+                pass
+
+            return False
+
+        # 1) Try internal factory first (fast, version-tolerant)
+        subj = None
         try:
-            return AstrologicalSubjectFactory.create(
+            subj = AstrologicalSubjectFactory.create(
                 name=name,
                 year=birth.year,
                 month=birth.month,
@@ -56,7 +81,10 @@ class KerykeionAdapter:
                 ephemeris_path=self._ephemeris_path,
             )
         except Exception:
-            # 2) Fallback to kerykeion factory (some installs support this better)
+            subj = None
+
+        # 2) If internal subject exists but has no aspects, rebuild via KerykeionSubjectFactory
+        if subj is None or not _subject_has_aspects(subj):
             return KerykeionSubjectFactory.from_birth_data(
                 name=name,
                 year=birth.year,
@@ -73,6 +101,8 @@ class KerykeionAdapter:
                 perspective_type=perspective_type,
                 active_points=active_points,
             )
+
+        return subj
 
     def natal_chart_data(self, subject: Any) -> Dict[str, Any]:
         return ChartDataFactory.natal_chart_data(subject)
