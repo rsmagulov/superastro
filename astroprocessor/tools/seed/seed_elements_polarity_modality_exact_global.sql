@@ -1,6 +1,6 @@
 -- AUTO-GENERATED. DO NOT EDIT BY HAND.
 
--- GLOBAL exact keys for elements/polarity/modality
+-- GLOBAL exact keys for elements/polarity/modality (aligned with key_builder)
 
 BEGIN;
 
@@ -70,94 +70,16 @@ WHERE NOT EXISTS (
 );
 
 UPDATE knowledge_items
-SET text = 'Стихия «Огонь»: количество попало в bucket 4.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.fire.count.4' AND locale = 'ru-RU'
+SET text = 'Стихия «Огонь»: количество попало в bucket 4p.', priority = 89, is_active = 1, meta_json = '{}'
+WHERE key = 'natal.elements.fire.count.4p' AND locale = 'ru-RU'
   AND (topic_category = '' OR topic_category IS NULL)
   AND (text IS NULL OR LENGTH(TRIM(text))=0);
 
 INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.fire.count.4', '', 'ru-RU', 'Стихия «Огонь»: количество попало в bucket 4.', 89, CURRENT_TIMESTAMP, 1, '{}'
+SELECT 'natal.elements.fire.count.4p', '', 'ru-RU', 'Стихия «Огонь»: количество попало в bucket 4p.', 89, CURRENT_TIMESTAMP, 1, '{}'
 WHERE NOT EXISTS (
   SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.fire.count.4' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Огонь»: количество попало в bucket 5.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.fire.count.5' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.fire.count.5', '', 'ru-RU', 'Стихия «Огонь»: количество попало в bucket 5.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.fire.count.5' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Огонь»: количество попало в bucket 6.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.fire.count.6' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.fire.count.6', '', 'ru-RU', 'Стихия «Огонь»: количество попало в bucket 6.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.fire.count.6' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Огонь»: количество попало в bucket 7.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.fire.count.7' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.fire.count.7', '', 'ru-RU', 'Стихия «Огонь»: количество попало в bucket 7.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.fire.count.7' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Огонь»: количество попало в bucket 8.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.fire.count.8' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.fire.count.8', '', 'ru-RU', 'Стихия «Огонь»: количество попало в bucket 8.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.fire.count.8' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Огонь»: количество попало в bucket 9.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.fire.count.9' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.fire.count.9', '', 'ru-RU', 'Стихия «Огонь»: количество попало в bucket 9.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.fire.count.9' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Огонь»: количество попало в bucket 10.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.fire.count.10' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.fire.count.10', '', 'ru-RU', 'Стихия «Огонь»: количество попало в bucket 10.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.fire.count.10' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
+  WHERE key = 'natal.elements.fire.count.4p' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
 );
 
 UPDATE knowledge_items
@@ -239,94 +161,16 @@ WHERE NOT EXISTS (
 );
 
 UPDATE knowledge_items
-SET text = 'Стихия «Земля»: количество попало в bucket 4.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.earth.count.4' AND locale = 'ru-RU'
+SET text = 'Стихия «Земля»: количество попало в bucket 4p.', priority = 89, is_active = 1, meta_json = '{}'
+WHERE key = 'natal.elements.earth.count.4p' AND locale = 'ru-RU'
   AND (topic_category = '' OR topic_category IS NULL)
   AND (text IS NULL OR LENGTH(TRIM(text))=0);
 
 INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.earth.count.4', '', 'ru-RU', 'Стихия «Земля»: количество попало в bucket 4.', 89, CURRENT_TIMESTAMP, 1, '{}'
+SELECT 'natal.elements.earth.count.4p', '', 'ru-RU', 'Стихия «Земля»: количество попало в bucket 4p.', 89, CURRENT_TIMESTAMP, 1, '{}'
 WHERE NOT EXISTS (
   SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.earth.count.4' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Земля»: количество попало в bucket 5.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.earth.count.5' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.earth.count.5', '', 'ru-RU', 'Стихия «Земля»: количество попало в bucket 5.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.earth.count.5' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Земля»: количество попало в bucket 6.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.earth.count.6' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.earth.count.6', '', 'ru-RU', 'Стихия «Земля»: количество попало в bucket 6.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.earth.count.6' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Земля»: количество попало в bucket 7.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.earth.count.7' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.earth.count.7', '', 'ru-RU', 'Стихия «Земля»: количество попало в bucket 7.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.earth.count.7' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Земля»: количество попало в bucket 8.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.earth.count.8' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.earth.count.8', '', 'ru-RU', 'Стихия «Земля»: количество попало в bucket 8.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.earth.count.8' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Земля»: количество попало в bucket 9.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.earth.count.9' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.earth.count.9', '', 'ru-RU', 'Стихия «Земля»: количество попало в bucket 9.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.earth.count.9' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Земля»: количество попало в bucket 10.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.earth.count.10' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.earth.count.10', '', 'ru-RU', 'Стихия «Земля»: количество попало в bucket 10.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.earth.count.10' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
+  WHERE key = 'natal.elements.earth.count.4p' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
 );
 
 UPDATE knowledge_items
@@ -408,94 +252,16 @@ WHERE NOT EXISTS (
 );
 
 UPDATE knowledge_items
-SET text = 'Стихия «Воздух»: количество попало в bucket 4.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.air.count.4' AND locale = 'ru-RU'
+SET text = 'Стихия «Воздух»: количество попало в bucket 4p.', priority = 89, is_active = 1, meta_json = '{}'
+WHERE key = 'natal.elements.air.count.4p' AND locale = 'ru-RU'
   AND (topic_category = '' OR topic_category IS NULL)
   AND (text IS NULL OR LENGTH(TRIM(text))=0);
 
 INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.air.count.4', '', 'ru-RU', 'Стихия «Воздух»: количество попало в bucket 4.', 89, CURRENT_TIMESTAMP, 1, '{}'
+SELECT 'natal.elements.air.count.4p', '', 'ru-RU', 'Стихия «Воздух»: количество попало в bucket 4p.', 89, CURRENT_TIMESTAMP, 1, '{}'
 WHERE NOT EXISTS (
   SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.air.count.4' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Воздух»: количество попало в bucket 5.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.air.count.5' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.air.count.5', '', 'ru-RU', 'Стихия «Воздух»: количество попало в bucket 5.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.air.count.5' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Воздух»: количество попало в bucket 6.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.air.count.6' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.air.count.6', '', 'ru-RU', 'Стихия «Воздух»: количество попало в bucket 6.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.air.count.6' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Воздух»: количество попало в bucket 7.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.air.count.7' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.air.count.7', '', 'ru-RU', 'Стихия «Воздух»: количество попало в bucket 7.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.air.count.7' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Воздух»: количество попало в bucket 8.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.air.count.8' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.air.count.8', '', 'ru-RU', 'Стихия «Воздух»: количество попало в bucket 8.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.air.count.8' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Воздух»: количество попало в bucket 9.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.air.count.9' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.air.count.9', '', 'ru-RU', 'Стихия «Воздух»: количество попало в bucket 9.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.air.count.9' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Воздух»: количество попало в bucket 10.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.air.count.10' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.air.count.10', '', 'ru-RU', 'Стихия «Воздух»: количество попало в bucket 10.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.air.count.10' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
+  WHERE key = 'natal.elements.air.count.4p' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
 );
 
 UPDATE knowledge_items
@@ -577,94 +343,16 @@ WHERE NOT EXISTS (
 );
 
 UPDATE knowledge_items
-SET text = 'Стихия «Вода»: количество попало в bucket 4.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.water.count.4' AND locale = 'ru-RU'
+SET text = 'Стихия «Вода»: количество попало в bucket 4p.', priority = 89, is_active = 1, meta_json = '{}'
+WHERE key = 'natal.elements.water.count.4p' AND locale = 'ru-RU'
   AND (topic_category = '' OR topic_category IS NULL)
   AND (text IS NULL OR LENGTH(TRIM(text))=0);
 
 INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.water.count.4', '', 'ru-RU', 'Стихия «Вода»: количество попало в bucket 4.', 89, CURRENT_TIMESTAMP, 1, '{}'
+SELECT 'natal.elements.water.count.4p', '', 'ru-RU', 'Стихия «Вода»: количество попало в bucket 4p.', 89, CURRENT_TIMESTAMP, 1, '{}'
 WHERE NOT EXISTS (
   SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.water.count.4' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Вода»: количество попало в bucket 5.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.water.count.5' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.water.count.5', '', 'ru-RU', 'Стихия «Вода»: количество попало в bucket 5.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.water.count.5' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Вода»: количество попало в bucket 6.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.water.count.6' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.water.count.6', '', 'ru-RU', 'Стихия «Вода»: количество попало в bucket 6.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.water.count.6' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Вода»: количество попало в bucket 7.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.water.count.7' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.water.count.7', '', 'ru-RU', 'Стихия «Вода»: количество попало в bucket 7.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.water.count.7' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Вода»: количество попало в bucket 8.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.water.count.8' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.water.count.8', '', 'ru-RU', 'Стихия «Вода»: количество попало в bucket 8.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.water.count.8' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Вода»: количество попало в bucket 9.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.water.count.9' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.water.count.9', '', 'ru-RU', 'Стихия «Вода»: количество попало в bucket 9.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.water.count.9' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
-);
-
-UPDATE knowledge_items
-SET text = 'Стихия «Вода»: количество попало в bucket 10.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.elements.water.count.10' AND locale = 'ru-RU'
-  AND (topic_category = '' OR topic_category IS NULL)
-  AND (text IS NULL OR LENGTH(TRIM(text))=0);
-
-INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.elements.water.count.10', '', 'ru-RU', 'Стихия «Вода»: количество попало в bucket 10.', 89, CURRENT_TIMESTAMP, 1, '{}'
-WHERE NOT EXISTS (
-  SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.elements.water.count.10' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
+  WHERE key = 'natal.elements.water.count.4p' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
 );
 
 UPDATE knowledge_items
@@ -889,55 +577,68 @@ WHERE NOT EXISTS (
 );
 
 UPDATE knowledge_items
-SET text = 'Доминирующая модальность: общий вариант (любой).', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.modality.dominant.any' AND locale = 'ru-RU'
+SET text = 'Баланс модальностей: общий вариант (любой).', priority = 89, is_active = 1, meta_json = '{}'
+WHERE key = 'natal.modality.balance.any' AND locale = 'ru-RU'
   AND (topic_category = '' OR topic_category IS NULL)
   AND (text IS NULL OR LENGTH(TRIM(text))=0);
 
 INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.modality.dominant.any', '', 'ru-RU', 'Доминирующая модальность: общий вариант (любой).', 89, CURRENT_TIMESTAMP, 1, '{}'
+SELECT 'natal.modality.balance.any', '', 'ru-RU', 'Баланс модальностей: общий вариант (любой).', 89, CURRENT_TIMESTAMP, 1, '{}'
 WHERE NOT EXISTS (
   SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.modality.dominant.any' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
+  WHERE key = 'natal.modality.balance.any' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
 );
 
 UPDATE knowledge_items
-SET text = 'Доминирующая модальность — кардинальная.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.modality.dominant.cardinal' AND locale = 'ru-RU'
+SET text = 'Баланс модальностей: кардинальная.', priority = 89, is_active = 1, meta_json = '{}'
+WHERE key = 'natal.modality.balance.cardinal' AND locale = 'ru-RU'
   AND (topic_category = '' OR topic_category IS NULL)
   AND (text IS NULL OR LENGTH(TRIM(text))=0);
 
 INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.modality.dominant.cardinal', '', 'ru-RU', 'Доминирующая модальность — кардинальная.', 89, CURRENT_TIMESTAMP, 1, '{}'
+SELECT 'natal.modality.balance.cardinal', '', 'ru-RU', 'Баланс модальностей: кардинальная.', 89, CURRENT_TIMESTAMP, 1, '{}'
 WHERE NOT EXISTS (
   SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.modality.dominant.cardinal' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
+  WHERE key = 'natal.modality.balance.cardinal' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
 );
 
 UPDATE knowledge_items
-SET text = 'Доминирующая модальность — фиксированная.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.modality.dominant.fixed' AND locale = 'ru-RU'
+SET text = 'Баланс модальностей: фиксированная.', priority = 89, is_active = 1, meta_json = '{}'
+WHERE key = 'natal.modality.balance.fixed' AND locale = 'ru-RU'
   AND (topic_category = '' OR topic_category IS NULL)
   AND (text IS NULL OR LENGTH(TRIM(text))=0);
 
 INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.modality.dominant.fixed', '', 'ru-RU', 'Доминирующая модальность — фиксированная.', 89, CURRENT_TIMESTAMP, 1, '{}'
+SELECT 'natal.modality.balance.fixed', '', 'ru-RU', 'Баланс модальностей: фиксированная.', 89, CURRENT_TIMESTAMP, 1, '{}'
 WHERE NOT EXISTS (
   SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.modality.dominant.fixed' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
+  WHERE key = 'natal.modality.balance.fixed' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
 );
 
 UPDATE knowledge_items
-SET text = 'Доминирующая модальность — мутабельная.', priority = 89, is_active = 1, meta_json = '{}'
-WHERE key = 'natal.modality.dominant.mutable' AND locale = 'ru-RU'
+SET text = 'Баланс модальностей: мутабельная.', priority = 89, is_active = 1, meta_json = '{}'
+WHERE key = 'natal.modality.balance.mutable' AND locale = 'ru-RU'
   AND (topic_category = '' OR topic_category IS NULL)
   AND (text IS NULL OR LENGTH(TRIM(text))=0);
 
 INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
-SELECT 'natal.modality.dominant.mutable', '', 'ru-RU', 'Доминирующая модальность — мутабельная.', 89, CURRENT_TIMESTAMP, 1, '{}'
+SELECT 'natal.modality.balance.mutable', '', 'ru-RU', 'Баланс модальностей: мутабельная.', 89, CURRENT_TIMESTAMP, 1, '{}'
 WHERE NOT EXISTS (
   SELECT 1 FROM knowledge_items
-  WHERE key = 'natal.modality.dominant.mutable' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
+  WHERE key = 'natal.modality.balance.mutable' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
+);
+
+UPDATE knowledge_items
+SET text = 'Баланс модальностей: баланс.', priority = 89, is_active = 1, meta_json = '{}'
+WHERE key = 'natal.modality.balance.balanced' AND locale = 'ru-RU'
+  AND (topic_category = '' OR topic_category IS NULL)
+  AND (text IS NULL OR LENGTH(TRIM(text))=0);
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.modality.balance.balanced', '', 'ru-RU', 'Баланс модальностей: баланс.', 89, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.modality.balance.balanced' AND locale = 'ru-RU' AND (topic_category = '' OR topic_category IS NULL)
 );
 
 UPDATE knowledge_items

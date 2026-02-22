@@ -29,6 +29,41 @@ class RawBlock:
     tags: list
     weight: float
 
+def _dedupe_raw_blocks(blocks: List[RawBlock]) -> tuple[List[RawBlock], int]:
+    """
+    Stable dedupe by KB key.
+
+    Returns:
+      (deduped_blocks, removed_count)
+    """
+    out: List[RawBlock] = []
+    idx_by_key: Dict[str, int] = {}
+    removed = 0
+
+    for b in blocks:
+        idx = idx_by_key.get(b.key)
+        if idx is None:
+            idx_by_key[b.key] = len(out)
+            out.append(b)
+            continue
+
+        removed += 1
+        # prefer higher priority if duplicate occurs
+        if b.priority > out[idx].priority:
+            out[idx] = b
+
+    return out, removed
+
+def _sort_raw_blocks_for_use(blocks: List[RawBlock]) -> List[RawBlock]:
+    """
+    Selection should prefer higher priority KB texts (career-depth etc),
+    not the generation order of key_builder.
+
+    Stable: keeps original order among same priority.
+    """
+    indexed = list(enumerate(blocks))
+    indexed.sort(key=lambda it: (-it[1].priority, it[0]))
+    return [b for _, b in indexed]
 
 class ChartService:
     def __init__(self, *, ephemeris_path: str | None = None) -> None:
@@ -205,7 +240,8 @@ class ChartService:
                         "created_at": hit.created_at,
                     }
                 )
-
+            raw_blocks, removed_raw = _dedupe_raw_blocks(raw_blocks)
+            raw_blocks = _sort_raw_blocks_for_use(raw_blocks)
             used: List[RawBlock] = []
             total_chars = 0
             for b in raw_blocks:
@@ -216,8 +252,18 @@ class ChartService:
                 used.append(b)
                 total_chars += len(b.text)
 
+            used, removed_used = _dedupe_raw_blocks(used)
             final_text = "\n\n".join(b.text for b in used)
-            final_meta = {"source": "raw.blocks", "mode": "concat_v0", "blocks_used": len(used), "budget": {"max_blocks": max_blocks, "max_chars": max_chars}}
+            final_meta = {
+                "source": "raw.blocks",
+                "mode": "concat_v0",
+                "blocks_used": len(used),
+                "budget": {"max_blocks": max_blocks, "max_chars": max_chars},
+                # 🔥 diagnostics marker
+                "dedupe_enabled": True,
+                "dedupe_removed_raw": removed_raw,
+                "dedupe_removed_used": removed_used,
+            }
 
             out[topic] = {
                 "topic_category": topic,
@@ -340,7 +386,8 @@ class ChartService:
                     )
                 )
                 hits_trace.append({"block_id": b.id, "key": hit.key, "knowledge_item_id": hit.id, "priority": hit.priority, "created_at": hit.created_at})
-
+            raw_blocks, removed_raw = _dedupe_raw_blocks(raw_blocks)
+            raw_blocks = _sort_raw_blocks_for_use(raw_blocks)
             used: List[RawBlock] = []
             total_chars = 0
             for b in raw_blocks:
@@ -351,8 +398,18 @@ class ChartService:
                 used.append(b)
                 total_chars += len(b.text)
 
+            used, removed_used = _dedupe_raw_blocks(used)
             final_text = "\n\n".join(b.text for b in used)
-            final_meta = {"source": "raw.blocks", "mode": "concat_v0", "blocks_used": len(used), "budget": {"max_blocks": max_blocks, "max_chars": max_chars}}
+            final_meta = {
+                "source": "raw.blocks",
+                "mode": "concat_v0",
+                "blocks_used": len(used),
+                "budget": {"max_blocks": max_blocks, "max_chars": max_chars},
+                # 🔥 diagnostics marker
+                "dedupe_enabled": True,
+                "dedupe_removed_raw": removed_raw,
+                "dedupe_removed_used": removed_used,
+            }
 
             out[topic] = {
                 "topic_category": topic,

@@ -270,6 +270,10 @@ def _build_debug_payload(
 
     return out
 
+# astroprocessor/app/routers/public_v2.py
+# REPLACE the whole function: async def _debug_keydiff_for_topics(...)
+# NOTE: keydiff must mirror KnowledgeRepo resolution:
+# topic-specific OR global (topic_category ''/NULL). Otherwise debug reports false "missing_nonempty".
 async def _debug_keydiff_for_topics(
     *,
     knowledge_session: AsyncSession,
@@ -282,8 +286,17 @@ async def _debug_keydiff_for_topics(
 ) -> dict[str, Any]:
     """
     Для debug=2:
-    - candidate_keys_missing_any: ключи, которых нет в DB вообще для (topic, locale*)
-    - candidate_keys_no_active_nonempty: ключи есть, но нет active+nonempty text
+
+    Считает coverage так же, как реально работает KnowledgeRepo:
+    ключ считается "покрытым", если существует active+nonempty запись
+    либо в topic-specific (topic_category == topic),
+    либо в global (topic_category == '' OR NULL).
+
+    candidate_keys_missing_any:
+      ключа нет ни в topic-specific, ни в global.
+
+    candidate_keys_no_active_nonempty:
+      ключ есть (topic/global), но нигде нет active+nonempty текста.
     """
 
     sampled_blocks = knowledge_blocks_dump[: max(1, int(max_blocks))]
@@ -293,7 +306,7 @@ async def _debug_keydiff_for_topics(
     for b in sampled_blocks:
         for k in (b.get("candidate_keys") or [])[:50]:
             ks = str(k)
-            if ks in seen:
+            if not ks or ks in seen:
                 continue
             seen.add(ks)
             keys.append(ks)
@@ -316,7 +329,7 @@ async def _debug_keydiff_for_topics(
     stmt = sql_text(
         """
         SELECT
-          topic_category AS topic,
+          COALESCE(topic_category, '') AS topic,
           key AS key,
           COUNT(*) AS rows_total,
           SUM(
@@ -326,33 +339,56 @@ async def _debug_keydiff_for_topics(
             END
           ) AS rows_active_nonempty
         FROM knowledge_items
-        WHERE topic_category IN :topics
-          AND key IN :keys
+        WHERE
+          key IN :keys
           AND (locale = :locale OR locale LIKE :locale || '-%')
-        GROUP BY topic_category, key
+          AND (topic_category IN :topics OR topic_category = '' OR topic_category IS NULL)
+        GROUP BY COALESCE(topic_category, ''), key
         """
     ).bindparams(
         bindparam("topics", expanding=True),
         bindparam("keys", expanding=True),
     )
 
-    rows = (await knowledge_session.execute(stmt, {"topics": topics, "keys": keys, "locale": locale})).mappings().all()
+    rows = (
+        await knowledge_session.execute(
+            stmt, {"topics": topics, "keys": keys, "locale": locale}
+        )
+    ).mappings().all()
 
-    # index: topic -> key -> stats
-    present: dict[str, dict[str, dict[str, int]]] = {t: {} for t in topics}
+    # Build maps:
+    # - per-topic stats
+    # - global stats (topic_category ''/NULL normalized to '')
+    present_by_topic: dict[str, dict[str, dict[str, int]]] = {t: {} for t in topics}
+    present_global: dict[str, dict[str, int]] = {}
+
     for r in rows:
-        t = str(r["topic"])
-        k = str(r["key"])
-        present.setdefault(t, {})[k] = {
+        t = str(r["topic"] or "").strip()
+        k = str(r["key"] or "").strip()
+        stats = {
             "rows_total": int(r["rows_total"] or 0),
             "rows_active_nonempty": int(r["rows_active_nonempty"] or 0),
         }
 
+        if t == "":
+            present_global[k] = stats
+        elif t in present_by_topic:
+            present_by_topic[t][k] = stats
+
+    def _has_any(topic: str, key: str) -> bool:
+        return key in present_by_topic.get(topic, {}) or key in present_global
+
+    def _has_active_nonempty(topic: str, key: str) -> bool:
+        t_stats = present_by_topic.get(topic, {}).get(key)
+        if t_stats and int(t_stats.get("rows_active_nonempty", 0)) > 0:
+            return True
+        g_stats = present_global.get(key)
+        return bool(g_stats and int(g_stats.get("rows_active_nonempty", 0)) > 0)
+
     out_topics: dict[str, Any] = {}
     for t in topics:
-        pmap = present.get(t, {}) or {}
-        missing_any = [k for k in keys if k not in pmap]
-        no_active_nonempty = [k for k in keys if (k in pmap and (pmap[k]["rows_active_nonempty"] <= 0))]
+        missing_any = [k for k in keys if not _has_any(t, k)]
+        no_active_nonempty = [k for k in keys if _has_any(t, k) and not _has_active_nonempty(t, k)]
 
         out_topics[t] = {
             "candidate_keys_total_unique": len(keys),

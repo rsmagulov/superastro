@@ -1565,6 +1565,76 @@ def _extract_aspects(natal_data: dict[str, Any]) -> list[dict[str, str]]:
 
     return out
 
+def _compute_aspects_fallback_from_longitudes(natal_data: dict[str, Any]) -> list[dict[str, str]]:
+    """
+    Fallback aspect computation when natal_data['aspects'] is empty.
+
+    Returns the same normalized shape as _extract_aspects():
+      [{"a":"sun","aspect":"square","b":"moon"}, ...]
+    """
+    planets = natal_data.get("planets") or {}
+    angles = natal_data.get("angles") or {}
+
+    def _lon(obj: Any) -> float | None:
+        if not isinstance(obj, dict):
+            return None
+        for k in ("lon", "longitude", "ecliptic_longitude", "abs_pos", "position"):
+            v = obj.get(k)
+            if isinstance(v, (int, float)):
+                return float(v)
+        return None
+
+    # Collect longitudes (planets + angles)
+    longs: dict[str, float] = {}
+    for p, v in planets.items():
+        if isinstance(p, str):
+            lv = _lon(v)
+            if lv is not None:
+                longs[_norm_planet(_norm_token(p))] = lv % 360.0
+
+    for a, v in angles.items():
+        if isinstance(a, str):
+            ak = _norm_token(a)
+            if ak in {"ascendant"}:
+                ak = "asc"
+            if ak in {"midheaven"}:
+                ak = "mc"
+            if ak in {"desc", "descendant", "dc"}:
+                ak = "dsc"
+            if ak in ANGLES:
+                lv = _lon(v)
+                if lv is not None:
+                    longs[ak] = lv % 360.0
+
+    if len(longs) < 2:
+        return []
+
+    # Major aspects with simple orbs (safe defaults)
+    aspect_defs: list[tuple[str, float, float]] = [
+        ("conjunction", 0.0, 6.0),
+        ("sextile", 60.0, 4.0),
+        ("square", 90.0, 5.0),
+        ("trine", 120.0, 5.0),
+        ("opposition", 180.0, 6.0),
+    ]
+
+    names = sorted(longs.keys())
+    out: list[dict[str, str]] = []
+
+    def _delta(a: float, b: float) -> float:
+        d = abs(a - b) % 360.0
+        return d if d <= 180.0 else 360.0 - d
+
+    for i in range(len(names)):
+        for j in range(i + 1, len(names)):
+            n1, n2 = names[i], names[j]
+            d = _delta(longs[n1], longs[n2])
+            for asp_name, exact, orb in aspect_defs:
+                if abs(d - exact) <= orb:
+                    out.append({"a": n1, "aspect": asp_name, "b": n2})
+                    break
+
+    return out
 
 def _extract_aspect_configs(natal_data: dict[str, Any]) -> list[str]:
     raw = natal_data.get("aspect_configurations") or natal_data.get("aspect_configs") or natal_data.get("configs") or []
@@ -1644,6 +1714,8 @@ def build_knowledge_key_blocks(
     aspects: list[dict[str, str]] = []
     if include_aspects and (not unknown_time) and profile.include_aspects:
         aspects = _extract_aspects(natal_data)
+        if not aspects:
+            aspects = _compute_aspects_fallback_from_longitudes(natal_data)
 
     # 0) topic generic fallback as first block
     if tc is not None:
@@ -1751,8 +1823,8 @@ def build_knowledge_key_blocks(
                     id=f"angle:{a}:any",
                     candidate_keys=_dedup_keep_order(
                         [
-                            f"{tone_namespace}.angle.{a}.sign.any",
-                            f"{tone_namespace}.angle.{a}",
+                            f"{tone_namespace}.angle.{a}",           # ✅ сборочный ключ первым (natal.angle.mc)
+                            f"{tone_namespace}.angle.{a}.sign.any",  # fallback если сборочного нет
                             f"{tone_namespace}.angle",
                             _global_generic_key(tone_namespace=tone_namespace),
                         ]
@@ -1785,9 +1857,9 @@ def build_knowledge_key_blocks(
             # Always emit a minimal house-cusp ladder so DB can hit *.cusp.sign.any seeds
             skeleton_cusp_keys = _dedup_keep_order(
                 [
-                    f"{tone_namespace}.house.{h}.cusp.sign.any",
+                    f"{tone_namespace}.house.{h}",                # ✅ сборочный ключ первым (natal.house.10)
+                    f"{tone_namespace}.house.{h}.cusp.sign.any",  # sign-any fallback
                     f"{tone_namespace}.house.{h}.cusp",
-                    f"{tone_namespace}.house.{h}",
                     f"{tone_namespace}.house.cusp.core",
                     f"{tone_namespace}.house.boundary",
                     f"{tone_namespace}.house",

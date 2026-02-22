@@ -341,6 +341,7 @@ C:\Projects\superastro
 |   |   |   test_e2e_v2_debug2_hits_include_planet_groups_present.py
 |   |   |   test_e2e_v2_debug2_hits_include_sign_present.py
 |   |   |   test_e2e_v2_debug_runtime_candidate_keys_growth.py
+|   |   |   test_e2e_v2_debug_runtime_no_natal_generic_in_used_career.py
 |   |   |   test_e2e_v2_interpret_prefers_topic_generic_over_global_generic.py
 |   |   |   test_e2e_v2_interpret_topic_generic_fallbacks.py
 |   |   |   test_error_contract_404.py
@@ -391,6 +392,7 @@ C:\Projects\superastro
 |   |           test_e2e_v2_debug2_hits_include_planet_groups_present.cpython-312-pytest-9.0.2.pyc
 |   |           test_e2e_v2_debug2_hits_include_sign_present.cpython-312-pytest-9.0.2.pyc
 |   |           test_e2e_v2_debug_runtime_candidate_keys_growth.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_debug_runtime_no_natal_generic_in_used_career.cpython-312-pytest-9.0.2.pyc
 |   |           test_e2e_v2_interpret_prefers_topic_generic_over_global_generic.cpython-312-pytest-9.0.2.pyc
 |   |           test_e2e_v2_interpret_topic_generic_fallbacks.cpython-312-pytest-9.0.2.pyc
 |   |           test_error_contract_404.cpython-312-pytest-9.0.2.pyc
@@ -435,6 +437,7 @@ C:\Projects\superastro
 |   |           
 |   \---tools
 |       |   capture_cli_stdout.py
+|       |   check_kb_coverage.ps1
 |       |   import_jsonl_items.py
 |       |   kb.ps1
 |       |   make_keybuilder_clones.py
@@ -524,21 +527,49 @@ C:\Projects\superastro
 |       |           
 |       +---seed
 |       |   |   ev1_seed_any_ru.jsonl
+|       |   |   generate_angle_sign_scaffolds_global.py
+|       |   |   generate_aspect_planet_pair_scaffolds_global.py
+|       |   |   generate_aspect_scaffolds_global.py
+|       |   |   generate_elements_polarity_modality_exact_global.py
+|       |   |   generate_elements_polarity_modality_scaffolds_global.py
+|       |   |   generate_house_cusp_sign_scaffolds_global.py
+|       |   |   generate_house_planet_presence_global.py
+|       |   |   generate_house_ruler_aspect_scaffolds_global.py
+|       |   |   generate_house_ruler_pos_scaffolds_global.py
+|       |   |   generate_house_ruler_scaffolds_global.py
+|       |   |   generate_outer_planets_sign_seed_global.py
+|       |   |   generate_personality_core_missing_planet_keys_global.py
 |       |   |   generate_planet_groups_seed_all_topics.py
+|       |   |   generate_planet_scaffolds_global.py
+|       |   |   generate_planet_sign_house_scaffolds_global.py
 |       |   |   generate_sign_present_seed_all_topics.py
 |       |   |   load_seed_jsonl.py
 |       |   |   load_seed_jsonl_upsert.py
 |       |   |   seed_angles_upsert.sql
+|       |   |   seed_angle_sign_scaffolds_global.sql
+|       |   |   seed_aspect_planet_pair_scaffolds_global.sql
+|       |   |   seed_aspect_scaffolds_global.sql
+|       |   |   seed_elements_polarity_modality_exact_global.sql
+|       |   |   seed_elements_polarity_modality_scaffolds_global.sql
 |       |   |   seed_generic_all_topics.sql
 |       |   |   seed_groups_and_sign_present_min.sql
+|       |   |   seed_house_cusp_sign_scaffolds_global.sql
+|       |   |   seed_house_planet_presence_global.sql
 |       |   |   seed_house_rulers.py
 |       |   |   seed_house_ruler_aspects_cleanup.sql
 |       |   |   seed_house_ruler_aspects_scaffold.sql
+|       |   |   seed_house_ruler_aspect_scaffolds_global.sql
+|       |   |   seed_house_ruler_pos_scaffolds_global.sql
+|       |   |   seed_house_ruler_scaffolds_global.sql
 |       |   |   seed_knowledge_84.jsonl
 |       |   |   seed_love_intimacy_generic_fixes.sql
+|       |   |   seed_outer_planets_sign_global.sql
 |       |   |   seed_personality_core_generic.sql
+|       |   |   seed_personality_core_missing_planet_keys_global.sql
 |       |   |   seed_planet_groups_all_topics.sql
+|       |   |   seed_planet_scaffolds_global.sql
 |       |   |   seed_planet_sign_any_topics.sql
+|       |   |   seed_planet_sign_house_scaffolds_global.sql
 |       |   |   seed_sign_present_all_topics.sql
 |       |   |   seed_topic_generic_all_topics.sql
 |       |   |   

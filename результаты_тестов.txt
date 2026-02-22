@@ -1,0 +1,155 @@
+(venv) PS C:\Projects\superastro\astroprocessor> pwsh -File .\tools\check_kb_coverage.ps1 -MaxBlocksList "30,50,80"
+
+================================================================================
+KB Coverage Check
+================================================================================
+RepoRoot:    C:\Projects\superastro\astroprocessor
+ImportRoot:  C:\Projects\superastro\astroprocessor
+DB:          C:\Projects\superastro\astroprocessor\data\knowledge.db
+Python:      python
+TOPIC_RU:    app.services.search_intent_builder
+Budgets:     30, 50, 80
+Topics:      ancestral_topics, career, creativity, emotional_world, how_others_see_me, karmic_tasks, love_intimacy, money, partnership_marriage, past_lives_symbolic, personality_core, psychology, purpose_path, self_esteem, strengths_weaknesses, talents
+
+================================================================================
+DB checks: empty texts / required fallbacks
+================================================================================
+OK   empty_text_ru = 0
+OK   natal.generic present (ru-RU, active, non-empty)
+
+================================================================================
+API checks per topic & budget
+================================================================================
+Criteria per topic+budget:
+  - used_natal_generic_count == 0
+  - candidate_keys_no_active_nonempty_count == 0
+
+Running budget max_blocks=30 -> http://127.0.0.1:8000/v2/interpret?locale=ru&debug=2&max_blocks=30
+Running budget max_blocks=50 -> http://127.0.0.1:8000/v2/interpret?locale=ru&debug=2&max_blocks=50
+Running budget max_blocks=80 -> http://127.0.0.1:8000/v2/interpret?locale=ru&debug=2&max_blocks=80
+
+================================================================================
+Summary (OK/FAIL per topic+budget)
+================================================================================
+
+max_blocks topic                   ok used_natal_generic missing_nonempty note
+---------- -----                   -- ------------------ ---------------- ----
+        30 personality_core     False                  0               16 missing_nonempty=16
+        50 personality_core     False                  0               16 missing_nonempty=16
+        80 personality_core     False                  0               16 missing_nonempty=16
+        30 ancestral_topics      True                  0                0
+        30 career                True                  0                0
+        30 creativity            True                  0                0
+        30 emotional_world       True                  0                0
+        30 how_others_see_me     True                  0                0
+        30 karmic_tasks          True                  0                0
+        30 love_intimacy         True                  0                0
+        30 money                 True                  0                0
+        30 partnership_marriage  True                  0                0
+        30 past_lives_symbolic   True                  0                0
+        30 psychology            True                  0                0
+        30 purpose_path          True                  0                0
+        30 self_esteem           True                  0                0
+        30 strengths_weaknesses  True                  0                0
+        30 talents               True                  0                0
+        50 ancestral_topics      True                  0                0
+        50 career                True                  0                0
+        50 creativity            True                  0                0
+        50 emotional_world       True                  0                0
+        50 how_others_see_me     True                  0                0
+        50 karmic_tasks          True                  0                0
+        50 love_intimacy         True                  0                0
+        50 money                 True                  0                0
+        50 partnership_marriage  True                  0                0
+        50 past_lives_symbolic   True                  0                0
+        50 psychology            True                  0                0
+        50 purpose_path          True                  0                0
+        50 self_esteem           True                  0                0
+        50 strengths_weaknesses  True                  0                0
+        50 talents               True                  0                0
+        80 ancestral_topics      True                  0                0
+        80 career                True                  0                0
+        80 creativity            True                  0                0
+        80 emotional_world       True                  0                0
+        80 how_others_see_me     True                  0                0
+        80 karmic_tasks          True                  0                0
+        80 love_intimacy         True                  0                0
+        80 money                 True                  0                0
+        80 partnership_marriage  True                  0                0
+        80 past_lives_symbolic   True                  0                0
+        80 psychology            True                  0                0
+        80 purpose_path          True                  0                0
+        80 self_esteem           True                  0                0
+        80 strengths_weaknesses  True                  0                0
+        80 talents               True                  0                0
+
+
+================================================================================
+FAILED details (samples)
+================================================================================
+
+--- topic=personality_core max_blocks=30 ---
+candidate_keys_no_active_nonempty_sample:
+  natal.planet.sun.sign.capricorn.house.any
+  natal.planet.sun.sign.any
+  natal.planet.sun
+  natal.planet.moon.sign.pisces.house.any
+  natal.planet.moon.sign.any
+  natal.planet.moon
+  natal.planet.mercury.sign.capricorn.house.11
+  natal.planet.mercury.sign.capricorn.house.any
+  natal.planet.mercury.sign.any
+  natal.planet.mercury
+  natal.planet.venus.sign.aquarius.house.any
+  natal.planet.venus.sign.any
+  natal.planet.venus
+  natal.planet.mars.sign.sagittarius.house.any
+  natal.planet.mars.sign.any
+  natal.planet.mars
+
+--- topic=personality_core max_blocks=50 ---
+candidate_keys_no_active_nonempty_sample:
+  natal.planet.sun.sign.capricorn.house.any
+  natal.planet.sun.sign.any
+  natal.planet.sun
+  natal.planet.moon.sign.pisces.house.any
+  natal.planet.moon.sign.any
+  natal.planet.moon
+  natal.planet.mercury.sign.capricorn.house.11
+  natal.planet.mercury.sign.capricorn.house.any
+  natal.planet.mercury.sign.any
+  natal.planet.mercury
+  natal.planet.venus.sign.aquarius.house.any
+  natal.planet.venus.sign.any
+  natal.planet.venus
+  natal.planet.mars.sign.sagittarius.house.any
+  natal.planet.mars.sign.any
+  natal.planet.mars
+
+--- topic=personality_core max_blocks=80 ---
+candidate_keys_no_active_nonempty_sample:
+  natal.planet.sun.sign.capricorn.house.any
+  natal.planet.sun.sign.any
+  natal.planet.sun
+  natal.planet.moon.sign.pisces.house.any
+  natal.planet.moon.sign.any
+  natal.planet.moon
+  natal.planet.mercury.sign.capricorn.house.11
+  natal.planet.mercury.sign.capricorn.house.any
+  natal.planet.mercury.sign.any
+  natal.planet.mercury
+  natal.planet.venus.sign.aquarius.house.any
+  natal.planet.venus.sign.any
+  natal.planet.venus
+  natal.planet.mars.sign.sagittarius.house.any
+  natal.planet.mars.sign.any
+  natal.planet.mars
+
+================================================================================
+Final
+================================================================================
+FAIL: Some checks failed. See output above.
+(venv) PS C:\Projects\superastro\astroprocessor> sqlite3 .\data\knowledge.db "SELECT key, COALESCE(topic_category,''), locale, LENGTH(text) FROM knowledge_items WHERE key='natal.elements.fire.count.any' AND locale='ru-RU' AND (topic_category='' OR topic_category IS NULL);"
+>> sqlite3 .\data\knowledge.db "SELECT key, COALESCE(topic_category,''), locale, LENGTH(text) FROM knowledge_items WHERE key='natal.planet.sun' AND locale='ru-RU' AND (topic_category='' OR topic_category IS NULL);"
+natal.elements.fire.count.any||ru-RU|56
+natal.planet.sun||ru-RU|67
