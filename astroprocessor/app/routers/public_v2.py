@@ -153,7 +153,8 @@ def _build_debug_payload(
     debug: int,
     max_blocks: int = 12,
     max_keys_per_block: int = 12,
-    max_hits: int = 30,
+    max_hits: int = 200,
+    max_filtered_sample: int = 200,
 ) -> dict[str, Any]:
     """
     debug=1 -> counts only
@@ -161,10 +162,15 @@ def _build_debug_payload(
       - global knowledge_blocks_sample (one topic)
       - per-topic knowledge_blocks_sample (each topic)
       - per-topic hits_sample / used_blocks_sample
+      - per-topic filtered_out_by_budget_sample (hits trimmed by budget)
+
+    Added counters:
+      - hits_sign_present_count / used_sign_present_count
+      - hits_planet_groups_count / used_planet_groups_count
+      - hits_natal_generic_count / used_natal_generic_count
     """
     out: dict[str, Any] = {"debug": int(debug), "topics": {}}
 
-    # global block stats (take from any topic core that has knowledge_blocks)
     any_core = next((cores_by_topic.get(t) for t in topics if isinstance(cores_by_topic.get(t), dict)), None) or {}
     kb_dump = any_core.get("knowledge_blocks") or []
     out["blocks_total"] = len(kb_dump)
@@ -180,23 +186,59 @@ def _build_debug_payload(
             for b in sampled
         ]
 
+    def _is_sign_present_key(k: Any) -> bool:
+        ks = str(k or "")
+        return ks.startswith("natal.sign.") and ks.endswith(".present")
+
+    def _is_planet_group_key(k: Any) -> bool:
+        ks = str(k or "")
+        return ks.startswith("natal.planets.group.")
+
+    def _is_natal_generic_key(k: Any) -> bool:
+        return str(k or "") == "natal.generic"
+
     for t in topics:
         core = cores_by_topic.get(str(t), {}) or {}
         trace = core.get("trace") or {}
-        hits = trace.get("hits") or []
-        raw_blocks_used = core.get("raw_blocks") or []
+
+        hits = trace.get("hits") or []  # pre-budget
+        raw_blocks_used = core.get("raw_blocks") or []  # post-budget
         kb = core.get("knowledge_blocks") or []
 
         found = len(hits)
         used = len(raw_blocks_used)
         blocks_total = len(kb) if isinstance(kb, list) else 0
 
+        used_block_ids = {str(b.get("block_id")) for b in raw_blocks_used if isinstance(b, dict)}
+        filtered_hits = [
+            h
+            for h in hits
+            if str((h or {}).get("block_id"))
+            and str((h or {}).get("block_id")) not in used_block_ids
+        ]
+
+        # HIT counters
+        hits_sign_present_count = sum(1 for h in hits if _is_sign_present_key((h or {}).get("key")))
+        hits_planet_groups_count = sum(1 for h in hits if _is_planet_group_key((h or {}).get("key")))
+        hits_natal_generic_count = sum(1 for h in hits if _is_natal_generic_key((h or {}).get("key")))
+
+        # USED counters
+        used_sign_present_count = sum(1 for b in raw_blocks_used if _is_sign_present_key((b or {}).get("key")))
+        used_planet_groups_count = sum(1 for b in raw_blocks_used if _is_planet_group_key((b or {}).get("key")))
+        used_natal_generic_count = sum(1 for b in raw_blocks_used if _is_natal_generic_key((b or {}).get("key")))
+
         topic_dbg: dict[str, Any] = {
             "blocks_total": blocks_total,
             "hits_found": found,
             "blocks_used": used,
-            "filtered_out_by_budget": max(0, found - used),
+            "filtered_out_by_budget": len(filtered_hits),
             "misses_no_hit": max(0, blocks_total - found),
+            "hits_sign_present_count": hits_sign_present_count,
+            "hits_planet_groups_count": hits_planet_groups_count,
+            "hits_natal_generic_count": hits_natal_generic_count,
+            "used_sign_present_count": used_sign_present_count,
+            "used_planet_groups_count": used_planet_groups_count,
+            "used_natal_generic_count": used_natal_generic_count,
         }
 
         if int(debug) >= 2 and isinstance(kb, list) and kb:
@@ -211,6 +253,18 @@ def _build_debug_payload(
             ]
             topic_dbg["hits_sample"] = hits[: max(1, int(max_hits))]
             topic_dbg["used_blocks_sample"] = raw_blocks_used[: max(1, int(max_hits))]
+
+            topic_dbg["filtered_out_by_budget_sample"] = [
+                {
+                    "block_id": fh.get("block_id"),
+                    "key": fh.get("key"),
+                    "knowledge_item_id": fh.get("knowledge_item_id"),
+                    "priority": fh.get("priority"),
+                    "created_at": fh.get("created_at"),
+                }
+                for fh in filtered_hits[: max(1, int(max_filtered_sample))]
+                if isinstance(fh, dict)
+            ]
 
         out["topics"][str(t)] = topic_dbg
 

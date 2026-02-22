@@ -249,6 +249,7 @@ C:\Projects\superastro
 |   |   |           meta_codec.cpython-312.pyc
 |   |   |           natal_data_codec.cpython-312.pyc
 |   |   |           place_codec.cpython-312.pyc
+|   |   |           search_intent_builder.cpython-312.pyc
 |   |   |           
 |   |   \---__pycache__
 |   |           db.cpython-312.pyc
@@ -337,6 +338,8 @@ C:\Projects\superastro
 |   |   |   test_admin_ui.py
 |   |   |   test_api_smoke.py
 |   |   |   test_contract_natal_data.py
+|   |   |   test_e2e_v2_debug2_hits_include_planet_groups_present.py
+|   |   |   test_e2e_v2_debug2_hits_include_sign_present.py
 |   |   |   test_e2e_v2_debug_runtime_candidate_keys_growth.py
 |   |   |   test_e2e_v2_interpret_prefers_topic_generic_over_global_generic.py
 |   |   |   test_e2e_v2_interpret_topic_generic_fallbacks.py
@@ -385,6 +388,8 @@ C:\Projects\superastro
 |   |           test_admin_ui.cpython-312-pytest-9.0.2.pyc
 |   |           test_api_smoke.cpython-312-pytest-9.0.2.pyc
 |   |           test_contract_natal_data.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_debug2_hits_include_planet_groups_present.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_debug2_hits_include_sign_present.cpython-312-pytest-9.0.2.pyc
 |   |           test_e2e_v2_debug_runtime_candidate_keys_growth.cpython-312-pytest-9.0.2.pyc
 |   |           test_e2e_v2_interpret_prefers_topic_generic_over_global_generic.cpython-312-pytest-9.0.2.pyc
 |   |           test_e2e_v2_interpret_topic_generic_fallbacks.cpython-312-pytest-9.0.2.pyc
@@ -518,20 +523,29 @@ C:\Projects\superastro
 |       |           seed_wellington_nz_1970_03_15_unknown.json
 |       |           
 |       +---seed
-|       |       ev1_seed_any_ru.jsonl
-|       |       load_seed_jsonl.py
-|       |       load_seed_jsonl_upsert.py
-|       |       seed_angles_upsert.sql
-|       |       seed_generic_all_topics.sql
-|       |       seed_house_rulers.py
-|       |       seed_house_ruler_aspects_cleanup.sql
-|       |       seed_house_ruler_aspects_scaffold.sql
-|       |       seed_knowledge_84.jsonl
-|       |       seed_love_intimacy_generic_fixes.sql
-|       |       seed_personality_core_generic.sql
-|       |       seed_planet_sign_any_topics.sql
-|       |       seed_topic_generic_all_topics.sql
-|       |       
+|       |   |   ev1_seed_any_ru.jsonl
+|       |   |   generate_planet_groups_seed_all_topics.py
+|       |   |   generate_sign_present_seed_all_topics.py
+|       |   |   load_seed_jsonl.py
+|       |   |   load_seed_jsonl_upsert.py
+|       |   |   seed_angles_upsert.sql
+|       |   |   seed_generic_all_topics.sql
+|       |   |   seed_groups_and_sign_present_min.sql
+|       |   |   seed_house_rulers.py
+|       |   |   seed_house_ruler_aspects_cleanup.sql
+|       |   |   seed_house_ruler_aspects_scaffold.sql
+|       |   |   seed_knowledge_84.jsonl
+|       |   |   seed_love_intimacy_generic_fixes.sql
+|       |   |   seed_personality_core_generic.sql
+|       |   |   seed_planet_groups_all_topics.sql
+|       |   |   seed_planet_sign_any_topics.sql
+|       |   |   seed_sign_present_all_topics.sql
+|       |   |   seed_topic_generic_all_topics.sql
+|       |   |   
+|       |   \---__pycache__
+|       |           generate_planet_groups_seed_all_topics.cpython-312.pyc
+|       |           generate_sign_present_seed_all_topics.cpython-312.pyc
+|       |           
 |       +---tests
 |       |       conftest.py
 |       |       regress_knowledge_pick.ps1
