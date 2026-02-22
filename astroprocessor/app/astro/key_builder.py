@@ -48,6 +48,32 @@ SIGNS: set[str] = {
     "pisces",
 }
 
+# --- common: planet-groups + sign.present ------------------------------------
+
+SIGN_ORDER: tuple[str, ...] = (
+    "aries",
+    "taurus",
+    "gemini",
+    "cancer",
+    "leo",
+    "virgo",
+    "libra",
+    "scorpio",
+    "sagittarius",
+    "capricorn",
+    "aquarius",
+    "pisces",
+)
+
+PERSONAL_PLANETS: tuple[str, ...] = ("sun", "moon", "mercury", "venus", "mars")
+
+PLANET_GROUPS: dict[str, tuple[str, ...]] = {
+    "luminaries": ("sun", "moon"),
+    "inner": ("mercury", "venus", "mars"),
+    "social": ("jupiter", "saturn"),
+    "outer": ("uranus", "neptune", "pluto"),
+}
+
 ANGLES: set[str] = {"asc", "mc", "dsc", "ic"}
 
 ASPECTS: set[str] = {
@@ -1060,7 +1086,125 @@ def _extract_angles(natal_data: dict[str, Any]) -> dict[str, str]:
 
     return out
 
+def _planet_groups_blocks(
+    planets: dict[str, dict[str, Any]],
+    *,
+    tc: Optional[str],
+    tone_namespace: str,
+) -> list["KeyBlock"]:
+    """
+    Common blocks: natal.planets.group.<name>.present (+ optional count buckets).
 
+    Order inside block:
+      - most specific: count bucket
+      - then present
+      - then topic generic (if tc)
+      - then global generic
+    """
+    blocks: list[KeyBlock] = []
+
+    for group_name, members in PLANET_GROUPS.items():
+        count = 0
+        for p in members:
+            v = planets.get(p) or {}
+            sign = _norm_token(v.get("sign"))
+            if sign in SIGNS:
+                count += 1
+
+        # bucket range: 0..len(members)
+        max_n = len(members)
+        if count < 0:
+            count = 0
+        if count > max_n:
+            count = max_n
+
+        keys: list[str] = [
+            f"{tone_namespace}.planets.group.{group_name}.count.{count}",
+            f"{tone_namespace}.planets.group.{group_name}.present",
+        ]
+        if tc is not None:
+            keys.append(_topic_generic_key(tone_namespace=tone_namespace, topic_category=tc))
+        keys.append(_global_generic_key(tone_namespace=tone_namespace))
+        keys = _dedup_keep_order(keys)
+
+        blocks.append(
+            KeyBlock(
+                id=f"planet_group_{group_name}",
+                candidate_keys=keys,
+                meta={
+                    "group": group_name,
+                    "members": list(members),
+                    "present_count": count,
+                },
+            )
+        )
+
+    return blocks
+
+
+def _sign_present_blocks(
+    *,
+    planets: dict[str, dict[str, Any]],
+    angles: dict[str, Any],          # values may be str (current extractor) or dict (tolerate)
+    houses_cusps: dict[int, Any],    # values may be str (current extractor) or dict (tolerate)
+    tc: Optional[str],
+    tone_namespace: str,
+) -> list["KeyBlock"]:
+    """
+    Common blocks: natal.sign.<sign>.present
+
+    A sign is 'present' if it appears in:
+      - personal planets (sun/moon/mercury/venus/mars)
+      - angles (asc/mc/dsc/ic) if known
+      - house cusps if known
+
+    NOTE: extractors in this repo normalize:
+      - angles -> dict[str, str]
+      - houses_cusps -> dict[int, str]
+    This function tolerates dict-shaped values too.
+    """
+    signs: set[str] = set()
+
+    # personal planets (dict values)
+    for p in PERSONAL_PLANETS:
+        v = planets.get(p) or {}
+        s = _norm_sign(v.get("sign"))
+        if s:
+            signs.add(s)
+
+    # angles (usually str values)
+    for a in ("asc", "mc", "dsc", "ic"):
+        raw = angles.get(a)
+        s = _norm_sign(raw)
+        if s:
+            signs.add(s)
+
+    # house cusps (usually str values)
+    for h in range(1, 13):
+        raw = houses_cusps.get(h)
+        s = _norm_sign(raw)
+        if s:
+            signs.add(s)
+
+    ordered_signs = [s for s in SIGN_ORDER if s in signs]
+
+    blocks: list[KeyBlock] = []
+    for s in ordered_signs:
+        keys: list[str] = [f"{tone_namespace}.sign.{s}.present"]
+        if tc is not None:
+            keys.append(_topic_generic_key(tone_namespace=tone_namespace, topic_category=tc))
+        keys.append(_global_generic_key(tone_namespace=tone_namespace))
+        keys = _dedup_keep_order(keys)
+
+        blocks.append(
+            KeyBlock(
+                id=f"sign_present_{s}",
+                candidate_keys=keys,
+                meta={"sign": s},
+            )
+        )
+
+    return blocks
 
 
 def _extract_houses_cusps(natal_data: dict[str, Any]) -> dict[int, str]:
@@ -1536,6 +1680,7 @@ def build_knowledge_key_blocks(
             )
         )
 
+    
     # 1) planets (topic focus first; optionally include_all_planets)
     ordered = _ordered_planets(
         planets,
@@ -1563,9 +1708,34 @@ def build_knowledge_key_blocks(
         # This preserves legacy behavior for core planets, but avoids doubling every planet.
         _append_unique_block(blocks, KeyBlock(id=blk.id, candidate_keys=blk_keys, meta=blk.meta))
 
-        if p in set(planets_order):
-            _append_unique_block(blocks, KeyBlock(id=f"{p}_core", candidate_keys=blk_keys, meta=blk.meta))
+        # Core aliases:
+        # - if include_all_planets=True -> alias every emitted planet (tests expect jupiter_core)
+        # - else -> alias only baseline planets_order (sun/moon/mercury/venus/mars)
+        if include_all_planets or (p in set(planets_order)):
+            _append_unique_block(
+                blocks,
+                KeyBlock(id=f"{p}_core", candidate_keys=blk_keys, meta=blk.meta),
+                dedupe_by_keys=False,  # важно: иначе alias выкидывается как дубль planet:<p>
+            )
 
+    # common blocks (all topics): planet-groups + sign.present
+    blocks.extend(
+        _planet_groups_blocks(
+            planets,
+            tc=tc,
+            tone_namespace=tone_namespace,
+        )
+    )
+
+    blocks.extend(
+        _sign_present_blocks(
+            planets=planets,
+            angles=angles,
+            houses_cusps=houses_cusps,
+            tc=tc,
+            tone_namespace=tone_namespace,
+        )
+    )
     
     # 2) angles (works even if sign missing)
     if include_angles:

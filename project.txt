@@ -1,4 +1,3 @@
-
 C:\Projects\superastro
 |   .gitattributes
 |   .gitignore
@@ -528,6 +527,7 @@ C:\Projects\superastro
 |       |       seed_house_ruler_aspects_cleanup.sql
 |       |       seed_house_ruler_aspects_scaffold.sql
 |       |       seed_knowledge_84.jsonl
+|       |       seed_love_intimacy_generic_fixes.sql
 |       |       seed_personality_core_generic.sql
 |       |       seed_planet_sign_any_topics.sql
 |       |       seed_topic_generic_all_topics.sql

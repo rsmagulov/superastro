@@ -1,6 +1,6 @@
 # astroprocessor/app/astro/kerykeion_adapter.py
 from __future__ import annotations
-
+import json as _json
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
@@ -44,14 +44,17 @@ class KerykeionAdapter:
             # Prefer quick check via json() (works in your probe)
             try:
                 raw = getattr(subj, "json", None)
-                if callable(raw):
-                    import json as _json
-
-                    parsed = _json.loads(raw())
-                    if isinstance(parsed, dict):
-                        # aspects may be stored under these keys depending on version
-                        if parsed.get("aspects") or parsed.get("aspects_list"):
-                            return True
+                # raw is a callable that returns JSON string (legacy pydantic) OR we can call v2 method directly
+                model_dump_json = getattr(subj, "model_dump_json", None)
+                if callable(model_dump_json):
+                    parsed = _json.loads(model_dump_json())
+                else:
+                    json_fn = getattr(subj, "json", None)
+                    if callable(json_fn):
+                        parsed = _json.loads(json_fn())
+                    else:
+                        # last resort: if obj already a dict-like
+                        parsed = subj
             except Exception:
                 pass
 

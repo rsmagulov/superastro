@@ -22,7 +22,30 @@ def _try_set_swisseph_path(ephemeris_path: str | None) -> None:
         return
 
 
+def _import_kerykeion_subject_factory_class():
+    """
+    Prefer the new kerykeion API:
+      AstrologicalSubjectFactory.from_birth_data(...)
+    """
+    try:
+        from kerykeion import AstrologicalSubjectFactory  # type: ignore
+
+        return AstrologicalSubjectFactory
+    except Exception:
+        pass
+
+    try:
+        from kerykeion.AstrologicalSubjectFactory import AstrologicalSubjectFactory  # type: ignore
+
+        return AstrologicalSubjectFactory
+    except Exception:
+        return None
+
+
 def _import_kerykeion_subject_class():
+    """
+    Legacy fallback for older kerykeion versions.
+    """
     try:
         from kerykeion import AstrologicalSubject  # type: ignore
 
@@ -36,7 +59,7 @@ def _import_kerykeion_subject_class():
         return AstrologicalSubject
     except Exception as e:
         raise ImportError(
-            "Cannot import Kerykeion AstrologicalSubject. "
+            "Cannot import Kerykeion AstrologicalSubject / Factory. "
             "Make sure 'kerykeion' is installed and compatible."
         ) from e
 
@@ -99,9 +122,68 @@ class AstrologicalSubjectFactory:
         ephemeris_path: str | None = None,
     ) -> Any:
         _try_set_swisseph_path(ephemeris_path)
+
+        # 1) Prefer new kerykeion API (no deprecation warnings)
+        KFactory = _import_kerykeion_subject_factory_class()
+        if KFactory is not None:
+            last_err: Optional[Exception] = None
+
+            kwargs_variants: list[dict[str, Any]] = [
+                {
+                    "name": name,
+                    "year": year,
+                    "month": month,
+                    "day": day,
+                    "hour": hour,
+                    "minute": minute,
+                    "lat": lat,
+                    "lng": lon,
+                    "tz_str": tz_str,
+                    "houses_system_identifier": houses_system_identifier,
+                },
+                {
+                    "name": name,
+                    "year": year,
+                    "month": month,
+                    "day": day,
+                    "hour": hour,
+                    "minute": minute,
+                    "lat": lat,
+                    "lon": lon,
+                    "tz_str": tz_str,
+                    "houses_system_identifier": houses_system_identifier,
+                },
+                {
+                    "name": name,
+                    "year": year,
+                    "month": month,
+                    "day": day,
+                    "hour": hour,
+                    "minute": minute,
+                    "lat": lat,
+                    "lng": lon,
+                    "timezone": tz_str,
+                    "houses_system_identifier": houses_system_identifier,
+                },
+            ]
+
+            for kw in kwargs_variants:
+                try:
+                    from_birth = getattr(KFactory, "from_birth_data", None)
+                    if callable(from_birth):
+                        return from_birth(**kw)
+                except Exception as e:
+                    last_err = e
+                    continue
+
+            # If factory exists but all variants failed, fall back to legacy subject ctor
+            # (still better than crashing).
+            # keep last_err for diagnostics
+
+        # 2) Legacy fallback
         Subject = _import_kerykeion_subject_class()
 
-        kwargs_variants: list[dict[str, Any]] = [
+        kwargs_variants = [
             {
                 "name": name,
                 "year": year,
@@ -148,7 +230,7 @@ class AstrologicalSubjectFactory:
                 last_err = e
                 continue
 
-        raise RuntimeError(f"Failed to create AstrologicalSubject: {last_err}") from last_err
+        raise RuntimeError(f"Failed to create kerykeion subject (factory/legacy): {last_err}") from last_err
 
 
 class ChartDataFactory:
@@ -429,7 +511,8 @@ class ChartDataFactory:
         def _try_json_dump() -> dict[str, Any] | None:
             import json as _json
 
-            for meth in ("to_json", "json"):
+            # Prefer Pydantic v2
+            for meth in ("model_dump", "model_dump_json", "to_json", "json"):
                 fn = getattr(subject, meth, None)
                 if not callable(fn):
                     continue
@@ -438,16 +521,16 @@ class ChartDataFactory:
                     probe[f"{meth}_ok"] = True
                     probe[f"{meth}_type"] = str(type(raw))
 
+                    if isinstance(raw, dict):
+                        probe[f"{meth}_keys_sample"] = list(raw.keys())[:120]
+                        return raw
+
                     if isinstance(raw, str):
                         parsed = _json.loads(raw)
                         if isinstance(parsed, dict):
                             probe[f"{meth}_keys_sample"] = list(parsed.keys())[:120]
                             return parsed
                         return None
-
-                    if isinstance(raw, dict):
-                        probe[f"{meth}_keys_sample"] = list(raw.keys())[:120]
-                        return raw
                 except Exception as e:
                     probe[f"{meth}_ok"] = False
                     probe[f"{meth}_err"] = f"{type(e).__name__}: {e}"
