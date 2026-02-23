@@ -10,6 +10,12 @@ C:\Projects\superastro
 |   debug_ancestral_topics_ru_160_20260223_131010_after.json
 |   debug_ancestral_topics_ru_160_20260223_131010_before.json
 |   debug_ancestral_topics_ru_160_20260223_131010_mini_housecore.json
+|   debug_ancestral_topics_ru_160_20260223_145217_after.json
+|   debug_ancestral_topics_ru_160_20260223_145217_before.json
+|   debug_ancestral_topics_ru_160_20260223_145217_mini_topiccore.json
+|   debug_ancestral_topics_ru_160_20260223_145449_after.json
+|   debug_ancestral_topics_ru_160_20260223_145449_before.json
+|   debug_ancestral_topics_ru_160_20260223_145449_mini_topiccore.json
 |   debug_career.json
 |   debug_career_120.json
 |   debug_career_120_after_compress_big.json
@@ -40,18 +46,39 @@ C:\Projects\superastro
 |   debug_career_ru_160_20260223_130703_after.json
 |   debug_career_ru_160_20260223_130703_before.json
 |   debug_career_ru_160_20260223_130703_mini_housecore.json
+|   debug_career_ru_160_20260223_140630_after.json
+|   debug_career_ru_160_20260223_140630_before.json
+|   debug_career_ru_160_20260223_140630_mini_topiccore.json
+|   debug_career_ru_160_20260223_141054_after.json
+|   debug_career_ru_160_20260223_141054_before.json
+|   debug_career_ru_160_20260223_141054_mini_topiccore.json
+|   debug_career_ru_160_20260223_141229_after.json
+|   debug_career_ru_160_20260223_141229_before.json
+|   debug_career_ru_160_20260223_141229_mini_topiccore.json
 |   debug_creativity_ru_160_20260223_125034_after.json
 |   debug_creativity_ru_160_20260223_125034_before.json
 |   debug_creativity_ru_160_20260223_125034_mini_focus.json
 |   debug_creativity_ru_160_20260223_130908_after.json
 |   debug_creativity_ru_160_20260223_130908_before.json
 |   debug_creativity_ru_160_20260223_130908_mini_housecore.json
+|   debug_creativity_ru_160_20260223_143001_after.json
+|   debug_creativity_ru_160_20260223_143001_before.json
+|   debug_creativity_ru_160_20260223_143001_mini_topiccore.json
+|   debug_creativity_ru_160_20260223_143137_after.json
+|   debug_creativity_ru_160_20260223_143137_before.json
+|   debug_creativity_ru_160_20260223_143137_mini_topiccore.json
 |   debug_emotional_world_ru_160_20260223_125049_after.json
 |   debug_emotional_world_ru_160_20260223_125049_before.json
 |   debug_emotional_world_ru_160_20260223_125049_mini_focus.json
 |   debug_emotional_world_ru_160_20260223_130809_after.json
 |   debug_emotional_world_ru_160_20260223_130809_before.json
 |   debug_emotional_world_ru_160_20260223_130809_mini_housecore.json
+|   debug_emotional_world_ru_160_20260223_142801_after.json
+|   debug_emotional_world_ru_160_20260223_142801_before.json
+|   debug_emotional_world_ru_160_20260223_142801_mini_topiccore.json
+|   debug_emotional_world_ru_160_20260223_142933_after.json
+|   debug_emotional_world_ru_160_20260223_142933_before.json
+|   debug_emotional_world_ru_160_20260223_142933_mini_topiccore.json
 |   debug_how_others_see_me_ru_160_20260223_125101_after.json
 |   debug_how_others_see_me_ru_160_20260223_125101_before.json
 |   debug_how_others_see_me_ru_160_20260223_125101_mini_focus.json
@@ -65,12 +92,27 @@ C:\Projects\superastro
 |   debug_how_others_see_me_ru_160_20260223_131719_after.json
 |   debug_how_others_see_me_ru_160_20260223_131719_before.json
 |   debug_how_others_see_me_ru_160_20260223_131719_mini_housecore.json
+|   debug_how_others_see_me_ru_160_20260223_135928_after.json
+|   debug_how_others_see_me_ru_160_20260223_135928_before.json
+|   debug_how_others_see_me_ru_160_20260223_135928_mini_topiccore.json
+|   debug_how_others_see_me_ru_160_20260223_140018_after.json
+|   debug_how_others_see_me_ru_160_20260223_140018_before.json
+|   debug_how_others_see_me_ru_160_20260223_140018_mini_topiccore.json
+|   debug_how_others_see_me_ru_160_20260223_140221_after.json
+|   debug_how_others_see_me_ru_160_20260223_140221_before.json
+|   debug_how_others_see_me_ru_160_20260223_140221_mini_topiccore.json
 |   debug_karmic_tasks_ru_160_20260223_125112_after.json
 |   debug_karmic_tasks_ru_160_20260223_125112_before.json
 |   debug_karmic_tasks_ru_160_20260223_125112_mini_focus.json
 |   debug_karmic_tasks_ru_160_20260223_130954_after.json
 |   debug_karmic_tasks_ru_160_20260223_130954_before.json
 |   debug_karmic_tasks_ru_160_20260223_130954_mini_housecore.json
+|   debug_karmic_tasks_ru_160_20260223_144651_after.json
+|   debug_karmic_tasks_ru_160_20260223_144651_before.json
+|   debug_karmic_tasks_ru_160_20260223_144651_mini_topiccore.json
+|   debug_karmic_tasks_ru_160_20260223_144852_after.json
+|   debug_karmic_tasks_ru_160_20260223_144852_before.json
+|   debug_karmic_tasks_ru_160_20260223_144852_mini_topiccore.json
 |   debug_love_intimacy_ru_160_20260223_124935_after.json
 |   debug_love_intimacy_ru_160_20260223_124935_before.json
 |   debug_love_intimacy_ru_160_20260223_124935_mini_focus.json
@@ -80,6 +122,9 @@ C:\Projects\superastro
 |   debug_love_intimacy_ru_160_20260223_130726_after.json
 |   debug_love_intimacy_ru_160_20260223_130726_before.json
 |   debug_love_intimacy_ru_160_20260223_130726_mini_housecore.json
+|   debug_love_intimacy_ru_160_20260223_142606_after.json
+|   debug_love_intimacy_ru_160_20260223_142606_before.json
+|   debug_love_intimacy_ru_160_20260223_142606_mini_topiccore.json
 |   debug_money_ru_160_20260223_124955_after.json
 |   debug_money_ru_160_20260223_124955_before.json
 |   debug_money_ru_160_20260223_124955_mini_focus.json
@@ -92,6 +137,12 @@ C:\Projects\superastro
 |   debug_money_ru_160_20260223_130711_after.json
 |   debug_money_ru_160_20260223_130711_before.json
 |   debug_money_ru_160_20260223_130711_mini_housecore.json
+|   debug_money_ru_160_20260223_141445_after.json
+|   debug_money_ru_160_20260223_141445_before.json
+|   debug_money_ru_160_20260223_141445_mini_topiccore.json
+|   debug_money_ru_160_20260223_141727_after.json
+|   debug_money_ru_160_20260223_141727_before.json
+|   debug_money_ru_160_20260223_141727_mini_topiccore.json
 |   debug_one_house2_ruler_saturn_sign_any.json
 |   debug_one_house6_mercury_sign_any.json
 |   debug_partnership_marriage_ru_160_20260223_124946_after.json
@@ -106,36 +157,84 @@ C:\Projects\superastro
 |   debug_partnership_marriage_ru_160_20260223_130747_after.json
 |   debug_partnership_marriage_ru_160_20260223_130747_before.json
 |   debug_partnership_marriage_ru_160_20260223_130747_mini_housecore.json
+|   debug_partnership_marriage_ru_160_20260223_142259_after.json
+|   debug_partnership_marriage_ru_160_20260223_142259_before.json
+|   debug_partnership_marriage_ru_160_20260223_142259_mini_topiccore.json
+|   debug_partnership_marriage_ru_160_20260223_142536_after.json
+|   debug_partnership_marriage_ru_160_20260223_142536_before.json
+|   debug_partnership_marriage_ru_160_20260223_142536_mini_topiccore.json
 |   debug_past_lives_symbolic_ru_160_20260223_125159_after.json
 |   debug_past_lives_symbolic_ru_160_20260223_125159_before.json
 |   debug_past_lives_symbolic_ru_160_20260223_125159_mini_focus.json
 |   debug_past_lives_symbolic_ru_160_20260223_131003_after.json
 |   debug_past_lives_symbolic_ru_160_20260223_131003_before.json
 |   debug_past_lives_symbolic_ru_160_20260223_131003_mini_housecore.json
+|   debug_past_lives_symbolic_ru_160_20260223_144935_after.json
+|   debug_past_lives_symbolic_ru_160_20260223_144935_before.json
+|   debug_past_lives_symbolic_ru_160_20260223_144935_mini_topiccore.json
+|   debug_past_lives_symbolic_ru_160_20260223_145148_after.json
+|   debug_past_lives_symbolic_ru_160_20260223_145148_before.json
+|   debug_past_lives_symbolic_ru_160_20260223_145148_mini_topiccore.json
 |   debug_personality_core_ru_160_20260223_125210_after.json
 |   debug_personality_core_ru_160_20260223_125210_before.json
 |   debug_personality_core_ru_160_20260223_125210_mini_focus.json
 |   debug_personality_core_ru_160_20260223_130802_after.json
 |   debug_personality_core_ru_160_20260223_130802_before.json
 |   debug_personality_core_ru_160_20260223_130802_mini_housecore.json
+|   debug_personality_core_ru_160_20260223_135143_after.json
+|   debug_personality_core_ru_160_20260223_135143_before.json
+|   debug_personality_core_ru_160_20260223_135143_mini_topiccore.json
+|   debug_personality_core_ru_160_20260223_135545_after.json
+|   debug_personality_core_ru_160_20260223_135545_before.json
+|   debug_personality_core_ru_160_20260223_135545_mini_topiccore.json
+|   debug_personality_core_ru_160_20260223_135605_after.json
+|   debug_personality_core_ru_160_20260223_135605_before.json
+|   debug_personality_core_ru_160_20260223_135605_mini_topiccore.json
 |   debug_psychology_ru_160_20260223_125225_after.json
 |   debug_psychology_ru_160_20260223_125225_before.json
 |   debug_psychology_ru_160_20260223_125225_mini_focus.json
 |   debug_psychology_ru_160_20260223_130754_after.json
 |   debug_psychology_ru_160_20260223_130754_before.json
 |   debug_psychology_ru_160_20260223_130754_mini_housecore.json
+|   debug_psychology_ru_160_20260223_135708_after.json
+|   debug_psychology_ru_160_20260223_135708_before.json
+|   debug_psychology_ru_160_20260223_135708_mini_topiccore.json
+|   debug_psychology_ru_160_20260223_135900_after.json
+|   debug_psychology_ru_160_20260223_135900_before.json
+|   debug_psychology_ru_160_20260223_135900_mini_topiccore.json
 |   debug_purpose_path_ru_160_20260223_125238_after.json
 |   debug_purpose_path_ru_160_20260223_125238_before.json
 |   debug_purpose_path_ru_160_20260223_125238_mini_focus.json
 |   debug_purpose_path_ru_160_20260223_130919_after.json
 |   debug_purpose_path_ru_160_20260223_130919_before.json
 |   debug_purpose_path_ru_160_20260223_130919_mini_housecore.json
+|   debug_purpose_path_ru_160_20260223_143219_after.json
+|   debug_purpose_path_ru_160_20260223_143219_before.json
+|   debug_purpose_path_ru_160_20260223_143219_mini_topiccore.json
+|   debug_purpose_path_ru_160_20260223_144220_after.json
+|   debug_purpose_path_ru_160_20260223_144220_before.json
+|   debug_purpose_path_ru_160_20260223_144220_mini_topiccore.json
+|   debug_purpose_path_ru_160_20260223_144242_after.json
+|   debug_purpose_path_ru_160_20260223_144242_before.json
+|   debug_purpose_path_ru_160_20260223_144242_mini_topiccore.json
+|   debug_purpose_path_ru_160_20260223_144254_after.json
+|   debug_purpose_path_ru_160_20260223_144254_before.json
+|   debug_purpose_path_ru_160_20260223_144254_mini_topiccore.json
 |   debug_self_esteem_ru_160_20260223_125248_after.json
 |   debug_self_esteem_ru_160_20260223_125248_before.json
 |   debug_self_esteem_ru_160_20260223_125248_mini_focus.json
 |   debug_self_esteem_ru_160_20260223_130816_after.json
 |   debug_self_esteem_ru_160_20260223_130816_before.json
 |   debug_self_esteem_ru_160_20260223_130816_mini_housecore.json
+|   debug_self_esteem_ru_160_20260223_141925_after.json
+|   debug_self_esteem_ru_160_20260223_141925_before.json
+|   debug_self_esteem_ru_160_20260223_141925_mini_topiccore.json
+|   debug_self_esteem_ru_160_20260223_142021_after.json
+|   debug_self_esteem_ru_160_20260223_142021_before.json
+|   debug_self_esteem_ru_160_20260223_142021_mini_topiccore.json
+|   debug_self_esteem_ru_160_20260223_142220_after.json
+|   debug_self_esteem_ru_160_20260223_142220_before.json
+|   debug_self_esteem_ru_160_20260223_142220_mini_topiccore.json
 |   debug_strengths_weaknesses_ru_160_20260223_125259_after.json
 |   debug_strengths_weaknesses_ru_160_20260223_125259_before.json
 |   debug_strengths_weaknesses_ru_160_20260223_125259_mini_focus.json
@@ -149,12 +248,27 @@ C:\Projects\superastro
 |   debug_strengths_weaknesses_ru_160_20260223_131727_after.json
 |   debug_strengths_weaknesses_ru_160_20260223_131727_before.json
 |   debug_strengths_weaknesses_ru_160_20260223_131727_mini_housecore.json
+|   debug_strengths_weaknesses_ru_160_20260223_133447_after.json
+|   debug_strengths_weaknesses_ru_160_20260223_133447_before.json
+|   debug_strengths_weaknesses_ru_160_20260223_133447_mini_topiccore.json
+|   debug_strengths_weaknesses_ru_160_20260223_134116_after.json
+|   debug_strengths_weaknesses_ru_160_20260223_134116_before.json
+|   debug_strengths_weaknesses_ru_160_20260223_134116_mini_topiccore.json
+|   debug_strengths_weaknesses_ru_160_20260223_134359_after.json
+|   debug_strengths_weaknesses_ru_160_20260223_134359_before.json
+|   debug_strengths_weaknesses_ru_160_20260223_134359_mini_topiccore.json
 |   debug_talents_ru_160_20260223_125310_after.json
 |   debug_talents_ru_160_20260223_125310_before.json
 |   debug_talents_ru_160_20260223_125310_mini_focus.json
 |   debug_talents_ru_160_20260223_130900_after.json
 |   debug_talents_ru_160_20260223_130900_before.json
 |   debug_talents_ru_160_20260223_130900_mini_housecore.json
+|   debug_talents_ru_160_20260223_144340_after.json
+|   debug_talents_ru_160_20260223_144340_before.json
+|   debug_talents_ru_160_20260223_144340_mini_topiccore.json
+|   debug_talents_ru_160_20260223_144616_after.json
+|   debug_talents_ru_160_20260223_144616_before.json
+|   debug_talents_ru_160_20260223_144616_mini_topiccore.json
 |   ev1_keys_unique.txt
 |   kb_import_git.patch
 |   Opisanie_BZ.docx
@@ -163,6 +277,7 @@ C:\Projects\superastro
 |   readme.md
 |   run_focus_house_core.ps1
 |   run_focus_planet_aspect_group.ps1
+|   run_focus_topic_core.ps1
 |   tmp_check_career.sql
 |   результаты_тестов.txt
 |   
@@ -712,6 +827,8 @@ C:\Projects\superastro
 |       |   |   load_seed_jsonl_upsert.py
 |       |   |   seed_ancestral_topics_focus_planet_aspect_group_20260223_125010.sql
 |       |   |   seed_ancestral_topics_housecore_20260223_131010.sql
+|       |   |   seed_ancestral_topics_topiccore_20260223_145217.sql
+|       |   |   seed_ancestral_topics_topiccore_20260223_145449.sql
 |       |   |   seed_angles_upsert.sql
 |       |   |   seed_angle_sign_scaffolds_global.sql
 |       |   |   seed_aspect_planet_pair_scaffolds_global.sql
@@ -741,13 +858,19 @@ C:\Projects\superastro
 |       |   |   seed_career_quality_focus.sql
 |       |   |   seed_career_quality_focus_450.sql
 |       |   |   seed_career_quality_wave.sql
+|       |   |   seed_career_topiccore_20260223_140630.sql
+|       |   |   seed_career_topiccore_20260223_141229.sql
 |       |   |   seed_career_wave_next_candidates.sql
 |       |   |   seed_creativity_focus_planet_aspect_group_20260223_125034.sql
 |       |   |   seed_creativity_housecore_20260223_130908.sql
+|       |   |   seed_creativity_topiccore_20260223_143001.sql
+|       |   |   seed_creativity_topiccore_20260223_143137.sql
 |       |   |   seed_elements_polarity_modality_exact_global.sql
 |       |   |   seed_elements_polarity_modality_scaffolds_global.sql
 |       |   |   seed_emotional_world_focus_planet_aspect_group_20260223_125049.sql
 |       |   |   seed_emotional_world_housecore_20260223_130809.sql
+|       |   |   seed_emotional_world_topiccore_20260223_142801.sql
+|       |   |   seed_emotional_world_topiccore_20260223_142933.sql
 |       |   |   seed_generic_all_topics.sql
 |       |   |   seed_groups_and_sign_present_min.sql
 |       |   |   seed_house_cusp_sign_scaffolds_global.sql
@@ -762,45 +885,74 @@ C:\Projects\superastro
 |       |   |   seed_how_others_see_me_housecore_20260223_131206.sql
 |       |   |   seed_how_others_see_me_housecore_20260223_131643.sql
 |       |   |   seed_how_others_see_me_housecore_20260223_131719.sql
+|       |   |   seed_how_others_see_me_topiccore_20260223_135928.sql
+|       |   |   seed_how_others_see_me_topiccore_20260223_140018.sql
+|       |   |   seed_how_others_see_me_topiccore_20260223_140221.sql
 |       |   |   seed_karmic_tasks_focus_planet_aspect_group_20260223_125112.sql
 |       |   |   seed_karmic_tasks_housecore_20260223_130954.sql
+|       |   |   seed_karmic_tasks_topiccore_20260223_144651.sql
+|       |   |   seed_karmic_tasks_topiccore_20260223_144852.sql
 |       |   |   seed_knowledge_84.jsonl
 |       |   |   seed_love_intimacy_focus_planet_aspect_group_20260223_124935.sql
 |       |   |   seed_love_intimacy_focus_planet_aspect_group_20260223_125124.sql
 |       |   |   seed_love_intimacy_generic_fixes.sql
 |       |   |   seed_love_intimacy_housecore_20260223_130726.sql
+|       |   |   seed_love_intimacy_topiccore_20260223_142606.sql
 |       |   |   seed_money_focus_planet_aspect_group_20260223_124955.sql
 |       |   |   seed_money_focus_planet_aspect_group_20260223_125135.sql
 |       |   |   seed_money_housecore_20260223_130236.sql
 |       |   |   seed_money_housecore_20260223_130711.sql
+|       |   |   seed_money_topiccore_20260223_141445.sql
+|       |   |   seed_money_topiccore_20260223_141727.sql
 |       |   |   seed_outer_planets_sign_global.sql
 |       |   |   seed_partnership_marriage_focus_planet_aspect_group_20260223_124946.sql
 |       |   |   seed_partnership_marriage_focus_planet_aspect_group_20260223_125146.sql
 |       |   |   seed_partnership_marriage_housecore_20260223_130738.sql
 |       |   |   seed_partnership_marriage_housecore_20260223_130747.sql
+|       |   |   seed_partnership_marriage_topiccore_20260223_142259.sql
+|       |   |   seed_partnership_marriage_topiccore_20260223_142536.sql
 |       |   |   seed_past_lives_symbolic_focus_planet_aspect_group_20260223_125159.sql
 |       |   |   seed_past_lives_symbolic_housecore_20260223_131003.sql
+|       |   |   seed_past_lives_symbolic_topiccore_20260223_144935.sql
+|       |   |   seed_past_lives_symbolic_topiccore_20260223_145148.sql
 |       |   |   seed_personality_core_focus_planet_aspect_group_20260223_125210.sql
 |       |   |   seed_personality_core_generic.sql
 |       |   |   seed_personality_core_housecore_20260223_130802.sql
 |       |   |   seed_personality_core_missing_planet_keys_global.sql
+|       |   |   seed_personality_core_topiccore_20260223_135143.sql
+|       |   |   seed_personality_core_topiccore_20260223_135545.sql
+|       |   |   seed_personality_core_topiccore_20260223_135605.sql
 |       |   |   seed_planet_groups_all_topics.sql
 |       |   |   seed_planet_scaffolds_global.sql
 |       |   |   seed_planet_sign_any_topics.sql
 |       |   |   seed_planet_sign_house_scaffolds_global.sql
 |       |   |   seed_psychology_focus_planet_aspect_group_20260223_125225.sql
 |       |   |   seed_psychology_housecore_20260223_130754.sql
+|       |   |   seed_psychology_topiccore_20260223_135708.sql
+|       |   |   seed_psychology_topiccore_20260223_135900.sql
 |       |   |   seed_purpose_path_focus_planet_aspect_group_20260223_125238.sql
 |       |   |   seed_purpose_path_housecore_20260223_130919.sql
+|       |   |   seed_purpose_path_topiccore_20260223_143219.sql
+|       |   |   seed_purpose_path_topiccore_20260223_144220.sql
+|       |   |   seed_purpose_path_topiccore_20260223_144242.sql
+|       |   |   seed_purpose_path_topiccore_20260223_144254.sql
 |       |   |   seed_self_esteem_focus_planet_aspect_group_20260223_125248.sql
 |       |   |   seed_self_esteem_housecore_20260223_130816.sql
+|       |   |   seed_self_esteem_topiccore_20260223_141925.sql
+|       |   |   seed_self_esteem_topiccore_20260223_142021.sql
+|       |   |   seed_self_esteem_topiccore_20260223_142220.sql
 |       |   |   seed_sign_present_all_topics.sql
 |       |   |   seed_strengths_weaknesses_focus_planet_aspect_group_20260223_125259.sql
 |       |   |   seed_strengths_weaknesses_housecore_20260223_131157.sql
 |       |   |   seed_strengths_weaknesses_housecore_20260223_131616.sql
 |       |   |   seed_strengths_weaknesses_housecore_20260223_131727.sql
+|       |   |   seed_strengths_weaknesses_topiccore_20260223_133447.sql
+|       |   |   seed_strengths_weaknesses_topiccore_20260223_134116.sql
+|       |   |   seed_strengths_weaknesses_topiccore_20260223_134359.sql
 |       |   |   seed_talents_focus_planet_aspect_group_20260223_125310.sql
 |       |   |   seed_talents_housecore_20260223_130900.sql
+|       |   |   seed_talents_topiccore_20260223_144340.sql
+|       |   |   seed_talents_topiccore_20260223_144616.sql
 |       |   |   seed_topic_generic_all_topics.sql
 |       |   |   
 |       |   \---__pycache__
