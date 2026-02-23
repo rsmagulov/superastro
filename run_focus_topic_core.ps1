@@ -5,10 +5,13 @@
 # topic-core mini-json -> seed -> apply -> debug -> report
 # Standard: max_blocks=160, max_chars=100000, debug=2, locale=ru, one topic per run
 
-$ErrorActionPreference = "Stop"
-
 [CmdletBinding()]
 param(
+  [Parameter()][switch]$SaveResponse,
+  [Parameter()][switch]$OpenResponse,
+  [Parameter()][string]$ResponseDir = "C:\Projects\superastro\debug\responses",
+  [Parameter()][string]$ApiLocale = "ru",
+
   [string]$Root = "C:\Projects\superastro",
   [string]$ApiBase = "http://127.0.0.1:8000",
   [ValidateSet(
@@ -45,7 +48,29 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+function Save-FullResponseJson {
+  param(
+    [Parameter(Mandatory)]$Resp,
+    [Parameter(Mandatory)][string]$Phase
+  )
 
+  if (-not $SaveResponse) { return }
+
+  if (-not (Test-Path $ResponseDir)) {
+    New-Item -ItemType Directory -Path $ResponseDir | Out-Null
+  }
+
+  $respPath = Join-Path $ResponseDir ("resp_{0}_{1}_{2}.json" -f $Topic, $RunTag, $Phase)
+  $Resp | ConvertTo-Json -Depth 100 | Set-Content -Encoding UTF8 $respPath
+
+  if (-not (Test-Path $respPath) -or ((Get-Item $respPath).Length -lt 200)) {
+    throw "SaveResponse failed: $respPath missing or too small"
+  }
+
+  if ($OpenResponse -and $Phase -eq "after") {
+    notepad $respPath
+  }
+}
 function NowTag { Get-Date -Format "yyyyMMdd_HHmmss" }
 
 function Ensure-Path([string]$p) {
@@ -137,24 +162,62 @@ function Invoke-RunCleanup([string]$debugDir, [string]$seedDir, [string]$topic, 
 # rest of your script
 # ----------------------------
 function Normalize-Payload([pscustomobject]$payloadObj) {
-  if (-not $payloadObj.birth) { throw "Request JSON must contain 'birth' object." }
-  if (-not $payloadObj.topics) {
-    $payloadObj | Add-Member -NotePropertyName topics -NotePropertyValue @() -Force
+  if (-not $payloadObj) { throw "Request JSON is empty." }
+
+  $hasBirth = ($payloadObj.PSObject.Properties.Match('birth').Count -gt 0)
+  if (-not $hasBirth -or -not $payloadObj.birth) { throw "Request JSON must contain 'birth' object." }
+
+  $hasName = ($payloadObj.PSObject.Properties.Match('name').Count -gt 0)
+  if (-not $hasName -or -not $payloadObj.name) { $payloadObj | Add-Member -NotePropertyName name -NotePropertyValue "Test User" -Force }
+
+  # --- IMPORTANT: v2 expects topic_categories (NOT topics) ---
+  $hasTC = ($payloadObj.PSObject.Properties.Match('topic_categories').Count -gt 0)
+  if (-not $hasTC) {
+    $payloadObj | Add-Member -NotePropertyName topic_categories -NotePropertyValue @() -Force
   }
-  if (@($payloadObj.topics).Count -eq 0) { $payloadObj.topics = @($Topic) }
-  if ($payloadObj.topics -notcontains $Topic) { $payloadObj.topics = @($Topic) }
+
+  $tc = @()
+  if ($payloadObj.topic_categories) { $tc = @($payloadObj.topic_categories) }
+
+  if ($tc.Count -eq 0 -or $tc -notcontains $Topic) {
+    $payloadObj.topic_categories = @($Topic)
+  }
+
+  # Back-compat cleanup: if "topics" exists, keep it but it won't drive v2.
   return $payloadObj
 }
 
-function Invoke-Debug([string]$payloadJson, [string]$outPath) {
-  $uri = "$ApiBase/v2/interpret?locale=$Locale&debug=2&max_blocks=$MaxBlocks&max_chars=$MaxChars"
+function Invoke-Debug([string]$payloadJson, [string]$outPath, [string]$Phase) {
+  $uri = "$ApiBase/v2/interpret?locale=$ApiLocale&debug=2&max_blocks=$MaxBlocks&max_chars=$MaxChars"
   try {
-    Invoke-RestMethod -Method Post -Uri $uri -ContentType "application/json; charset=utf-8" -Body $payloadJson |
-      ConvertTo-Json -Depth 100 |
-      Set-Content -Encoding UTF8 $outPath
-  } catch {
-    throw "HTTP debug fetch failed: $($_.Exception.Message)"
+    $resp = Invoke-RestMethod -Method Post -Uri $uri -ContentType "application/json; charset=utf-8" -Body $payloadJson
+
+    Save-FullResponseJson -Resp $resp -Phase $Phase
+
+    $resp | ConvertTo-Json -Depth 100 | Set-Content -Encoding UTF8 $outPath
+  } 
+  catch {
+    $msg = $_.Exception.Message
+    $respText = $null
+
+    try {
+      $webResp = $_.Exception.Response
+      if ($webResp -and $webResp.GetResponseStream()) {
+        $reader = New-Object System.IO.StreamReader($webResp.GetResponseStream())
+        $respText = $reader.ReadToEnd()
+        $reader.Close()
+      }
+    } catch { }
+
+    if ($respText) {
+      Write-Host "HTTP error body:" -ForegroundColor Yellow
+      Write-Host $respText
+      throw "HTTP debug fetch failed: $msg"
+    }
+
+    throw "HTTP debug fetch failed: $msg"
   }
+
   if (-not (Test-Path $outPath)) { throw "Debug output was not written: $outPath" }
   if ((Get-Item $outPath).Length -lt 10) { throw "Debug output is too small (likely broken): $outPath" }
 }
@@ -166,7 +229,6 @@ function Load-UsedBlocks([string]$debugPath) {
 
 function Detect-ProfileFromUsed([object[]]$usedBlocks) {
   $keys = @($usedBlocks | ForEach-Object { $_.key })
-
   $hasAsc = $keys | Where-Object { $_ -match '^natal\.(angle\.asc(\.|$)|house\.1(\.|$))' }
   if (@($hasAsc).Count -gt 0) { return "asc_house1_core" }
 
@@ -253,6 +315,18 @@ function Build-DefaultFocusRegex([string]$topicName, [string]$profileOverride) {
 Ensure-Path $Root
 Set-Location $Root
 
+# --- DEFAULT REQUEST PATH (avoid 422 on empty payload) ---
+if ([string]::IsNullOrWhiteSpace($ReqPath)) {
+  $candidate1 = Join-Path $Root "astroprocessor\tools\requests\req_career.json"
+  $candidate2 = Join-Path $Root "astroprocessor\payload.json"
+
+  if (Test-Path $candidate1) { $ReqPath = $candidate1 }
+  elseif (Test-Path $candidate2) { $ReqPath = $candidate2 }
+  else { throw "ReqPath is empty and no default request file found. Checked: $candidate1 ; $candidate2" }
+}
+
+Write-Host "Using ReqPath -> $ReqPath"
+
 if ([string]::IsNullOrWhiteSpace($ReqPath)) {
   $ReqPath = Join-Path $Root "astroprocessor\tools\requests\req_general.json"
 }
@@ -304,10 +378,24 @@ $payloadJson = $payloadObj | ConvertTo-Json -Depth 100
 
 # --- Debug before ---
 Write-Host "1) Fetch debug (before) -> $DebugBefore" -ForegroundColor Yellow
-Invoke-Debug -payloadJson $payloadJson -outPath $DebugBefore
-
+Invoke-Debug -payloadJson $payloadJson -outPath $DebugBefore -Phase "before"
+$debugObj = Get-Content $DebugBefore -Raw | ConvertFrom-Json
+# actual topic returned by API (StrictMode-safe)
+if (-not $debugObj.meta -or -not $debugObj.meta.topics -or @($debugObj.meta.topics).Count -lt 1) {
+  throw "Debug JSON has no meta.topics[] (cannot determine actual topic)."
+}
+$actualTopic = $debugObj.meta.topics[0]
+Write-Host "API returned topic -> $actualTopic (requested: $Topic)" -ForegroundColor Yellow
 $usedBefore = Load-UsedBlocks -debugPath $DebugBefore
 Write-Host ("used_count(before) = {0}" -f @($usedBefore).Count) -ForegroundColor Green
+
+$topicsDbg = $debugObj.meta.debug.topics
+  $topicProp = $topicsDbg.PSObject.Properties.Match($actualTopic)
+  if ($topicProp.Count -eq 0) {
+    $avail = ($topicsDbg.PSObject.Properties.Name) -join ", "
+    throw "Debug JSON has no topic '$actualTopic' under meta.debug.topics. Available: $avail"
+  }
+  $used = $topicProp[0].Value.used_blocks_sample
 
 # Auto profile detection / focus regex (based on real used keys)
 if ([string]::IsNullOrWhiteSpace($FocusRegex)) {
@@ -362,7 +450,7 @@ if ((Get-Item $MiniJson).Length -lt 10) { throw "Mini JSON too small: $MiniJson"
 
 # Seed generation
 Write-Host "`n3) Generate seed SQL -> $SeedSql" -ForegroundColor Yellow
-& $PythonExe $GeneratorPath --in $DebugBefore --out $SeedSql --topic $Topic --locale $Locale --max-len $SeedMaxLen --max-keys $SeedMaxKeys --priority $SeedPriority
+& $PythonExe $GeneratorPath --from-mini $MiniJson --out $SeedSql --topic $Topic --locale $Locale --max-len $SeedMaxLen --max-keys $SeedMaxKeys --priority $SeedPriority
 if ($LASTEXITCODE -ne 0) { throw "Seed generator failed (exit=$LASTEXITCODE)." }
 if (-not (Test-Path $SeedSql)) { throw "Seed SQL not created: $SeedSql" }
 if ((Get-Item $SeedSql).Length -lt 10) { throw "Seed SQL too small: $SeedSql" }
@@ -376,10 +464,44 @@ $cnt = & $SqliteExe $DbPath "SELECT COUNT(1) FROM knowledge_items WHERE topic_ca
 if ($LASTEXITCODE -ne 0) { throw "sqlite3 verify query failed (exit=$LASTEXITCODE)." }
 if ([int]$cnt -le 0) { throw "sqlite3 verification failed: no active priority=140 rows for topic=$Topic locale=$Locale." }
 
+# verify: updated_at set for seed keys (fail-fast)
+$seedKeys = (Select-String $SeedSql -Pattern "VALUES\('([^']+)'" | ForEach-Object { $_.Matches[0].Groups[1].Value })
+if (-not $seedKeys -or $seedKeys.Count -lt 1) { throw "Seed verify failed: no keys parsed from $SeedSql" }
+
+$inList = ($seedKeys | ForEach-Object { "'" + ($_ -replace "'","''") + "'" }) -join ","
+$verifySql = @"
+SELECT
+  COUNT(*) AS matched,
+  SUM(CASE WHEN updated_at IS NOT NULL THEN 1 ELSE 0 END) AS with_updated_at
+FROM knowledge_items
+WHERE topic_category='$Topic' AND locale='$Locale' AND priority=$SeedPriority AND is_active=1
+  AND key IN ($inList);
+"@
+
+# machine-parsable output: "matched|with_updated_at"
+$line = sqlite3 -noheader -batch -separator "|" $DbPath $verifySql
+Write-Host "verify(raw) = $line"
+
+$parts = $line -split "\|"
+if ($parts.Count -lt 2) { throw "Seed verify failed: cannot parse sqlite output: '$line'" }
+
+$matched = [int]$parts[0]
+$withUpdated = [int]$parts[1]
+$expected = [int]$seedKeys.Count
+
+Write-Host ("matched={0} with_updated_at={1} expected={2}" -f $matched, $withUpdated, $expected)
+
+if ($matched -ne $expected) {
+  throw "Seed verify failed: expected matched=$expected, got matched=$matched (topic=$Topic)"
+}
+if ($withUpdated -ne $expected) {
+  throw "Seed verify failed: expected with_updated_at=$expected, got with_updated_at=$withUpdated (topic=$Topic)"
+}
+
 # Debug after
 Write-Host "`n5) Fetch debug (after) -> $DebugAfter" -ForegroundColor Yellow
-Invoke-Debug -payloadJson $payloadJson -outPath $DebugAfter
-
+Invoke-Debug -payloadJson $payloadJson -outPath $DebugAfter -Phase "after"
+$debugObjAfter = Get-Content $DebugAfter -Raw | ConvertFrom-Json
 $usedAfter = Load-UsedBlocks -debugPath $DebugAfter
 Write-Host ("used_count(after) = {0}" -f @($usedAfter).Count) -ForegroundColor Green
 

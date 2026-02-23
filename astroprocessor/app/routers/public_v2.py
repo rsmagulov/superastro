@@ -99,6 +99,16 @@ def _resolve_topics(req: InterpretV2Request) -> list[str]:
 
     return ["personality_core"]
 
+def _dedupe_keep_order(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for it in items:
+        k = it.strip()
+        if not k or k in seen:
+            continue
+        seen.add(k)
+        out.append(it)
+    return out
 
 def _split_to_messages(text: str, limit: int = SAFE_LIMIT) -> list[str]:
     text = (text or "").strip()
@@ -864,6 +874,10 @@ async def interpret_v2(
             text = "\n\n".join(parts).strip()
         if int(debug) > 0:
             meta["debug_runtime"]["topics"][str(t)]["after_fallback_text_len"] = len((text or "").strip())
+
+        paras = [p.strip() for p in (text or "").split("\n\n") if p.strip()]
+        paras = _dedupe_keep_order(paras)
+        text = "\n\n".join(paras).strip()
 
         messages = _split_to_messages(text)
         if int(debug) > 0:

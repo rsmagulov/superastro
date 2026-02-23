@@ -97,13 +97,171 @@ SIGN_TRAITS_RU: dict[str, dict[str, str]] = {
 
 @dataclass(frozen=True)
 class Opt:
-    in_path: Path
+    in_path: Path | None
+    mini_path: Path | None
+    source_path: Path  # for header/debug only
     out_path: Path
     topic: str
     locale: str
     max_len: int
     max_keys: int
     priority: int
+
+
+def _load_used_blocks_from_debug(path: Path, topic: str) -> list[dict[str, Any]]:
+    raw = json.loads(path.read_text(encoding="utf-8-sig"))
+    try:
+        return list(raw["meta"]["debug"]["topics"][topic]["used_blocks_sample"])
+    except Exception as e:
+        raise RuntimeError(f"Cannot find meta.debug.topics.{topic}.used_blocks_sample in {path}") from e
+
+
+def _load_used_blocks_from_mini(path: Path) -> list[dict[str, Any]]:
+    raw = json.loads(path.read_text(encoding="utf-8-sig"))
+
+    KEY_FIELDS = ("key", "k", "id", "name", "block_key", "kb_key")
+
+    def is_kb_key(s: Any) -> bool:
+        if not isinstance(s, str) or not s:
+            return False
+        # very permissive: "natal.house.1..." etc
+        return "." in s and len(s) >= 6 and not s.startswith("{") and not s.startswith("[")
+
+    def extract_from_list(lst: list[Any]) -> list[dict[str, Any]] | None:
+        if not isinstance(lst, list):
+            return None
+        out: list[dict[str, Any]] = []
+        for it in lst:
+            if isinstance(it, str) and is_kb_key(it):
+                out.append({"key": it, "text": ""})
+                continue
+            if isinstance(it, dict):
+                key = None
+                for f in KEY_FIELDS:
+                    if isinstance(it.get(f), str) and it.get(f):
+                        key = it.get(f)
+                        break
+                if not key or not is_kb_key(key):
+                    continue
+                text = it.get("text", "")
+                if text is None:
+                    text = ""
+                if not isinstance(text, str):
+                    text = str(text)
+                out.append({"key": key, "text": text})
+        return out if out else None
+
+    def extract_from_map(d: dict[str, Any]) -> list[dict[str, Any]] | None:
+        if not isinstance(d, dict) or not d:
+            return None
+        keys = list(d.keys())
+        kb_keys = [k for k in keys if is_kb_key(k)]
+        # accept only "map-like" dicts (avoid generic meta dicts)
+        if len(kb_keys) < 5:
+            return None
+        if len(kb_keys) / max(len(keys), 1) < 0.6:
+            return None
+
+        out: list[dict[str, Any]] = []
+        for k in kb_keys:
+            v = d.get(k)
+            if isinstance(v, str):
+                out.append({"key": k, "text": v})
+            elif isinstance(v, dict):
+                text = v.get("text", "")
+                if text is None:
+                    text = ""
+                if not isinstance(text, str):
+                    text = str(text)
+                out.append({"key": k, "text": text})
+            else:
+                out.append({"key": k, "text": ""})
+        return out if out else None
+
+    # Candidate search with scoring
+    best: tuple[int, str, list[dict[str, Any]]] | None = None
+
+    def consider(candidate: list[dict[str, Any]] | None, path_s: str, bonus: int = 0) -> None:
+        nonlocal best
+        if not candidate:
+            return
+        score = len(candidate) + bonus
+        if best is None or score > best[0]:
+            best = (score, path_s, candidate)
+
+    def walk(obj: Any, path_stack: list[str]) -> None:
+        # Prefer named locations
+        if isinstance(obj, dict):
+            for k in ("focus", "mini_focus", "focus_keys", "used_keys", "used", "keys"):
+                v = obj.get(k)
+                if isinstance(v, list):
+                    consider(extract_from_list(v), ".".join(path_stack + [k]), bonus=1000)
+                if isinstance(v, dict):
+                    consider(extract_from_map(v), ".".join(path_stack + [k]), bonus=1000)
+
+            # Generic dict-map candidate
+            consider(extract_from_map(obj), ".".join(path_stack) or "<root>", bonus=0)
+
+            for k, v in obj.items():
+                walk(v, path_stack + [str(k)])
+            return
+
+        if isinstance(obj, list):
+            consider(extract_from_list(obj), ".".join(path_stack) or "<root_list>", bonus=0)
+            for i, it in enumerate(obj):
+                walk(it, path_stack + [f"[{i}]"])
+            return
+
+    walk(raw, [])
+
+    if best is None:
+        top_keys = list(raw.keys()) if isinstance(raw, dict) else []
+        raise RuntimeError(
+            f"Cannot find mini focus in {path}. Top-level keys={top_keys}. "
+            "No suitable list/map of KB keys found."
+        )
+
+    _, found_path, out = best
+    print(f"INFO: mini focus path = {found_path}, items = {len(out)}")
+    return out
+
+
+def load_used_blocks(opt: Opt) -> list[dict[str, Any]]:
+    if opt.mini_path is not None:
+        return _load_used_blocks_from_mini(opt.mini_path)
+    if opt.in_path is not None:
+        return _load_used_blocks_from_debug(opt.in_path, opt.topic)
+    raise RuntimeError("Internal: neither --in nor --from-mini provided.")
+
+
+
+def build_sql(keys: list[str], opt: Opt) -> str:
+    out: list[str] = [
+        "-- AUTO-GENERATED. DO NOT EDIT BY HAND.",
+        f"-- Overrides from shortest used blocks (topic_category={opt.topic})",
+        f"-- Source JSON: {opt.source_path.as_posix()}",
+        f"-- Filter: len(text)<= {opt.max_len}, max_keys={opt.max_keys}",
+        "",
+        "BEGIN;",
+        "",
+    ]
+
+    for key in keys:
+        txt = synth_text(key=key, topic=opt.topic).replace("'", "''")
+        out.append(
+            "INSERT INTO knowledge_items(key, topic_category, locale, text, is_active, priority, meta_json, created_at, updated_at)\n"
+            f"VALUES('{key}', '{opt.topic}', '{opt.locale}', '{txt}', 1, {opt.priority}, '{{}}', "
+            "CAST(strftime('%s','now') AS INTEGER), CAST(strftime('%s','now') AS INTEGER))\n"
+            "ON CONFLICT(key, topic_category, locale) DO UPDATE SET\n"
+            "  text=excluded.text,\n"
+            "  is_active=excluded.is_active,\n"
+            "  priority=excluded.priority,\n"
+            "  meta_json=COALESCE(excluded.meta_json, knowledge_items.meta_json),\n"
+            "  updated_at=excluded.updated_at;\n"
+        )
+
+    out.extend(["", "COMMIT;", ""])
+    return "\n".join(out)
 
 
 def _ru_planet(p: str) -> str:
@@ -895,7 +1053,7 @@ def build_sql(keys: list[str], opt: Opt) -> str:
     out: list[str] = [
         "-- AUTO-GENERATED. DO NOT EDIT BY HAND.",
         f"-- Overrides from debug shortest used blocks (topic_category={opt.topic})",
-        f"-- Source JSON: {opt.in_path.as_posix()}",
+        f"-- Source JSON: {opt.source_path.as_posix()}",
         f"-- Filter: len(text)<= {opt.max_len}, max_keys={opt.max_keys}",
         "",
         "BEGIN;",
@@ -905,39 +1063,48 @@ def build_sql(keys: list[str], opt: Opt) -> str:
     for key in keys:
         txt = synth_text(key=key, topic=opt.topic).replace("'", "''")
         out.append(
-            "INSERT INTO knowledge_items(key, topic_category, locale, text, is_active, priority)\n"
-            f"VALUES('{key}', '{opt.topic}', '{opt.locale}', '{txt}', 1, {opt.priority})\n"
+            "INSERT INTO knowledge_items("
+            "key, topic_category, locale, text, is_active, priority, meta_json, created_at, updated_at"
+            ")\n"
+            f"VALUES('{key}', '{opt.topic}', '{opt.locale}', '{txt}', 1, {opt.priority}, '{{}}', "
+            "datetime('now'), CAST(strftime('%s','now') AS INTEGER))\n"
             "ON CONFLICT(key, topic_category, locale) DO UPDATE SET\n"
             "  text=excluded.text,\n"
             "  is_active=excluded.is_active,\n"
-            "  priority=excluded.priority;\n"
+            "  priority=excluded.priority,\n"
+            "  meta_json=COALESCE(excluded.meta_json, knowledge_items.meta_json),\n"
+            "  updated_at=excluded.updated_at;\n"
         )
 
     out.extend(["", "COMMIT;", ""])
     return "\n".join(out)
 
 
-def load_used_blocks(path: Path, topic: str) -> list[dict[str, Any]]:
-    raw = json.loads(path.read_text(encoding="utf-8-sig"))
-    try:
-        return list(raw["meta"]["debug"]["topics"][topic]["used_blocks_sample"])
-    except Exception as e:
-        raise RuntimeError(f"Cannot find meta.debug.topics.{topic}.used_blocks_sample in {path}") from e
-
-
 def parse_args() -> Opt:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--in", dest="in_path", required=True, help="debug(before).json")
+
+    src = ap.add_mutually_exclusive_group(required=True)
+    src.add_argument("--in", dest="in_path", help="debug(before).json")
+    src.add_argument("--from-mini", dest="mini_path", help="mini_focus.json (mini.focus[])")
+
     ap.add_argument("--out", dest="out_path", required=True, help="seed.sql output path")
     ap.add_argument("--topic", dest="topic", required=True, help="topic_category name (e.g., career)")
     ap.add_argument("--locale", dest="locale", default="ru-RU")
     ap.add_argument("--max-len", dest="max_len", type=int, default=420)
     ap.add_argument("--max-keys", dest="max_keys", type=int, default=200)
     ap.add_argument("--priority", dest="priority", type=int, default=140)
+
     a = ap.parse_args()
 
+    in_path = Path(a.in_path) if a.in_path else None
+    mini_path = Path(a.mini_path) if a.mini_path else None
+    source_path = mini_path if mini_path is not None else in_path
+    assert source_path is not None
+
     return Opt(
-        in_path=Path(a.in_path),
+        in_path=in_path,
+        mini_path=mini_path,
+        source_path=source_path,
         out_path=Path(a.out_path),
         topic=a.topic,
         locale=a.locale,
@@ -949,7 +1116,7 @@ def parse_args() -> Opt:
 
 def main() -> int:
     opt = parse_args()
-    used = load_used_blocks(opt.in_path, opt.topic)
+    used = load_used_blocks(opt)
     keys = select_short_keys(used, opt)
     sql = build_sql(keys, opt)
     opt.out_path.write_text(sql, encoding="utf-8")
