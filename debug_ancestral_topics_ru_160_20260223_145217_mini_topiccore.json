@@ -1,0 +1,172 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "ancestral_topics":  {
+                                                                       "used_blocks_sample":  [
+                                                                                                  {
+                                                                                                      "block_id":  "house:4:cusp:any",
+                                                                                                      "knowledge_item_id":  12885,
+                                                                                                      "key":  "natal.house.4.cusp.sign.any",
+                                                                                                      "priority":  140,
+                                                                                                      "created_at":  "2026-02-23 08:10:11",
+                                                                                                      "text":  "Куспид 4-й дом: знак не уточнён (any). В карьере важнее управление темой дома, чем стиль знака. Практика: выдели 1–2 навыка по теме дома и составь план на 4 недели (задачи, метрики, ритм)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:4:ruler:any",
+                                                                                                      "knowledge_item_id":  12887,
+                                                                                                      "key":  "natal.house.4.ruler.any",
+                                                                                                      "priority":  140,
+                                                                                                      "created_at":  "2026-02-23 08:10:11",
+                                                                                                      "text":  "Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_taurus",
+                                                                                                      "knowledge_item_id":  2063,
+                                                                                                      "key":  "natal.sign.taurus.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Телец». Это добавляет стилю проявления темы качества «Телец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_gemini",
+                                                                                                      "knowledge_item_id":  2064,
+                                                                                                      "key":  "natal.sign.gemini.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Близнецы». Это добавляет стилю проявления темы качества «Близнецы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_cancer",
+                                                                                                      "knowledge_item_id":  2065,
+                                                                                                      "key":  "natal.sign.cancer.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Рак». Это добавляет стилю проявления темы качества «Рак» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_leo",
+                                                                                                      "knowledge_item_id":  2066,
+                                                                                                      "key":  "natal.sign.leo.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Лев». Это добавляет стилю проявления темы качества «Лев» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_virgo",
+                                                                                                      "knowledge_item_id":  2067,
+                                                                                                      "key":  "natal.sign.virgo.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Дева». Это добавляет стилю проявления темы качества «Дева» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_scorpio",
+                                                                                                      "knowledge_item_id":  2069,
+                                                                                                      "key":  "natal.sign.scorpio.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Скорпион». Это добавляет стилю проявления темы качества «Скорпион» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_sagittarius",
+                                                                                                      "knowledge_item_id":  2070,
+                                                                                                      "key":  "natal.sign.sagittarius.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Стрелец». Это добавляет стилю проявления темы качества «Стрелец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_capricorn",
+                                                                                                      "knowledge_item_id":  2071,
+                                                                                                      "key":  "natal.sign.capricorn.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Козерог». Это добавляет стилю проявления темы качества «Козерог» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_aquarius",
+                                                                                                      "knowledge_item_id":  2072,
+                                                                                                      "key":  "natal.sign.aquarius.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Водолей». Это добавляет стилю проявления темы качества «Водолей» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "sign_present_pisces",
+                                                                                                      "knowledge_item_id":  2073,
+                                                                                                      "key":  "natal.sign.pisces.present",
+                                                                                                      "priority":  102,
+                                                                                                      "created_at":  "2026-02-21 09:56:30",
+                                                                                                      "text":  "Тема «Род»: заметен акцент знака «Рыбы». Это добавляет стилю проявления темы качества «Рыбы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:4:ruler:mercury:aspects:present",
+                                                                                                      "knowledge_item_id":  7149,
+                                                                                                      "key":  "natal.house.4.ruler.mercury.aspects.present",
+                                                                                                      "priority":  91,
+                                                                                                      "created_at":  "2026-02-22 07:00:07",
+                                                                                                      "text":  "Есть аспекты у управителя 4-го дома (Меркурий): они показывают, с чем сцеплена тема 4-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:4:ruler:mercury:aspect:sextile:mars",
+                                                                                                      "knowledge_item_id":  7162,
+                                                                                                      "key":  "natal.house.4.ruler.mercury.aspect.sextile.mars",
+                                                                                                      "priority":  91,
+                                                                                                      "created_at":  "2026-02-22 07:00:07",
+                                                                                                      "text":  "Управитель 4-го дома (Меркурий) в аспекте «секстиль» с Марс: сцепка тем и влияние на реализацию 4-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "angle:ic",
+                                                                                                      "knowledge_item_id":  3149,
+                                                                                                      "key":  "natal.angle.ic.sign.gemini",
+                                                                                                      "priority":  88,
+                                                                                                      "created_at":  "2026-02-22 06:52:26",
+                                                                                                      "text":  "Угол IC в «Близнецы»: стиль проявления оси через качества «Близнецы»."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "angle:ic:any",
+                                                                                                      "knowledge_item_id":  3145,
+                                                                                                      "key":  "natal.angle.ic",
+                                                                                                      "priority":  86,
+                                                                                                      "created_at":  "2026-02-22 06:52:26",
+                                                                                                      "text":  "Угол IC: важная точка карты, описывает ось опыта и внешнего проявления."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:4:cusp",
+                                                                                                      "knowledge_item_id":  3201,
+                                                                                                      "key":  "natal.house.4.cusp.sign.gemini",
+                                                                                                      "priority":  86,
+                                                                                                      "created_at":  "2026-02-22 06:53:20",
+                                                                                                      "text":  "Куспид 4-го дома в «Близнецы»: стиль темы 4-го дома через качества «Близнецы»."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:4:ruler:mercury:pos",
+                                                                                                      "knowledge_item_id":  2692,
+                                                                                                      "key":  "natal.house.4.ruler.mercury.sign.any",
+                                                                                                      "priority":  86,
+                                                                                                      "created_at":  "2026-02-22 06:19:37",
+                                                                                                      "text":  "Управитель 4-го дома (Меркурий) стоит в определённом знаке: это задаёт стиль проявления темы 4-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:4:ruler:mercury",
+                                                                                                      "knowledge_item_id":  3351,
+                                                                                                      "key":  "natal.house.4.ruler.mercury",
+                                                                                                      "priority":  84,
+                                                                                                      "created_at":  "2026-02-22 06:54:16",
+                                                                                                      "text":  "Управитель 4-го дома — Меркурий: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 4-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "topic_generic",
+                                                                                                      "knowledge_item_id":  1501,
+                                                                                                      "key":  "natal.ancestral_topics.generic",
+                                                                                                      "priority":  80,
+                                                                                                      "created_at":  "1771587605",
+                                                                                                      "text":  "Базовый блок темы: ancestral_topics. Fallback внутри темы, когда специфические ключи недоступны."
+                                                                                                  }
+                                                                                              ]
+                                                                   }
+                                          }
+                           }
+             }
+}

@@ -1,0 +1,356 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "past_lives_symbolic":  {
+                                                                          "used_blocks_sample":  [
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:cusp:any",
+                                                                                                         "knowledge_item_id":  12866,
+                                                                                                         "key":  "natal.house.8.cusp.sign.any",
+                                                                                                         "priority":  140,
+                                                                                                         "created_at":  "2026-02-23 08:10:03",
+                                                                                                         "text":  "Куспид 8-й дом: знак не уточнён (any). В карьере важнее управление темой дома, чем стиль знака. Практика: выдели 1–2 навыка по теме дома и составь план на 4 недели (задачи, метрики, ритм)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:any",
+                                                                                                         "knowledge_item_id":  12871,
+                                                                                                         "key":  "natal.house.8.ruler.any",
+                                                                                                         "priority":  140,
+                                                                                                         "created_at":  "2026-02-23 08:10:03",
+                                                                                                         "text":  "Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:cusp:any",
+                                                                                                         "knowledge_item_id":  12867,
+                                                                                                         "key":  "natal.house.12.cusp.sign.any",
+                                                                                                         "priority":  140,
+                                                                                                         "created_at":  "2026-02-23 08:10:03",
+                                                                                                         "text":  "Куспид 12-й дом (закулисье/служение/психогигиена): знак не уточнён (any). В карьере важнее управление темой дома, чем стиль знака. Практика: выдели 1–2 навыка по теме дома и составь план на 4 недели (задачи, метрики, ритм)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:any",
+                                                                                                         "knowledge_item_id":  12872,
+                                                                                                         "key":  "natal.house.12.ruler.any",
+                                                                                                         "priority":  140,
+                                                                                                         "created_at":  "2026-02-23 08:10:03",
+                                                                                                         "text":  "Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:planet:mars",
+                                                                                                         "knowledge_item_id":  12883,
+                                                                                                         "key":  "natal.house.12.planet.mars",
+                                                                                                         "priority":  140,
+                                                                                                         "created_at":  "2026-02-23 08:10:03",
+                                                                                                         "text":  "Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_taurus",
+                                                                                                         "knowledge_item_id":  2171,
+                                                                                                         "key":  "natal.sign.taurus.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Телец». Это добавляет стилю проявления темы качества «Телец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_gemini",
+                                                                                                         "knowledge_item_id":  2172,
+                                                                                                         "key":  "natal.sign.gemini.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Близнецы». Это добавляет стилю проявления темы качества «Близнецы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_cancer",
+                                                                                                         "knowledge_item_id":  2173,
+                                                                                                         "key":  "natal.sign.cancer.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Рак». Это добавляет стилю проявления темы качества «Рак» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_leo",
+                                                                                                         "knowledge_item_id":  2174,
+                                                                                                         "key":  "natal.sign.leo.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Лев». Это добавляет стилю проявления темы качества «Лев» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_virgo",
+                                                                                                         "knowledge_item_id":  2175,
+                                                                                                         "key":  "natal.sign.virgo.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Дева». Это добавляет стилю проявления темы качества «Дева» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_scorpio",
+                                                                                                         "knowledge_item_id":  2177,
+                                                                                                         "key":  "natal.sign.scorpio.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Скорпион». Это добавляет стилю проявления темы качества «Скорпион» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_sagittarius",
+                                                                                                         "knowledge_item_id":  2178,
+                                                                                                         "key":  "natal.sign.sagittarius.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Стрелец». Это добавляет стилю проявления темы качества «Стрелец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_capricorn",
+                                                                                                         "knowledge_item_id":  2179,
+                                                                                                         "key":  "natal.sign.capricorn.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Козерог». Это добавляет стилю проявления темы качества «Козерог» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_aquarius",
+                                                                                                         "knowledge_item_id":  2180,
+                                                                                                         "key":  "natal.sign.aquarius.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Водолей». Это добавляет стилю проявления темы качества «Водолей» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "sign_present_pisces",
+                                                                                                         "knowledge_item_id":  2181,
+                                                                                                         "key":  "natal.sign.pisces.present",
+                                                                                                         "priority":  102,
+                                                                                                         "created_at":  "2026-02-21 09:56:30",
+                                                                                                         "text":  "Тема «Прошлые жизни»: заметен акцент знака «Рыбы». Это добавляет стилю проявления темы качества «Рыбы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:mars:aspects:present",
+                                                                                                         "knowledge_item_id":  9293,
+                                                                                                         "key":  "natal.house.8.ruler.mars.aspects.present",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Есть аспекты у управителя 8-го дома (Марс): они показывают, с чем сцеплена тема 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:mars:aspect:square:venus",
+                                                                                                         "knowledge_item_id":  9324,
+                                                                                                         "key":  "natal.house.8.ruler.mars.aspect.square.venus",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Управитель 8-го дома (Марс) в аспекте «квадрат» с Венера: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:mars:aspect:sextile:jupiter",
+                                                                                                         "knowledge_item_id":  9307,
+                                                                                                         "key":  "natal.house.8.ruler.mars.aspect.sextile.jupiter",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Управитель 8-го дома (Марс) в аспекте «секстиль» с Юпитер: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:mars:aspect:sextile:mercury",
+                                                                                                         "knowledge_item_id":  9305,
+                                                                                                         "key":  "natal.house.8.ruler.mars.aspect.sextile.mercury",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Управитель 8-го дома (Марс) в аспекте «секстиль» с Меркурий: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:pluto:aspects:present",
+                                                                                                         "knowledge_item_id":  9523,
+                                                                                                         "key":  "natal.house.8.ruler.pluto.aspects.present",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Есть аспекты у управителя 8-го дома (Плутон): они показывают, с чем сцеплена тема 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:pluto:aspect:sextile:uranus",
+                                                                                                         "knowledge_item_id":  9540,
+                                                                                                         "key":  "natal.house.8.ruler.pluto.aspect.sextile.uranus",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Управитель 8-го дома (Плутон) в аспекте «секстиль» с Уран: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:saturn:aspects:present",
+                                                                                                         "knowledge_item_id":  11437,
+                                                                                                         "key":  "natal.house.12.ruler.saturn.aspects.present",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Есть аспекты у управителя 12-го дома (Сатурн): они показывают, с чем сцеплена тема 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:saturn:aspect:opposition:moon",
+                                                                                                         "knowledge_item_id":  11475,
+                                                                                                         "key":  "natal.house.12.ruler.saturn.aspect.opposition.moon",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Управитель 12-го дома (Сатурн) в аспекте «оппозиция» с Луна: сцепка тем и влияние на реализацию 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:saturn:aspect:square:uranus",
+                                                                                                         "knowledge_item_id":  11471,
+                                                                                                         "key":  "natal.house.12.ruler.saturn.aspect.square.uranus",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Управитель 12-го дома (Сатурн) в аспекте «квадрат» с Уран: сцепка тем и влияние на реализацию 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:saturn:aspect:trine:sun",
+                                                                                                         "knowledge_item_id":  11456,
+                                                                                                         "key":  "natal.house.12.ruler.saturn.aspect.trine.sun",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Управитель 12-го дома (Сатурн) в аспекте «трин» с Солнце: сцепка тем и влияние на реализацию 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:uranus:aspects:present",
+                                                                                                         "knowledge_item_id":  11483,
+                                                                                                         "key":  "natal.house.12.ruler.uranus.aspects.present",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Есть аспекты у управителя 12-го дома (Уран): они показывают, с чем сцеплена тема 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:uranus:aspect:square:saturn",
+                                                                                                         "knowledge_item_id":  11517,
+                                                                                                         "key":  "natal.house.12.ruler.uranus.aspect.square.saturn",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Управитель 12-го дома (Уран) в аспекте «квадрат» с Сатурн: сцепка тем и влияние на реализацию 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:uranus:aspect:square:moon",
+                                                                                                         "knowledge_item_id":  11512,
+                                                                                                         "key":  "natal.house.12.ruler.uranus.aspect.square.moon",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Управитель 12-го дома (Уран) в аспекте «квадрат» с Луна: сцепка тем и влияние на реализацию 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:uranus:aspect:sextile:pluto",
+                                                                                                         "knowledge_item_id":  11501,
+                                                                                                         "key":  "natal.house.12.ruler.uranus.aspect.sextile.pluto",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Управитель 12-го дома (Уран) в аспекте «секстиль» с Плутон: сцепка тем и влияние на реализацию 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:cusp",
+                                                                                                         "knowledge_item_id":  3258,
+                                                                                                         "key":  "natal.house.8.cusp.sign.scorpio",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:53:20",
+                                                                                                         "text":  "Куспид 8-го дома в «Скорпион»: стиль темы 8-го дома через качества «Скорпион»."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:mars:pos",
+                                                                                                         "knowledge_item_id":  2818,
+                                                                                                         "key":  "natal.house.8.ruler.mars.sign.any",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:19:37",
+                                                                                                         "text":  "Управитель 8-го дома (Марс) стоит в определённом знаке: это задаёт стиль проявления темы 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:pluto:pos",
+                                                                                                         "knowledge_item_id":  2833,
+                                                                                                         "key":  "natal.house.8.ruler.pluto.sign.any",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:19:37",
+                                                                                                         "text":  "Управитель 8-го дома (Плутон) стоит в определённом знаке: это задаёт стиль проявления темы 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:cusp",
+                                                                                                         "knowledge_item_id":  3313,
+                                                                                                         "key":  "natal.house.12.cusp.sign.aquarius",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:53:20",
+                                                                                                         "text":  "Куспид 12-го дома в «Водолей»: стиль темы 12-го дома через качества «Водолей»."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:saturn:pos",
+                                                                                                         "knowledge_item_id":  2944,
+                                                                                                         "key":  "natal.house.12.ruler.saturn.sign.any",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:19:37",
+                                                                                                         "text":  "Управитель 12-го дома (Сатурн) стоит в определённом знаке: это задаёт стиль проявления темы 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:uranus:pos",
+                                                                                                         "knowledge_item_id":  2947,
+                                                                                                         "key":  "natal.house.12.ruler.uranus.sign.any",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:19:37",
+                                                                                                         "text":  "Управитель 12-го дома (Уран) стоит в определённом знаке: это задаёт стиль проявления темы 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:mars",
+                                                                                                         "knowledge_item_id":  3397,
+                                                                                                         "key":  "natal.house.8.ruler.mars",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:54:16",
+                                                                                                         "text":  "Управитель 8-го дома — Марс: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:pluto",
+                                                                                                         "knowledge_item_id":  3402,
+                                                                                                         "key":  "natal.house.8.ruler.pluto",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:54:16",
+                                                                                                         "text":  "Управитель 8-го дома — Плутон: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:planet:moon",
+                                                                                                         "knowledge_item_id":  3027,
+                                                                                                         "key":  "natal.house.8.planet.moon",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:20:27",
+                                                                                                         "text":  "Луна в 8-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Луна — они уточняют стиль и приоритеты проявления."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:planet:venus",
+                                                                                                         "knowledge_item_id":  3029,
+                                                                                                         "key":  "natal.house.8.planet.venus",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:20:27",
+                                                                                                         "text":  "Венера в 8-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Венера — они уточняют стиль и приоритеты проявления."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:saturn",
+                                                                                                         "knowledge_item_id":  3443,
+                                                                                                         "key":  "natal.house.12.ruler.saturn",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:54:16",
+                                                                                                         "text":  "Управитель 12-го дома — Сатурн: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:uranus",
+                                                                                                         "knowledge_item_id":  3444,
+                                                                                                         "key":  "natal.house.12.ruler.uranus",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:54:16",
+                                                                                                         "text":  "Управитель 12-го дома — Уран: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:planet:uranus",
+                                                                                                         "knowledge_item_id":  3073,
+                                                                                                         "key":  "natal.house.12.planet.uranus",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:20:27",
+                                                                                                         "text":  "Уран в 12-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Уран — они уточняют стиль и приоритеты проявления."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "topic_generic",
+                                                                                                         "knowledge_item_id":  1496,
+                                                                                                         "key":  "natal.past_lives_symbolic.generic",
+                                                                                                         "priority":  80,
+                                                                                                         "created_at":  "1771587605",
+                                                                                                         "text":  "Базовый блок темы: past_lives_symbolic. Fallback внутри темы, когда специфические ключи недоступны."
+                                                                                                     }
+                                                                                                 ]
+                                                                      }
+                                          }
+                           }
+             }
+}

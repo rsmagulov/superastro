@@ -1,0 +1,236 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "money":  {
+                                                            "used_blocks_sample":  [
+                                                                                       {
+                                                                                           "block_id":  "house:2:cusp:any",
+                                                                                           "knowledge_item_id":  1513,
+                                                                                           "key":  "natal.house.2.cusp.sign.any",
+                                                                                           "priority":  140,
+                                                                                           "created_at":  "1771614456",
+                                                                                           "text":  "Куспид 2-й дом (деньги/ресурсы/монетизация): знак не уточнён (any). В карьере важнее управление темой дома, чем стиль знака. Практика: выдели 1–2 навыка по теме дома и составь план на 4 недели (задачи, метрики, ритм)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "house:2:ruler:any",
+                                                                                           "knowledge_item_id":  1514,
+                                                                                           "key":  "natal.house.2.ruler.any",
+                                                                                           "priority":  140,
+                                                                                           "created_at":  "1771614456",
+                                                                                           "text":  "Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_taurus",
+                                                                                           "knowledge_item_id":  2147,
+                                                                                           "key":  "natal.sign.taurus.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Телец». Это добавляет стилю проявления темы качества «Телец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_gemini",
+                                                                                           "knowledge_item_id":  2148,
+                                                                                           "key":  "natal.sign.gemini.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Близнецы». Это добавляет стилю проявления темы качества «Близнецы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_cancer",
+                                                                                           "knowledge_item_id":  2149,
+                                                                                           "key":  "natal.sign.cancer.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Рак». Это добавляет стилю проявления темы качества «Рак» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_leo",
+                                                                                           "knowledge_item_id":  2150,
+                                                                                           "key":  "natal.sign.leo.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Лев». Это добавляет стилю проявления темы качества «Лев» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_virgo",
+                                                                                           "knowledge_item_id":  2151,
+                                                                                           "key":  "natal.sign.virgo.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Дева». Это добавляет стилю проявления темы качества «Дева» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_scorpio",
+                                                                                           "knowledge_item_id":  2153,
+                                                                                           "key":  "natal.sign.scorpio.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Скорпион». Это добавляет стилю проявления темы качества «Скорпион» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_sagittarius",
+                                                                                           "knowledge_item_id":  2154,
+                                                                                           "key":  "natal.sign.sagittarius.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Стрелец». Это добавляет стилю проявления темы качества «Стрелец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_capricorn",
+                                                                                           "knowledge_item_id":  2155,
+                                                                                           "key":  "natal.sign.capricorn.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Козерог». Это добавляет стилю проявления темы качества «Козерог» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_aquarius",
+                                                                                           "knowledge_item_id":  2156,
+                                                                                           "key":  "natal.sign.aquarius.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Водолей». Это добавляет стилю проявления темы качества «Водолей» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "sign_present_pisces",
+                                                                                           "knowledge_item_id":  2157,
+                                                                                           "key":  "natal.sign.pisces.present",
+                                                                                           "priority":  102,
+                                                                                           "created_at":  "2026-02-21 09:56:30",
+                                                                                           "text":  "Тема «Деньги»: заметен акцент знака «Рыбы». Это добавляет стилю проявления темы качества «Рыбы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "house:2:ruler:venus:aspects:present",
+                                                                                           "knowledge_item_id":  6169,
+                                                                                           "key":  "natal.house.2.ruler.venus.aspects.present",
+                                                                                           "priority":  91,
+                                                                                           "created_at":  "2026-02-22 07:00:07",
+                                                                                           "text":  "Есть аспекты у управителя 2-го дома (Венера): они показывают, с чем сцеплена тема 2-го дома."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "house:2:ruler:venus:aspect:square:mars",
+                                                                                           "knowledge_item_id":  6200,
+                                                                                           "key":  "natal.house.2.ruler.venus.aspect.square.mars",
+                                                                                           "priority":  91,
+                                                                                           "created_at":  "2026-02-22 07:00:07",
+                                                                                           "text":  "Управитель 2-го дома (Венера) в аспекте «квадрат» с Марс: сцепка тем и влияние на реализацию 2-го дома."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "house:2:ruler:venus:aspect:sextile:neptune",
+                                                                                           "knowledge_item_id":  6186,
+                                                                                           "key":  "natal.house.2.ruler.venus.aspect.sextile.neptune",
+                                                                                           "priority":  91,
+                                                                                           "created_at":  "2026-02-22 07:00:07",
+                                                                                           "text":  "Управитель 2-го дома (Венера) в аспекте «секстиль» с Нептун: сцепка тем и влияние на реализацию 2-го дома."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "elements:fire:count",
+                                                                                           "knowledge_item_id":  11637,
+                                                                                           "key":  "natal.elements.fire.count.3",
+                                                                                           "priority":  89,
+                                                                                           "created_at":  "2026-02-22 07:07:36",
+                                                                                           "text":  "Стихия «Огонь»: количество попало в bucket 3."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "elements:earth:count",
+                                                                                           "knowledge_item_id":  11650,
+                                                                                           "key":  "natal.elements.earth.count.3",
+                                                                                           "priority":  89,
+                                                                                           "created_at":  "2026-02-22 07:07:36",
+                                                                                           "text":  "Стихия «Земля»: количество попало в bucket 3."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "elements:air:count",
+                                                                                           "knowledge_item_id":  11663,
+                                                                                           "key":  "natal.elements.air.count.3",
+                                                                                           "priority":  89,
+                                                                                           "created_at":  "2026-02-22 07:07:36",
+                                                                                           "text":  "Стихия «Воздух»: количество попало в bucket 3."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "elements:water:count",
+                                                                                           "knowledge_item_id":  11674,
+                                                                                           "key":  "natal.elements.water.count.1",
+                                                                                           "priority":  89,
+                                                                                           "created_at":  "2026-02-22 07:07:36",
+                                                                                           "text":  "Стихия «Вода»: количество попало в bucket 1."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "elements:dominant",
+                                                                                           "knowledge_item_id":  11688,
+                                                                                           "key":  "natal.elements.dominant.fire",
+                                                                                           "priority":  89,
+                                                                                           "created_at":  "2026-02-22 07:07:36",
+                                                                                           "text":  "Доминирующая стихия — «Огонь»."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "elements:deficient",
+                                                                                           "knowledge_item_id":  11695,
+                                                                                           "key":  "natal.elements.deficient.water",
+                                                                                           "priority":  89,
+                                                                                           "created_at":  "2026-02-22 07:07:36",
+                                                                                           "text":  "Дефицит стихии — «Вода»."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "polarity:balance",
+                                                                                           "knowledge_item_id":  11698,
+                                                                                           "key":  "natal.polarity.balance.yang",
+                                                                                           "priority":  89,
+                                                                                           "created_at":  "2026-02-22 07:07:36",
+                                                                                           "text":  "Баланс инь/ян: ян."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "modality:dominant",
+                                                                                           "knowledge_item_id":  11703,
+                                                                                           "key":  "natal.modality.dominant.fixed",
+                                                                                           "priority":  89,
+                                                                                           "created_at":  "2026-02-22 07:07:36",
+                                                                                           "text":  "Доминирующая модальность — фиксированная."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "house:2:cusp",
+                                                                                           "knowledge_item_id":  1632,
+                                                                                           "key":  "natal.house.2.cusp.sign.taurus",
+                                                                                           "priority":  86,
+                                                                                           "created_at":  "1771651356",
+                                                                                           "text":  "2 дом в taurus: личные ресурсы и способы зарабатывать."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "house:2:ruler:venus:pos",
+                                                                                           "knowledge_item_id":  2635,
+                                                                                           "key":  "natal.house.2.ruler.venus.sign.any",
+                                                                                           "priority":  86,
+                                                                                           "created_at":  "2026-02-22 06:19:37",
+                                                                                           "text":  "Управитель 2-го дома (Венера) стоит в определённом знаке: это задаёт стиль проявления темы 2-го дома."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "house:2:ruler:venus",
+                                                                                           "knowledge_item_id":  1633,
+                                                                                           "key":  "natal.house.2.ruler.venus",
+                                                                                           "priority":  84,
+                                                                                           "created_at":  "1771651356",
+                                                                                           "text":  "управитель 2 дома (venus) при куспиде в taurus — про источники дохода и финансовые привычки."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "house:2:planet:saturn",
+                                                                                           "knowledge_item_id":  2972,
+                                                                                           "key":  "natal.house.2.planet.saturn",
+                                                                                           "priority":  84,
+                                                                                           "created_at":  "2026-02-22 06:20:27",
+                                                                                           "text":  "Сатурн в 2-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Сатурн — они уточняют стиль и приоритеты проявления."
+                                                                                       },
+                                                                                       {
+                                                                                           "block_id":  "topic_generic",
+                                                                                           "knowledge_item_id":  1492,
+                                                                                           "key":  "natal.money.generic",
+                                                                                           "priority":  80,
+                                                                                           "created_at":  "1771587605",
+                                                                                           "text":  "Базовый блок темы: money. Fallback внутри темы, когда специфические ключи недоступны."
+                                                                                       }
+                                                                                   ]
+                                                        }
+                                          }
+                           }
+             }
+}

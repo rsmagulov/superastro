@@ -1,0 +1,172 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "creativity":  {
+                                                                 "used_blocks_sample":  [
+                                                                                            {
+                                                                                                "block_id":  "house:5:cusp:any",
+                                                                                                "knowledge_item_id":  12826,
+                                                                                                "key":  "natal.house.5.cusp.sign.any",
+                                                                                                "priority":  140,
+                                                                                                "created_at":  "2026-02-23 08:09:08",
+                                                                                                "text":  "Куспид 5-й дом: знак не уточнён (any). В карьере важнее управление темой дома, чем стиль знака. Практика: выдели 1–2 навыка по теме дома и составь план на 4 недели (задачи, метрики, ритм)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:any",
+                                                                                                "knowledge_item_id":  12829,
+                                                                                                "key":  "natal.house.5.ruler.any",
+                                                                                                "priority":  140,
+                                                                                                "created_at":  "2026-02-23 08:09:08",
+                                                                                                "text":  "Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_taurus",
+                                                                                                "knowledge_item_id":  2087,
+                                                                                                "key":  "natal.sign.taurus.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Телец». Это добавляет стилю проявления темы качества «Телец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_gemini",
+                                                                                                "knowledge_item_id":  2088,
+                                                                                                "key":  "natal.sign.gemini.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Близнецы». Это добавляет стилю проявления темы качества «Близнецы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_cancer",
+                                                                                                "knowledge_item_id":  2089,
+                                                                                                "key":  "natal.sign.cancer.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Рак». Это добавляет стилю проявления темы качества «Рак» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_leo",
+                                                                                                "knowledge_item_id":  2090,
+                                                                                                "key":  "natal.sign.leo.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Лев». Это добавляет стилю проявления темы качества «Лев» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_virgo",
+                                                                                                "knowledge_item_id":  2091,
+                                                                                                "key":  "natal.sign.virgo.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Дева». Это добавляет стилю проявления темы качества «Дева» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_scorpio",
+                                                                                                "knowledge_item_id":  2093,
+                                                                                                "key":  "natal.sign.scorpio.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Скорпион». Это добавляет стилю проявления темы качества «Скорпион» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_sagittarius",
+                                                                                                "knowledge_item_id":  2094,
+                                                                                                "key":  "natal.sign.sagittarius.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Стрелец». Это добавляет стилю проявления темы качества «Стрелец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_capricorn",
+                                                                                                "knowledge_item_id":  2095,
+                                                                                                "key":  "natal.sign.capricorn.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Козерог». Это добавляет стилю проявления темы качества «Козерог» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_aquarius",
+                                                                                                "knowledge_item_id":  2096,
+                                                                                                "key":  "natal.sign.aquarius.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Водолей». Это добавляет стилю проявления темы качества «Водолей» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_pisces",
+                                                                                                "knowledge_item_id":  2097,
+                                                                                                "key":  "natal.sign.pisces.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Творчество»: заметен акцент знака «Рыбы». Это добавляет стилю проявления темы качества «Рыбы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:moon:aspects:present",
+                                                                                                "knowledge_item_id":  7611,
+                                                                                                "key":  "natal.house.5.ruler.moon.aspects.present",
+                                                                                                "priority":  91,
+                                                                                                "created_at":  "2026-02-22 07:00:07",
+                                                                                                "text":  "Есть аспекты у управителя 5-го дома (Луна): они показывают, с чем сцеплена тема 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:moon:aspect:opposition:saturn",
+                                                                                                "knowledge_item_id":  7658,
+                                                                                                "key":  "natal.house.5.ruler.moon.aspect.opposition.saturn",
+                                                                                                "priority":  91,
+                                                                                                "created_at":  "2026-02-22 07:00:07",
+                                                                                                "text":  "Управитель 5-го дома (Луна) в аспекте «оппозиция» с Сатурн: сцепка тем и влияние на реализацию 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:moon:aspect:square:uranus",
+                                                                                                "knowledge_item_id":  7649,
+                                                                                                "key":  "natal.house.5.ruler.moon.aspect.square.uranus",
+                                                                                                "priority":  91,
+                                                                                                "created_at":  "2026-02-22 07:00:07",
+                                                                                                "text":  "Управитель 5-го дома (Луна) в аспекте «квадрат» с Уран: сцепка тем и влияние на реализацию 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:moon:aspect:sextile:sun",
+                                                                                                "knowledge_item_id":  7623,
+                                                                                                "key":  "natal.house.5.ruler.moon.aspect.sextile.sun",
+                                                                                                "priority":  91,
+                                                                                                "created_at":  "2026-02-22 07:00:07",
+                                                                                                "text":  "Управитель 5-го дома (Луна) в аспекте «секстиль» с Солнце: сцепка тем и влияние на реализацию 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:cusp",
+                                                                                                "knowledge_item_id":  3215,
+                                                                                                "key":  "natal.house.5.cusp.sign.cancer",
+                                                                                                "priority":  86,
+                                                                                                "created_at":  "2026-02-22 06:53:20",
+                                                                                                "text":  "Куспид 5-го дома в «Рак»: стиль темы 5-го дома через качества «Рак»."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:moon:pos",
+                                                                                                "knowledge_item_id":  2719,
+                                                                                                "key":  "natal.house.5.ruler.moon.sign.any",
+                                                                                                "priority":  86,
+                                                                                                "created_at":  "2026-02-22 06:19:37",
+                                                                                                "text":  "Управитель 5-го дома (Луна) стоит в определённом знаке: это задаёт стиль проявления темы 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:moon",
+                                                                                                "knowledge_item_id":  3361,
+                                                                                                "key":  "natal.house.5.ruler.moon",
+                                                                                                "priority":  84,
+                                                                                                "created_at":  "2026-02-22 06:54:16",
+                                                                                                "text":  "Управитель 5-го дома — Луна: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "topic_generic",
+                                                                                                "knowledge_item_id":  1500,
+                                                                                                "key":  "natal.creativity.generic",
+                                                                                                "priority":  80,
+                                                                                                "created_at":  "1771587605",
+                                                                                                "text":  "Базовый блок темы: creativity. Fallback внутри темы, когда специфические ключи недоступны."
+                                                                                            }
+                                                                                        ]
+                                                             }
+                                          }
+                           }
+             }
+}

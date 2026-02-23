@@ -1,0 +1,221 @@
+-- AUTO-GENERATED. DO NOT EDIT BY HAND.
+
+-- Career overrides from debug shortest used blocks (topic_category=strengths_weaknesses)
+
+-- Source JSON: C:/Projects/superastro/debug_strengths_weaknesses_ru_160_20260223_133447_mini_topiccore.json
+
+-- Filter: len(text)<= 420, max_keys=250
+
+BEGIN;
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.polarity.balance.yang' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.polarity.balance.yang', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.polarity.balance.yang' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.elements.deficient.water' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.elements.deficient.water', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.elements.deficient.water' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.elements.dominant.fire' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.elements.dominant.fire', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.elements.dominant.fire' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.modality.dominant.fixed' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.modality.dominant.fixed', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.modality.dominant.fixed' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.elements.water.count.1' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.elements.water.count.1', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.elements.water.count.1' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.elements.earth.count.3' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.elements.earth.count.3', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.elements.earth.count.3' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.elements.fire.count.3' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.elements.fire.count.3', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.elements.fire.count.3' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.elements.air.count.3' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.elements.air.count.3', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.elements.air.count.3' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.cancer.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.cancer.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.cancer.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.aquarius.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.aquarius.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.aquarius.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.capricorn.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.capricorn.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.capricorn.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.gemini.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.gemini.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.gemini.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.leo.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.leo.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.leo.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.pisces.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.pisces.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.pisces.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.sagittarius.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.sagittarius.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.sagittarius.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.scorpio.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.scorpio.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.scorpio.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.taurus.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.taurus.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.taurus.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.sign.virgo.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.sign.virgo.present', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.sign.virgo.present' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+UPDATE knowledge_items
+SET text = 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', is_active = 1, priority = 140, meta_json = '{}'
+WHERE key = 'natal.strengths_weaknesses.generic' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses';
+
+INSERT INTO knowledge_items (key, topic_category, locale, text, priority, created_at, is_active, meta_json)
+SELECT 'natal.strengths_weaknesses.generic', 'strengths_weaknesses', 'ru-RU', 'Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость.', 140, CURRENT_TIMESTAMP, 1, '{}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM knowledge_items
+  WHERE key = 'natal.strengths_weaknesses.generic' AND locale = 'ru-RU' AND topic_category = 'strengths_weaknesses'
+);
+
+COMMIT;
+

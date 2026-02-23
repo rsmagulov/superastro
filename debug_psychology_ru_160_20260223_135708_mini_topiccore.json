@@ -1,0 +1,164 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "psychology":  {
+                                                                 "used_blocks_sample":  [
+                                                                                            {
+                                                                                                "block_id":  "sign_present_taurus",
+                                                                                                "knowledge_item_id":  2195,
+                                                                                                "key":  "natal.sign.taurus.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Телец». Это добавляет стилю проявления темы качества «Телец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_gemini",
+                                                                                                "knowledge_item_id":  2196,
+                                                                                                "key":  "natal.sign.gemini.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Близнецы». Это добавляет стилю проявления темы качества «Близнецы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_cancer",
+                                                                                                "knowledge_item_id":  2197,
+                                                                                                "key":  "natal.sign.cancer.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Рак». Это добавляет стилю проявления темы качества «Рак» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_leo",
+                                                                                                "knowledge_item_id":  2198,
+                                                                                                "key":  "natal.sign.leo.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Лев». Это добавляет стилю проявления темы качества «Лев» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_virgo",
+                                                                                                "knowledge_item_id":  2199,
+                                                                                                "key":  "natal.sign.virgo.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Дева». Это добавляет стилю проявления темы качества «Дева» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_scorpio",
+                                                                                                "knowledge_item_id":  2201,
+                                                                                                "key":  "natal.sign.scorpio.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Скорпион». Это добавляет стилю проявления темы качества «Скорпион» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_sagittarius",
+                                                                                                "knowledge_item_id":  2202,
+                                                                                                "key":  "natal.sign.sagittarius.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Стрелец». Это добавляет стилю проявления темы качества «Стрелец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_capricorn",
+                                                                                                "knowledge_item_id":  2203,
+                                                                                                "key":  "natal.sign.capricorn.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Козерог». Это добавляет стилю проявления темы качества «Козерог» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_aquarius",
+                                                                                                "knowledge_item_id":  2204,
+                                                                                                "key":  "natal.sign.aquarius.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Водолей». Это добавляет стилю проявления темы качества «Водолей» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "sign_present_pisces",
+                                                                                                "knowledge_item_id":  2205,
+                                                                                                "key":  "natal.sign.pisces.present",
+                                                                                                "priority":  102,
+                                                                                                "created_at":  "2026-02-21 09:56:30",
+                                                                                                "text":  "Тема «Психология»: заметен акцент знака «Рыбы». Это добавляет стилю проявления темы качества «Рыбы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "elements:fire:count",
+                                                                                                "knowledge_item_id":  11637,
+                                                                                                "key":  "natal.elements.fire.count.3",
+                                                                                                "priority":  89,
+                                                                                                "created_at":  "2026-02-22 07:07:36",
+                                                                                                "text":  "Стихия «Огонь»: количество попало в bucket 3."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "elements:earth:count",
+                                                                                                "knowledge_item_id":  11650,
+                                                                                                "key":  "natal.elements.earth.count.3",
+                                                                                                "priority":  89,
+                                                                                                "created_at":  "2026-02-22 07:07:36",
+                                                                                                "text":  "Стихия «Земля»: количество попало в bucket 3."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "elements:air:count",
+                                                                                                "knowledge_item_id":  11663,
+                                                                                                "key":  "natal.elements.air.count.3",
+                                                                                                "priority":  89,
+                                                                                                "created_at":  "2026-02-22 07:07:36",
+                                                                                                "text":  "Стихия «Воздух»: количество попало в bucket 3."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "elements:water:count",
+                                                                                                "knowledge_item_id":  11674,
+                                                                                                "key":  "natal.elements.water.count.1",
+                                                                                                "priority":  89,
+                                                                                                "created_at":  "2026-02-22 07:07:36",
+                                                                                                "text":  "Стихия «Вода»: количество попало в bucket 1."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "elements:dominant",
+                                                                                                "knowledge_item_id":  11688,
+                                                                                                "key":  "natal.elements.dominant.fire",
+                                                                                                "priority":  89,
+                                                                                                "created_at":  "2026-02-22 07:07:36",
+                                                                                                "text":  "Доминирующая стихия — «Огонь»."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "elements:deficient",
+                                                                                                "knowledge_item_id":  11695,
+                                                                                                "key":  "natal.elements.deficient.water",
+                                                                                                "priority":  89,
+                                                                                                "created_at":  "2026-02-22 07:07:36",
+                                                                                                "text":  "Дефицит стихии — «Вода»."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "polarity:balance",
+                                                                                                "knowledge_item_id":  11698,
+                                                                                                "key":  "natal.polarity.balance.yang",
+                                                                                                "priority":  89,
+                                                                                                "created_at":  "2026-02-22 07:07:36",
+                                                                                                "text":  "Баланс инь/ян: ян."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "modality:dominant",
+                                                                                                "knowledge_item_id":  11703,
+                                                                                                "key":  "natal.modality.dominant.fixed",
+                                                                                                "priority":  89,
+                                                                                                "created_at":  "2026-02-22 07:07:36",
+                                                                                                "text":  "Доминирующая модальность — фиксированная."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "topic_generic",
+                                                                                                "knowledge_item_id":  1487,
+                                                                                                "key":  "natal.psychology.generic",
+                                                                                                "priority":  80,
+                                                                                                "created_at":  "1771587605",
+                                                                                                "text":  "Базовый блок темы: psychology. Fallback внутри темы, когда специфические ключи недоступны."
+                                                                                            }
+                                                                                        ]
+                                                             }
+                                          }
+                           }
+             }
+}

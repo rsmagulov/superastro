@@ -1,0 +1,316 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "purpose_path":  {
+                                                                   "used_blocks_sample":  [
+                                                                                              {
+                                                                                                  "block_id":  "angle:mc:any",
+                                                                                                  "knowledge_item_id":  12834,
+                                                                                                  "key":  "natal.angle.mc",
+                                                                                                  "priority":  140,
+                                                                                                  "created_at":  "2026-02-23 08:09:19",
+                                                                                                  "text":  "MC (Средина Неба) — вектор карьеры: к какому статусу и типу результата ты стремишься и что должно быть видно рынку. Практика: сформулируй образ результата (роль/уровень/ценность) и 2 KPI на 30 дней; под них выбери один проект-носитель."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:cusp:any",
+                                                                                                  "knowledge_item_id":  12835,
+                                                                                                  "key":  "natal.house.9.cusp.sign.any",
+                                                                                                  "priority":  140,
+                                                                                                  "created_at":  "2026-02-23 08:09:19",
+                                                                                                  "text":  "Куспид 9-й дом: знак не уточнён (any). В карьере важнее управление темой дома, чем стиль знака. Практика: выдели 1–2 навыка по теме дома и составь план на 4 недели (задачи, метрики, ритм)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:ruler:any",
+                                                                                                  "knowledge_item_id":  12839,
+                                                                                                  "key":  "natal.house.9.ruler.any",
+                                                                                                  "priority":  140,
+                                                                                                  "created_at":  "2026-02-23 08:09:19",
+                                                                                                  "text":  "Карьерный маркер: показывает, где проще получить результат и что мешает стабильности. Практика: выбери 1 конкретный навык/процесс на 2 недели (приоритеты, дедлайны, коммуникации, контроль качества) и замерь эффект по метрикам: скорость, качество, доход, устойчивость."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:cusp:any",
+                                                                                                  "knowledge_item_id":  12837,
+                                                                                                  "key":  "natal.house.10.cusp.sign.any",
+                                                                                                  "priority":  140,
+                                                                                                  "created_at":  "2026-02-23 08:09:19",
+                                                                                                  "text":  "Куспид 10-й дом (карьера/статус/видимый результат): знак не уточнён (any). В карьере важнее управление темой дома, чем стиль знака. Практика: выдели 1–2 навыка по теме дома и составь план на 4 недели (задачи, метрики, ритм)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:any",
+                                                                                                  "knowledge_item_id":  12840,
+                                                                                                  "key":  "natal.house.10.ruler.any",
+                                                                                                  "priority":  140,
+                                                                                                  "created_at":  "2026-02-23 08:09:19",
+                                                                                                  "text":  "Управитель 10-го дома не уточнён (any). Сфокусируйся на теме 10-го дома: статус, видимый результат и ответственность. Практика: 1 KPI + 1 дедлайн + 1 еженедельный отчёт на 2–4 недели — и смотри, что сильнее всего двигает карьеру."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_taurus",
+                                                                                                  "knowledge_item_id":  2207,
+                                                                                                  "key":  "natal.sign.taurus.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Телец». Это добавляет стилю проявления темы качества «Телец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_gemini",
+                                                                                                  "knowledge_item_id":  2208,
+                                                                                                  "key":  "natal.sign.gemini.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Близнецы». Это добавляет стилю проявления темы качества «Близнецы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_cancer",
+                                                                                                  "knowledge_item_id":  2209,
+                                                                                                  "key":  "natal.sign.cancer.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Рак». Это добавляет стилю проявления темы качества «Рак» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_leo",
+                                                                                                  "knowledge_item_id":  2210,
+                                                                                                  "key":  "natal.sign.leo.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Лев». Это добавляет стилю проявления темы качества «Лев» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_virgo",
+                                                                                                  "knowledge_item_id":  2211,
+                                                                                                  "key":  "natal.sign.virgo.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Дева». Это добавляет стилю проявления темы качества «Дева» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_scorpio",
+                                                                                                  "knowledge_item_id":  2213,
+                                                                                                  "key":  "natal.sign.scorpio.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Скорпион». Это добавляет стилю проявления темы качества «Скорпион» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_sagittarius",
+                                                                                                  "knowledge_item_id":  2214,
+                                                                                                  "key":  "natal.sign.sagittarius.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Стрелец». Это добавляет стилю проявления темы качества «Стрелец» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_capricorn",
+                                                                                                  "knowledge_item_id":  2215,
+                                                                                                  "key":  "natal.sign.capricorn.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Козерог». Это добавляет стилю проявления темы качества «Козерог» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_aquarius",
+                                                                                                  "knowledge_item_id":  2216,
+                                                                                                  "key":  "natal.sign.aquarius.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Водолей». Это добавляет стилю проявления темы качества «Водолей» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "sign_present_pisces",
+                                                                                                  "knowledge_item_id":  2217,
+                                                                                                  "key":  "natal.sign.pisces.present",
+                                                                                                  "priority":  102,
+                                                                                                  "created_at":  "2026-02-21 09:56:30",
+                                                                                                  "text":  "Тема «Предназначение»: заметен акцент знака «Рыбы». Это добавляет стилю проявления темы качества «Рыбы» (через личные планеты, углы или куспиды домов в этом знаке)."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "angle:mc",
+                                                                                                  "knowledge_item_id":  1300,
+                                                                                                  "key":  "natal.angle.mc.sign.sagittarius",
+                                                                                                  "priority":  100,
+                                                                                                  "created_at":  "1771567143",
+                                                                                                  "text":  "MC в Стрельце — вектор реализации и публичный образ: заметнее всего раскрываются качества стрелец. Тебе легче расти, когда есть понятные критерии успеха и видимость вклада. Сильная сторона — упаковывать навыки в ясную ценность для других. Риск — жить чужой оценкой и терять связь с собственными приоритетами. Рабочий ключ: сформулируй миссию одной фразой и проверяй решения на соответствие ей. В лучшем проявлении ты строишь репутацию на качестве и последовательности."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:ruler:jupiter:aspects:present",
+                                                                                                  "knowledge_item_id":  9852,
+                                                                                                  "key":  "natal.house.9.ruler.jupiter.aspects.present",
+                                                                                                  "priority":  91,
+                                                                                                  "created_at":  "2026-02-22 07:00:08",
+                                                                                                  "text":  "Есть аспекты у управителя 9-го дома (Юпитер): они показывают, с чем сцеплена тема 9-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:ruler:jupiter:aspect:sextile:mars",
+                                                                                                  "knowledge_item_id":  9866,
+                                                                                                  "key":  "natal.house.9.ruler.jupiter.aspect.sextile.mars",
+                                                                                                  "priority":  91,
+                                                                                                  "created_at":  "2026-02-22 07:00:08",
+                                                                                                  "text":  "Управитель 9-го дома (Юпитер) в аспекте «секстиль» с Марс: сцепка тем и влияние на реализацию 9-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:jupiter:aspects:present",
+                                                                                                  "knowledge_item_id":  10365,
+                                                                                                  "key":  "natal.house.10.ruler.jupiter.aspects.present",
+                                                                                                  "priority":  91,
+                                                                                                  "created_at":  "2026-02-22 07:00:08",
+                                                                                                  "text":  "Есть аспекты у управителя 10-го дома (Юпитер): они показывают, с чем сцеплена тема 10-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:jupiter:aspect:sextile:mars",
+                                                                                                  "knowledge_item_id":  10379,
+                                                                                                  "key":  "natal.house.10.ruler.jupiter.aspect.sextile.mars",
+                                                                                                  "priority":  91,
+                                                                                                  "created_at":  "2026-02-22 07:00:08",
+                                                                                                  "text":  "Управитель 10-го дома (Юпитер) в аспекте «секстиль» с Марс: сцепка тем и влияние на реализацию 10-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "elements:fire:count",
+                                                                                                  "knowledge_item_id":  11637,
+                                                                                                  "key":  "natal.elements.fire.count.3",
+                                                                                                  "priority":  89,
+                                                                                                  "created_at":  "2026-02-22 07:07:36",
+                                                                                                  "text":  "Стихия «Огонь»: количество попало в bucket 3."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "elements:earth:count",
+                                                                                                  "knowledge_item_id":  11650,
+                                                                                                  "key":  "natal.elements.earth.count.3",
+                                                                                                  "priority":  89,
+                                                                                                  "created_at":  "2026-02-22 07:07:36",
+                                                                                                  "text":  "Стихия «Земля»: количество попало в bucket 3."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "elements:air:count",
+                                                                                                  "knowledge_item_id":  11663,
+                                                                                                  "key":  "natal.elements.air.count.3",
+                                                                                                  "priority":  89,
+                                                                                                  "created_at":  "2026-02-22 07:07:36",
+                                                                                                  "text":  "Стихия «Воздух»: количество попало в bucket 3."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "elements:water:count",
+                                                                                                  "knowledge_item_id":  11674,
+                                                                                                  "key":  "natal.elements.water.count.1",
+                                                                                                  "priority":  89,
+                                                                                                  "created_at":  "2026-02-22 07:07:36",
+                                                                                                  "text":  "Стихия «Вода»: количество попало в bucket 1."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "elements:dominant",
+                                                                                                  "knowledge_item_id":  11688,
+                                                                                                  "key":  "natal.elements.dominant.fire",
+                                                                                                  "priority":  89,
+                                                                                                  "created_at":  "2026-02-22 07:07:36",
+                                                                                                  "text":  "Доминирующая стихия — «Огонь»."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "elements:deficient",
+                                                                                                  "knowledge_item_id":  11695,
+                                                                                                  "key":  "natal.elements.deficient.water",
+                                                                                                  "priority":  89,
+                                                                                                  "created_at":  "2026-02-22 07:07:36",
+                                                                                                  "text":  "Дефицит стихии — «Вода»."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "polarity:balance",
+                                                                                                  "knowledge_item_id":  11698,
+                                                                                                  "key":  "natal.polarity.balance.yang",
+                                                                                                  "priority":  89,
+                                                                                                  "created_at":  "2026-02-22 07:07:36",
+                                                                                                  "text":  "Баланс инь/ян: ян."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "modality:dominant",
+                                                                                                  "knowledge_item_id":  11703,
+                                                                                                  "key":  "natal.modality.dominant.fixed",
+                                                                                                  "priority":  89,
+                                                                                                  "created_at":  "2026-02-22 07:07:36",
+                                                                                                  "text":  "Доминирующая модальность — фиксированная."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:cusp",
+                                                                                                  "knowledge_item_id":  3272,
+                                                                                                  "key":  "natal.house.9.cusp.sign.sagittarius",
+                                                                                                  "priority":  86,
+                                                                                                  "created_at":  "2026-02-22 06:53:20",
+                                                                                                  "text":  "Куспид 9-го дома в «Стрелец»: стиль темы 9-го дома через качества «Стрелец»."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:ruler:jupiter:pos",
+                                                                                                  "knowledge_item_id":  2851,
+                                                                                                  "key":  "natal.house.9.ruler.jupiter.sign.any",
+                                                                                                  "priority":  86,
+                                                                                                  "created_at":  "2026-02-22 06:19:37",
+                                                                                                  "text":  "Управитель 9-го дома (Юпитер) стоит в определённом знаке: это задаёт стиль проявления темы 9-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:cusp",
+                                                                                                  "knowledge_item_id":  3285,
+                                                                                                  "key":  "natal.house.10.cusp.sign.sagittarius",
+                                                                                                  "priority":  86,
+                                                                                                  "created_at":  "2026-02-22 06:53:20",
+                                                                                                  "text":  "Куспид 10-го дома в «Стрелец»: стиль темы 10-го дома через качества «Стрелец»."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:jupiter:pos",
+                                                                                                  "knowledge_item_id":  2881,
+                                                                                                  "key":  "natal.house.10.ruler.jupiter.sign.any",
+                                                                                                  "priority":  86,
+                                                                                                  "created_at":  "2026-02-22 06:19:37",
+                                                                                                  "text":  "Управитель 10-го дома (Юпитер) стоит в определённом знаке: это задаёт стиль проявления темы 10-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:ruler:jupiter",
+                                                                                                  "knowledge_item_id":  3409,
+                                                                                                  "key":  "natal.house.9.ruler.jupiter",
+                                                                                                  "priority":  84,
+                                                                                                  "created_at":  "2026-02-22 06:54:16",
+                                                                                                  "text":  "Управитель 9-го дома — Юпитер: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 9-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:planet:pluto",
+                                                                                                  "knowledge_item_id":  3045,
+                                                                                                  "key":  "natal.house.9.planet.pluto",
+                                                                                                  "priority":  84,
+                                                                                                  "created_at":  "2026-02-22 06:20:27",
+                                                                                                  "text":  "Плутон в 9-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Плутон — они уточняют стиль и приоритеты проявления."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:jupiter",
+                                                                                                  "knowledge_item_id":  3420,
+                                                                                                  "key":  "natal.house.10.ruler.jupiter",
+                                                                                                  "priority":  84,
+                                                                                                  "created_at":  "2026-02-22 06:54:16",
+                                                                                                  "text":  "Управитель 10-го дома — Юпитер: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 10-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:planet:mercury",
+                                                                                                  "knowledge_item_id":  3048,
+                                                                                                  "key":  "natal.house.10.planet.mercury",
+                                                                                                  "priority":  84,
+                                                                                                  "created_at":  "2026-02-22 06:20:27",
+                                                                                                  "text":  "Меркурий в 10-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Меркурий — они уточняют стиль и приоритеты проявления."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:planet:sun",
+                                                                                                  "knowledge_item_id":  3046,
+                                                                                                  "key":  "natal.house.10.planet.sun",
+                                                                                                  "priority":  84,
+                                                                                                  "created_at":  "2026-02-22 06:20:27",
+                                                                                                  "text":  "Солнце в 10-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Солнце — они уточняют стиль и приоритеты проявления."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "topic_generic",
+                                                                                                  "knowledge_item_id":  1490,
+                                                                                                  "key":  "natal.purpose_path.generic",
+                                                                                                  "priority":  80,
+                                                                                                  "created_at":  "1771587605",
+                                                                                                  "text":  "Базовый блок темы: purpose_path. Fallback внутри темы, когда специфические ключи недоступны."
+                                                                                              }
+                                                                                          ]
+                                                               }
+                                          }
+                           }
+             }
+}
