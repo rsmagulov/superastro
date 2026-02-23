@@ -1,0 +1,60 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "partnership_marriage":  {
+                                                                           "used_blocks_sample":  [
+                                                                                                      {
+                                                                                                          "block_id":  "house:7:cusp",
+                                                                                                          "knowledge_item_id":  3240,
+                                                                                                          "key":  "natal.house.7.cusp.sign.gemini",
+                                                                                                          "priority":  86,
+                                                                                                          "created_at":  "2026-02-22 06:53:20",
+                                                                                                          "text":  "Куспид 7-го дома в «Близнецы»: стиль темы 7-го дома через качества «Близнецы»."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "house:7:ruler:mercury:pos",
+                                                                                                          "knowledge_item_id":  2782,
+                                                                                                          "key":  "natal.house.7.ruler.mercury.sign.any",
+                                                                                                          "priority":  86,
+                                                                                                          "created_at":  "2026-02-22 06:19:37",
+                                                                                                          "text":  "Управитель 7-го дома (Меркурий) стоит в определённом знаке: это задаёт стиль проявления темы 7-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "house:7:cusp:any",
+                                                                                                          "knowledge_item_id":  3237,
+                                                                                                          "key":  "natal.house.7.cusp.sign.any",
+                                                                                                          "priority":  85,
+                                                                                                          "created_at":  "2026-02-22 06:53:20",
+                                                                                                          "text":  "Куспид 7-го дома в знаке: задаёт тон и стиль проявления темы 7-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "house:7:ruler:mercury",
+                                                                                                          "knowledge_item_id":  3384,
+                                                                                                          "key":  "natal.house.7.ruler.mercury",
+                                                                                                          "priority":  84,
+                                                                                                          "created_at":  "2026-02-22 06:54:16",
+                                                                                                          "text":  "Управитель 7-го дома — Меркурий: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 7-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "house:7:ruler:any",
+                                                                                                          "knowledge_item_id":  3381,
+                                                                                                          "key":  "natal.house.7.ruler.any",
+                                                                                                          "priority":  84,
+                                                                                                          "created_at":  "2026-02-22 06:54:16",
+                                                                                                          "text":  "Управитель 7-го дома: планета, которая показывает «как» и «через что» реализуется тема 7-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "house:7:planet:jupiter",
+                                                                                                          "knowledge_item_id":  3021,
+                                                                                                          "key":  "natal.house.7.planet.jupiter",
+                                                                                                          "priority":  84,
+                                                                                                          "created_at":  "2026-02-22 06:20:27",
+                                                                                                          "text":  "Юпитер в 7-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Юпитер — они уточняют стиль и приоритеты проявления."
+                                                                                                      }
+                                                                                                  ]
+                                                                       }
+                                          }
+                           }
+             }
+}

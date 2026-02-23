@@ -1,0 +1,76 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "career":  {
+                                                             "used_blocks_sample":  [
+                                                                                        {
+                                                                                            "block_id":  "house:6:ruler:mercury",
+                                                                                            "knowledge_item_id":  1581,
+                                                                                            "key":  "natal.house.6.ruler.mercury",
+                                                                                            "priority":  84,
+                                                                                            "created_at":  "1771651356",
+                                                                                            "text":  "управитель 6 дома (mercury) при куспиде в gemini описывает механику работы, дисциплины и навыков."
+                                                                                        },
+                                                                                        {
+                                                                                            "block_id":  "house:2:ruler:uranus:pos",
+                                                                                            "knowledge_item_id":  2647,
+                                                                                            "key":  "natal.house.2.ruler.uranus.sign.any",
+                                                                                            "priority":  86,
+                                                                                            "created_at":  "2026-02-22 06:19:37",
+                                                                                            "text":  "Управитель 2-го дома (Уран) стоит в определённом знаке: это задаёт стиль проявления темы 2-го дома."
+                                                                                        },
+                                                                                        {
+                                                                                            "block_id":  "house:6:ruler:any",
+                                                                                            "knowledge_item_id":  1508,
+                                                                                            "key":  "natal.house.6.ruler.any",
+                                                                                            "priority":  80,
+                                                                                            "created_at":  "1771614456",
+                                                                                            "text":  "Управитель 6 дома показывает, что помогает быть эффективным и как лучше организовать ежедневную работу."
+                                                                                        },
+                                                                                        {
+                                                                                            "block_id":  "house:2:ruler:saturn",
+                                                                                            "knowledge_item_id":  1623,
+                                                                                            "key":  "natal.house.2.ruler.saturn",
+                                                                                            "priority":  84,
+                                                                                            "created_at":  "1771651356",
+                                                                                            "text":  "управитель 2 дома (saturn) при куспиде в capricorn показывает, как легче монетизировать сильные стороны."
+                                                                                        },
+                                                                                        {
+                                                                                            "block_id":  "house:2:ruler:any",
+                                                                                            "knowledge_item_id":  1510,
+                                                                                            "key":  "natal.house.2.ruler.any",
+                                                                                            "priority":  80,
+                                                                                            "created_at":  "1771614456",
+                                                                                            "text":  "Управитель 2 дома показывает, через что проще монетизировать таланты и на чём держится финансовая устойчивость."
+                                                                                        },
+                                                                                        {
+                                                                                            "block_id":  "house:2:ruler:uranus",
+                                                                                            "knowledge_item_id":  1626,
+                                                                                            "key":  "natal.house.2.ruler.uranus",
+                                                                                            "priority":  84,
+                                                                                            "created_at":  "1771651356",
+                                                                                            "text":  "современный управитель 2 дома (uranus) при куспиде в aquarius показывает, как легче монетизировать сильные стороны."
+                                                                                        },
+                                                                                        {
+                                                                                            "block_id":  "house:2:planet:moon",
+                                                                                            "knowledge_item_id":  2967,
+                                                                                            "key":  "natal.house.2.planet.moon",
+                                                                                            "priority":  84,
+                                                                                            "created_at":  "2026-02-22 06:20:27",
+                                                                                            "text":  "Луна в 2-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Луна — они уточняют стиль и приоритеты проявления."
+                                                                                        },
+                                                                                        {
+                                                                                            "block_id":  "house:2:planet:venus",
+                                                                                            "knowledge_item_id":  2969,
+                                                                                            "key":  "natal.house.2.planet.venus",
+                                                                                            "priority":  84,
+                                                                                            "created_at":  "2026-02-22 06:20:27",
+                                                                                            "text":  "Венера в 2-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Венера — они уточняют стиль и приоритеты проявления."
+                                                                                        }
+                                                                                    ]
+                                                         }
+                                          }
+                           }
+             }
+}

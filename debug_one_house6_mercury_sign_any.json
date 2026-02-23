@@ -1,0 +1,20 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "career":  {
+                                                             "used_blocks_sample":  [
+                                                                                        {
+                                                                                            "block_id":  "house:6:ruler:mercury:pos",
+                                                                                            "knowledge_item_id":  2752,
+                                                                                            "key":  "natal.house.6.ruler.mercury.sign.any",
+                                                                                            "priority":  86,
+                                                                                            "created_at":  "2026-02-22 06:19:37",
+                                                                                            "text":  "Управитель 6-го дома (Меркурий) стоит в определённом знаке: это задаёт стиль проявления темы 6-го дома."
+                                                                                        }
+                                                                                    ]
+                                                         }
+                                          }
+                           }
+             }
+}

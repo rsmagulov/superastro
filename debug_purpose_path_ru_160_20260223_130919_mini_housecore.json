@@ -1,0 +1,124 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "purpose_path":  {
+                                                                   "used_blocks_sample":  [
+                                                                                              {
+                                                                                                  "block_id":  "angle:mc",
+                                                                                                  "knowledge_item_id":  56,
+                                                                                                  "key":  "natal.angle.mc.sign.libra",
+                                                                                                  "priority":  100,
+                                                                                                  "created_at":  "1771567143",
+                                                                                                  "text":  "MC в Весах — вектор реализации и публичный образ: заметнее всего раскрываются качества весы. Тебе легче расти, когда есть понятные критерии успеха и видимость вклада. Сильная сторона — упаковывать навыки в ясную ценность для других. Риск — жить чужой оценкой и терять связь с собственными приоритетами. Рабочий ключ: сформулируй миссию одной фразой и проверяй решения на соответствие ей. В лучшем проявлении ты строишь репутацию на качестве и последовательности."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:venus:aspects:present",
+                                                                                                  "knowledge_item_id":  10273,
+                                                                                                  "key":  "natal.house.10.ruler.venus.aspects.present",
+                                                                                                  "priority":  91,
+                                                                                                  "created_at":  "2026-02-22 07:00:08",
+                                                                                                  "text":  "Есть аспекты у управителя 10-го дома (Венера): они показывают, с чем сцеплена тема 10-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:venus:aspect:sextile:mars",
+                                                                                                  "knowledge_item_id":  10286,
+                                                                                                  "key":  "natal.house.10.ruler.venus.aspect.sextile.mars",
+                                                                                                  "priority":  91,
+                                                                                                  "created_at":  "2026-02-22 07:00:08",
+                                                                                                  "text":  "Управитель 10-го дома (Венера) в аспекте «секстиль» с Марс: сцепка тем и влияние на реализацию 10-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "angle:mc:any",
+                                                                                                  "knowledge_item_id":  3131,
+                                                                                                  "key":  "natal.angle.mc",
+                                                                                                  "priority":  86,
+                                                                                                  "created_at":  "2026-02-22 06:52:26",
+                                                                                                  "text":  "Угол MC: важная точка карты, описывает ось опыта и внешнего проявления."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:cusp",
+                                                                                                  "knowledge_item_id":  3269,
+                                                                                                  "key":  "natal.house.9.cusp.sign.virgo",
+                                                                                                  "priority":  86,
+                                                                                                  "created_at":  "2026-02-22 06:53:20",
+                                                                                                  "text":  "Куспид 9-го дома в «Дева»: стиль темы 9-го дома через качества «Дева»."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:ruler:mercury:pos",
+                                                                                                  "knowledge_item_id":  2842,
+                                                                                                  "key":  "natal.house.9.ruler.mercury.sign.any",
+                                                                                                  "priority":  86,
+                                                                                                  "created_at":  "2026-02-22 06:19:37",
+                                                                                                  "text":  "Управитель 9-го дома (Меркурий) стоит в определённом знаке: это задаёт стиль проявления темы 9-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:cusp",
+                                                                                                  "knowledge_item_id":  3283,
+                                                                                                  "key":  "natal.house.10.cusp.sign.libra",
+                                                                                                  "priority":  86,
+                                                                                                  "created_at":  "2026-02-22 06:53:20",
+                                                                                                  "text":  "Куспид 10-го дома в «Весы»: стиль темы 10-го дома через качества «Весы»."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:venus:pos",
+                                                                                                  "knowledge_item_id":  2875,
+                                                                                                  "key":  "natal.house.10.ruler.venus.sign.any",
+                                                                                                  "priority":  86,
+                                                                                                  "created_at":  "2026-02-22 06:19:37",
+                                                                                                  "text":  "Управитель 10-го дома (Венера) стоит в определённом знаке: это задаёт стиль проявления темы 10-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:cusp:any",
+                                                                                                  "knowledge_item_id":  3263,
+                                                                                                  "key":  "natal.house.9.cusp.sign.any",
+                                                                                                  "priority":  85,
+                                                                                                  "created_at":  "2026-02-22 06:53:20",
+                                                                                                  "text":  "Куспид 9-го дома в знаке: задаёт тон и стиль проявления темы 9-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:cusp:any",
+                                                                                                  "knowledge_item_id":  3276,
+                                                                                                  "key":  "natal.house.10.cusp.sign.any",
+                                                                                                  "priority":  85,
+                                                                                                  "created_at":  "2026-02-22 06:53:20",
+                                                                                                  "text":  "Куспид 10-го дома в знаке: задаёт тон и стиль проявления темы 10-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:ruler:mercury",
+                                                                                                  "knowledge_item_id":  3406,
+                                                                                                  "key":  "natal.house.9.ruler.mercury",
+                                                                                                  "priority":  84,
+                                                                                                  "created_at":  "2026-02-22 06:54:16",
+                                                                                                  "text":  "Управитель 9-го дома — Меркурий: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 9-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:9:ruler:any",
+                                                                                                  "knowledge_item_id":  3403,
+                                                                                                  "key":  "natal.house.9.ruler.any",
+                                                                                                  "priority":  84,
+                                                                                                  "created_at":  "2026-02-22 06:54:16",
+                                                                                                  "text":  "Управитель 9-го дома: планета, которая показывает «как» и «через что» реализуется тема 9-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:venus",
+                                                                                                  "knowledge_item_id":  3418,
+                                                                                                  "key":  "natal.house.10.ruler.venus",
+                                                                                                  "priority":  84,
+                                                                                                  "created_at":  "2026-02-22 06:54:16",
+                                                                                                  "text":  "Управитель 10-го дома — Венера: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 10-го дома."
+                                                                                              },
+                                                                                              {
+                                                                                                  "block_id":  "house:10:ruler:any",
+                                                                                                  "knowledge_item_id":  3414,
+                                                                                                  "key":  "natal.house.10.ruler.any",
+                                                                                                  "priority":  84,
+                                                                                                  "created_at":  "2026-02-22 06:54:16",
+                                                                                                  "text":  "Управитель 10-го дома: планета, которая показывает «как» и «через что» реализуется тема 10-го дома."
+                                                                                              }
+                                                                                          ]
+                                                               }
+                                          }
+                           }
+             }
+}

@@ -1,0 +1,124 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "strengths_weaknesses":  {
+                                                                           "used_blocks_sample":  [
+                                                                                                      {
+                                                                                                          "block_id":  "planet_group_luminaries",
+                                                                                                          "knowledge_item_id":  2527,
+                                                                                                          "key":  "natal.planets.group.luminaries.count.2",
+                                                                                                          "priority":  98,
+                                                                                                          "created_at":  "2026-02-21 10:40:05",
+                                                                                                          "text":  "(strengths_weaknesses) Светил в группе: 2 из 2."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet_group_inner",
+                                                                                                          "knowledge_item_id":  2532,
+                                                                                                          "key":  "natal.planets.group.inner.count.3",
+                                                                                                          "priority":  98,
+                                                                                                          "created_at":  "2026-02-21 10:40:05",
+                                                                                                          "text":  "(strengths_weaknesses) Личных планет в группе: 3 из 3."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet_group_social",
+                                                                                                          "knowledge_item_id":  2536,
+                                                                                                          "key":  "natal.planets.group.social.count.2",
+                                                                                                          "priority":  98,
+                                                                                                          "created_at":  "2026-02-21 10:40:05",
+                                                                                                          "text":  "(strengths_weaknesses) Социальных планет в группе: 2 из 2."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet_group_outer",
+                                                                                                          "knowledge_item_id":  2541,
+                                                                                                          "key":  "natal.planets.group.outer.count.3",
+                                                                                                          "priority":  98,
+                                                                                                          "created_at":  "2026-02-21 10:40:05",
+                                                                                                          "text":  "(strengths_weaknesses) Высших планет в группе: 3 из 3."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:sun",
+                                                                                                          "knowledge_item_id":  3573,
+                                                                                                          "key":  "natal.planet.sun.sign.capricorn.house.1",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Солнце в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:moon",
+                                                                                                          "knowledge_item_id":  3743,
+                                                                                                          "key":  "natal.planet.moon.sign.aquarius.house.2",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Луна в «Водолей» в 2-м доме: стиль «Водолей» проявляется в темах 2-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:mercury",
+                                                                                                          "knowledge_item_id":  3885,
+                                                                                                          "key":  "natal.planet.mercury.sign.capricorn.house.1",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Меркурий в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:venus",
+                                                                                                          "knowledge_item_id":  4055,
+                                                                                                          "key":  "natal.planet.venus.sign.aquarius.house.2",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Венера в «Водолей» в 2-м доме: стиль «Водолей» проявляется в темах 2-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:mars",
+                                                                                                          "knowledge_item_id":  4195,
+                                                                                                          "key":  "natal.planet.mars.sign.sagittarius.house.12",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Марс в «Стрелец» в 12-м доме: стиль «Стрелец» проявляется в темах 12-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:jupiter",
+                                                                                                          "knowledge_item_id":  4281,
+                                                                                                          "key":  "natal.planet.jupiter.sign.cancer.house.7",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Юпитер в «Рак» в 7-м доме: стиль «Рак» проявляется в темах 7-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:neptune",
+                                                                                                          "knowledge_item_id":  4821,
+                                                                                                          "key":  "natal.planet.neptune.sign.capricorn.house.1",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Нептун в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:pluto",
+                                                                                                          "knowledge_item_id":  4961,
+                                                                                                          "key":  "natal.planet.pluto.sign.scorpio.house.11",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Плутон в «Скорпион» в 11-м доме: стиль «Скорпион» проявляется в темах 11-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:saturn",
+                                                                                                          "knowledge_item_id":  4509,
+                                                                                                          "key":  "natal.planet.saturn.sign.capricorn.house.1",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Сатурн в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                                      },
+                                                                                                      {
+                                                                                                          "block_id":  "planet:uranus",
+                                                                                                          "knowledge_item_id":  4665,
+                                                                                                          "key":  "natal.planet.uranus.sign.capricorn.house.1",
+                                                                                                          "priority":  90,
+                                                                                                          "created_at":  "2026-02-22 06:58:23",
+                                                                                                          "text":  "Уран в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                                      }
+                                                                                                  ]
+                                                                       }
+                                          }
+                           }
+             }
+}

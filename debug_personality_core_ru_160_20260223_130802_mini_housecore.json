@@ -1,0 +1,132 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "personality_core":  {
+                                                                       "used_blocks_sample":  [
+                                                                                                  {
+                                                                                                      "block_id":  "angle:asc",
+                                                                                                      "knowledge_item_id":  45,
+                                                                                                      "key":  "natal.angle.asc.sign.sagittarius",
+                                                                                                      "priority":  100,
+                                                                                                      "created_at":  "1771567143",
+                                                                                                      "text":  "Асцендент в Стрельце — первое впечатление и манера входить в мир: ты проявляешь качества стрелец с порога. Люди сначала видят твой темп и стиль контакта, а уже потом глубину мотивации. Сильная сторона — быстро задавать тон и понимать, как устроена ситуация. Риск — застревать в роли и играть образ вместо живой реакции. Рабочий ключ: осознанно переключай темп и выбирай, где быть прямым, а где мягким. В лучшем проявлении рядом с тобой становится понятнее, что делать дальше."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:ruler:jupiter:aspects:present",
+                                                                                                      "knowledge_item_id":  5748,
+                                                                                                      "key":  "natal.house.1.ruler.jupiter.aspects.present",
+                                                                                                      "priority":  91,
+                                                                                                      "created_at":  "2026-02-22 07:00:07",
+                                                                                                      "text":  "Есть аспекты у управителя 1-го дома (Юпитер): они показывают, с чем сцеплена тема 1-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:ruler:jupiter:aspect:opposition:sun",
+                                                                                                      "knowledge_item_id":  5785,
+                                                                                                      "key":  "natal.house.1.ruler.jupiter.aspect.opposition.sun",
+                                                                                                      "priority":  91,
+                                                                                                      "created_at":  "2026-02-22 07:00:07",
+                                                                                                      "text":  "Управитель 1-го дома (Юпитер) в аспекте «оппозиция» с Солнце: сцепка тем и влияние на реализацию 1-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:ruler:jupiter:aspect:opposition:uranus",
+                                                                                                      "knowledge_item_id":  5791,
+                                                                                                      "key":  "natal.house.1.ruler.jupiter.aspect.opposition.uranus",
+                                                                                                      "priority":  91,
+                                                                                                      "created_at":  "2026-02-22 07:00:07",
+                                                                                                      "text":  "Управитель 1-го дома (Юпитер) в аспекте «оппозиция» с Уран: сцепка тем и влияние на реализацию 1-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "angle:asc:any",
+                                                                                                      "knowledge_item_id":  3130,
+                                                                                                      "key":  "natal.angle.asc",
+                                                                                                      "priority":  86,
+                                                                                                      "created_at":  "2026-02-22 06:52:26",
+                                                                                                      "text":  "Угол ASC: важная точка карты, описывает ось опыта и внешнего проявления."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:cusp",
+                                                                                                      "knowledge_item_id":  3168,
+                                                                                                      "key":  "natal.house.1.cusp.sign.sagittarius",
+                                                                                                      "priority":  86,
+                                                                                                      "created_at":  "2026-02-22 06:53:20",
+                                                                                                      "text":  "Куспид 1-го дома в «Стрелец»: стиль темы 1-го дома через качества «Стрелец»."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:ruler:jupiter:pos",
+                                                                                                      "knowledge_item_id":  2611,
+                                                                                                      "key":  "natal.house.1.ruler.jupiter.sign.any",
+                                                                                                      "priority":  86,
+                                                                                                      "created_at":  "2026-02-22 06:19:37",
+                                                                                                      "text":  "Управитель 1-го дома (Юпитер) стоит в определённом знаке: это задаёт стиль проявления темы 1-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:cusp:any",
+                                                                                                      "knowledge_item_id":  3159,
+                                                                                                      "key":  "natal.house.1.cusp.sign.any",
+                                                                                                      "priority":  85,
+                                                                                                      "created_at":  "2026-02-22 06:53:20",
+                                                                                                      "text":  "Куспид 1-го дома в знаке: задаёт тон и стиль проявления темы 1-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:ruler:jupiter",
+                                                                                                      "knowledge_item_id":  3321,
+                                                                                                      "key":  "natal.house.1.ruler.jupiter",
+                                                                                                      "priority":  84,
+                                                                                                      "created_at":  "2026-02-22 06:54:16",
+                                                                                                      "text":  "Управитель 1-го дома — Юпитер: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 1-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:ruler:any",
+                                                                                                      "knowledge_item_id":  3315,
+                                                                                                      "key":  "natal.house.1.ruler.any",
+                                                                                                      "priority":  84,
+                                                                                                      "created_at":  "2026-02-22 06:54:16",
+                                                                                                      "text":  "Управитель 1-го дома: планета, которая показывает «как» и «через что» реализуется тема 1-го дома."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:planet:mercury",
+                                                                                                      "knowledge_item_id":  2958,
+                                                                                                      "key":  "natal.house.1.planet.mercury",
+                                                                                                      "priority":  84,
+                                                                                                      "created_at":  "2026-02-22 06:20:27",
+                                                                                                      "text":  "Меркурий в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Меркурий — они уточняют стиль и приоритеты проявления."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:planet:neptune",
+                                                                                                      "knowledge_item_id":  2964,
+                                                                                                      "key":  "natal.house.1.planet.neptune",
+                                                                                                      "priority":  84,
+                                                                                                      "created_at":  "2026-02-22 06:20:27",
+                                                                                                      "text":  "Нептун в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Нептун — они уточняют стиль и приоритеты проявления."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:planet:saturn",
+                                                                                                      "knowledge_item_id":  2962,
+                                                                                                      "key":  "natal.house.1.planet.saturn",
+                                                                                                      "priority":  84,
+                                                                                                      "created_at":  "2026-02-22 06:20:27",
+                                                                                                      "text":  "Сатурн в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Сатурн — они уточняют стиль и приоритеты проявления."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:planet:sun",
+                                                                                                      "knowledge_item_id":  2956,
+                                                                                                      "key":  "natal.house.1.planet.sun",
+                                                                                                      "priority":  84,
+                                                                                                      "created_at":  "2026-02-22 06:20:27",
+                                                                                                      "text":  "Солнце в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Солнце — они уточняют стиль и приоритеты проявления."
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "block_id":  "house:1:planet:uranus",
+                                                                                                      "knowledge_item_id":  2963,
+                                                                                                      "key":  "natal.house.1.planet.uranus",
+                                                                                                      "priority":  84,
+                                                                                                      "created_at":  "2026-02-22 06:20:27",
+                                                                                                      "text":  "Уран в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Уран — они уточняют стиль и приоритеты проявления."
+                                                                                                  }
+                                                                                              ]
+                                                                   }
+                                          }
+                           }
+             }
+}

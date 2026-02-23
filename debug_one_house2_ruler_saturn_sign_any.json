@@ -1,0 +1,20 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "career":  {
+                                                             "used_blocks_sample":  [
+                                                                                        {
+                                                                                            "block_id":  "house:2:ruler:saturn:pos",
+                                                                                            "knowledge_item_id":  2644,
+                                                                                            "key":  "natal.house.2.ruler.saturn.sign.any",
+                                                                                            "priority":  86,
+                                                                                            "created_at":  "2026-02-22 06:19:37",
+                                                                                            "text":  "Управитель 2-го дома (Сатурн) стоит в определённом знаке: это задаёт стиль проявления темы 2-го дома."
+                                                                                        }
+                                                                                    ]
+                                                         }
+                                          }
+                           }
+             }
+}

@@ -2,6 +2,16 @@ C:\Projects\superastro
 |   .gitattributes
 |   .gitignore
 |   atomize_dryrun.json
+|   auto_iterate_career.ps1
+|   check_overrides.py
+|   debug_career.json
+|   debug_career_80.json
+|   debug_career_after.json
+|   debug_career_after_compress.json
+|   debug_career_after_compress_80.json
+|   debug_career_after_round2.json
+|   debug_career_auto_after_debug_career_80.json
+|   debug_career_auto_after_debug_career_after_round2.json
 |   ev1_keys_unique.txt
 |   kb_import_git.patch
 |   Opisanie_BZ.docx
@@ -28,6 +38,7 @@ C:\Projects\superastro
 |   |   atomize_dry.json
 |   |   atomize_dryrun.json
 |   |   check_staging.py
+|   |   debug_career.json
 |   |   debug_runtime.json
 |   |   ev1_keys_unique.txt
 |   |   fix_docs_mojibake.py
@@ -537,6 +548,7 @@ C:\Projects\superastro
 |       |   |   generate_career_depth_all_remaining_seed.py
 |       |   |   generate_career_depth_mc_house10_seed.py
 |       |   |   generate_career_house10_ruler_specific_aspects_seed.py
+|       |   |   generate_career_overrides_from_debug_shortest.py
 |       |   |   generate_elements_polarity_modality_exact_global.py
 |       |   |   generate_elements_polarity_modality_scaffolds_global.py
 |       |   |   generate_house_cusp_sign_scaffolds_global.py
@@ -556,9 +568,16 @@ C:\Projects\superastro
 |       |   |   seed_angle_sign_scaffolds_global.sql
 |       |   |   seed_aspect_planet_pair_scaffolds_global.sql
 |       |   |   seed_aspect_scaffolds_global.sql
+|       |   |   seed_career_auto_debug_career_80_len67.sql
+|       |   |   seed_career_auto_debug_career_after_round2_len354.sql
+|       |   |   seed_career_auto_debug_career_after_round2_len565.sql
+|       |   |   seed_career_compress_sign_present.sql
 |       |   |   seed_career_depth_all_remaining.sql
 |       |   |   seed_career_depth_mc_house10.sql
 |       |   |   seed_career_house10_ruler_specific_aspects.sql
+|       |   |   seed_career_overrides_round2.sql
+|       |   |   seed_career_overrides_round3_core.sql
+|       |   |   seed_career_overrides_short_used.sql
 |       |   |   seed_elements_polarity_modality_exact_global.sql
 |       |   |   seed_elements_polarity_modality_scaffolds_global.sql
 |       |   |   seed_generic_all_topics.sql

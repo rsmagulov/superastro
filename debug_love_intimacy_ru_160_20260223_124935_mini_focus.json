@@ -1,0 +1,196 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "love_intimacy":  {
+                                                                    "used_blocks_sample":  [
+                                                                                               {
+                                                                                                   "block_id":  "planet_group_luminaries",
+                                                                                                   "knowledge_item_id":  2383,
+                                                                                                   "key":  "natal.planets.group.luminaries.count.2",
+                                                                                                   "priority":  98,
+                                                                                                   "created_at":  "2026-02-21 10:40:05",
+                                                                                                   "text":  "(love_intimacy) Светил в группе: 2 из 2."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet_group_inner",
+                                                                                                   "knowledge_item_id":  2388,
+                                                                                                   "key":  "natal.planets.group.inner.count.3",
+                                                                                                   "priority":  98,
+                                                                                                   "created_at":  "2026-02-21 10:40:05",
+                                                                                                   "text":  "(love_intimacy) Личных планет в группе: 3 из 3."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet_group_social",
+                                                                                                   "knowledge_item_id":  2392,
+                                                                                                   "key":  "natal.planets.group.social.count.2",
+                                                                                                   "priority":  98,
+                                                                                                   "created_at":  "2026-02-21 10:40:05",
+                                                                                                   "text":  "(love_intimacy) Социальных планет в группе: 2 из 2."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet_group_outer",
+                                                                                                   "knowledge_item_id":  2397,
+                                                                                                   "key":  "natal.planets.group.outer.count.3",
+                                                                                                   "priority":  98,
+                                                                                                   "created_at":  "2026-02-21 10:40:05",
+                                                                                                   "text":  "(love_intimacy) Высших планет в группе: 3 из 3."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "aspect:mars:sextile:venus",
+                                                                                                   "knowledge_item_id":  5144,
+                                                                                                   "key":  "natal.aspect.mars.sextile.venus",
+                                                                                                   "priority":  92,
+                                                                                                   "created_at":  "2026-02-22 06:59:15",
+                                                                                                   "text":  "Аспект «секстиль» между Марс и Венера: связь тем двух планет, влияющая на стиль их взаимодействия."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "aspect:jupiter:opposition:uranus",
+                                                                                                   "knowledge_item_id":  5426,
+                                                                                                   "key":  "natal.aspect.jupiter.opposition.uranus",
+                                                                                                   "priority":  92,
+                                                                                                   "created_at":  "2026-02-22 06:59:15",
+                                                                                                   "text":  "Аспект «оппозиция» между Юпитер и Уран: связь тем двух планет, влияющая на стиль их взаимодействия."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "aspect:pluto:sextile:saturn",
+                                                                                                   "knowledge_item_id":  5192,
+                                                                                                   "key":  "natal.aspect.pluto.sextile.saturn",
+                                                                                                   "priority":  92,
+                                                                                                   "created_at":  "2026-02-22 06:59:15",
+                                                                                                   "text":  "Аспект «секстиль» между Плутон и Сатурн: связь тем двух планет, влияющая на стиль их взаимодействия."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "aspect:neptune:conjunction:sun",
+                                                                                                   "knowledge_item_id":  5087,
+                                                                                                   "key":  "natal.aspect.neptune.conjunction.sun",
+                                                                                                   "priority":  92,
+                                                                                                   "created_at":  "2026-02-22 06:59:15",
+                                                                                                   "text":  "Аспект «соединение» между Нептун и Солнце: связь тем двух планет, влияющая на стиль их взаимодействия."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "aspect:neptune:conjunction:saturn",
+                                                                                                   "knowledge_item_id":  5093,
+                                                                                                   "key":  "natal.aspect.neptune.conjunction.saturn",
+                                                                                                   "priority":  92,
+                                                                                                   "created_at":  "2026-02-22 06:59:15",
+                                                                                                   "text":  "Аспект «соединение» между Нептун и Сатурн: связь тем двух планет, влияющая на стиль их взаимодействия."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "aspect:sun:conjunction:uranus",
+                                                                                                   "knowledge_item_id":  5021,
+                                                                                                   "key":  "natal.aspect.sun.conjunction.uranus",
+                                                                                                   "priority":  92,
+                                                                                                   "created_at":  "2026-02-22 06:59:15",
+                                                                                                   "text":  "Аспект «соединение» между Солнце и Уран: связь тем двух планет, влияющая на стиль их взаимодействия."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "aspect:neptune:sextile:pluto",
+                                                                                                   "knowledge_item_id":  5185,
+                                                                                                   "key":  "natal.aspect.neptune.sextile.pluto",
+                                                                                                   "priority":  92,
+                                                                                                   "created_at":  "2026-02-22 06:59:15",
+                                                                                                   "text":  "Аспект «секстиль» между Нептун и Плутон: связь тем двух планет, влияющая на стиль их взаимодействия."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "aspect:jupiter:opposition:sun",
+                                                                                                   "knowledge_item_id":  5420,
+                                                                                                   "key":  "natal.aspect.jupiter.opposition.sun",
+                                                                                                   "priority":  92,
+                                                                                                   "created_at":  "2026-02-22 06:59:15",
+                                                                                                   "text":  "Аспект «оппозиция» между Юпитер и Солнце: связь тем двух планет, влияющая на стиль их взаимодействия."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "aspect:saturn:conjunction:sun",
+                                                                                                   "knowledge_item_id":  5069,
+                                                                                                   "key":  "natal.aspect.saturn.conjunction.sun",
+                                                                                                   "priority":  92,
+                                                                                                   "created_at":  "2026-02-22 06:59:15",
+                                                                                                   "text":  "Аспект «соединение» между Сатурн и Солнце: связь тем двух планет, влияющая на стиль их взаимодействия."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:venus",
+                                                                                                   "knowledge_item_id":  4055,
+                                                                                                   "key":  "natal.planet.venus.sign.aquarius.house.2",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Венера в «Водолей» в 2-м доме: стиль «Водолей» проявляется в темах 2-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:mars",
+                                                                                                   "knowledge_item_id":  4195,
+                                                                                                   "key":  "natal.planet.mars.sign.sagittarius.house.12",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Марс в «Стрелец» в 12-м доме: стиль «Стрелец» проявляется в темах 12-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:moon",
+                                                                                                   "knowledge_item_id":  3743,
+                                                                                                   "key":  "natal.planet.moon.sign.aquarius.house.2",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Луна в «Водолей» в 2-м доме: стиль «Водолей» проявляется в темах 2-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:sun",
+                                                                                                   "knowledge_item_id":  3573,
+                                                                                                   "key":  "natal.planet.sun.sign.capricorn.house.1",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Солнце в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:mercury",
+                                                                                                   "knowledge_item_id":  3885,
+                                                                                                   "key":  "natal.planet.mercury.sign.capricorn.house.1",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Меркурий в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:jupiter",
+                                                                                                   "knowledge_item_id":  4281,
+                                                                                                   "key":  "natal.planet.jupiter.sign.cancer.house.7",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Юпитер в «Рак» в 7-м доме: стиль «Рак» проявляется в темах 7-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:neptune",
+                                                                                                   "knowledge_item_id":  4821,
+                                                                                                   "key":  "natal.planet.neptune.sign.capricorn.house.1",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Нептун в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:pluto",
+                                                                                                   "knowledge_item_id":  4961,
+                                                                                                   "key":  "natal.planet.pluto.sign.scorpio.house.11",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Плутон в «Скорпион» в 11-м доме: стиль «Скорпион» проявляется в темах 11-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:saturn",
+                                                                                                   "knowledge_item_id":  4509,
+                                                                                                   "key":  "natal.planet.saturn.sign.capricorn.house.1",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Сатурн в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "planet:uranus",
+                                                                                                   "knowledge_item_id":  4665,
+                                                                                                   "key":  "natal.planet.uranus.sign.capricorn.house.1",
+                                                                                                   "priority":  90,
+                                                                                                   "created_at":  "2026-02-22 06:58:23",
+                                                                                                   "text":  "Уран в «Козерог» в 1-м доме: стиль «Козерог» проявляется в темах 1-го дома."
+                                                                                               }
+                                                                                           ]
+                                                                }
+                                          }
+                           }
+             }
+}

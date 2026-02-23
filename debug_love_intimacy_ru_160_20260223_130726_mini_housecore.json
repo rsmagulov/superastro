@@ -1,0 +1,196 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "love_intimacy":  {
+                                                                    "used_blocks_sample":  [
+                                                                                               {
+                                                                                                   "block_id":  "house:5:ruler:venus:aspects:present",
+                                                                                                   "knowledge_item_id":  7708,
+                                                                                                   "key":  "natal.house.5.ruler.venus.aspects.present",
+                                                                                                   "priority":  91,
+                                                                                                   "created_at":  "2026-02-22 07:00:07",
+                                                                                                   "text":  "Есть аспекты у управителя 5-го дома (Венера): они показывают, с чем сцеплена тема 5-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:5:ruler:venus:aspect:sextile:mars",
+                                                                                                   "knowledge_item_id":  7721,
+                                                                                                   "key":  "natal.house.5.ruler.venus.aspect.sextile.mars",
+                                                                                                   "priority":  91,
+                                                                                                   "created_at":  "2026-02-22 07:00:07",
+                                                                                                   "text":  "Управитель 5-го дома (Венера) в аспекте «секстиль» с Марс: сцепка тем и влияние на реализацию 5-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:ruler:sun:aspects:present",
+                                                                                                   "knowledge_item_id":  9059,
+                                                                                                   "key":  "natal.house.8.ruler.sun.aspects.present",
+                                                                                                   "priority":  91,
+                                                                                                   "created_at":  "2026-02-22 07:00:08",
+                                                                                                   "text":  "Есть аспекты у управителя 8-го дома (Солнце): они показывают, с чем сцеплена тема 8-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:ruler:sun:aspect:opposition:jupiter",
+                                                                                                   "knowledge_item_id":  9141,
+                                                                                                   "key":  "natal.house.8.ruler.sun.aspect.opposition.jupiter",
+                                                                                                   "priority":  91,
+                                                                                                   "created_at":  "2026-02-22 07:00:08",
+                                                                                                   "text":  "Управитель 8-го дома (Солнце) в аспекте «оппозиция» с Юпитер: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:ruler:sun:aspect:conjunction:neptune",
+                                                                                                   "knowledge_item_id":  9075,
+                                                                                                   "key":  "natal.house.8.ruler.sun.aspect.conjunction.neptune",
+                                                                                                   "priority":  91,
+                                                                                                   "created_at":  "2026-02-22 07:00:08",
+                                                                                                   "text":  "Управитель 8-го дома (Солнце) в аспекте «соединение» с Нептун: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:ruler:sun:aspect:conjunction:uranus",
+                                                                                                   "knowledge_item_id":  9073,
+                                                                                                   "key":  "natal.house.8.ruler.sun.aspect.conjunction.uranus",
+                                                                                                   "priority":  91,
+                                                                                                   "created_at":  "2026-02-22 07:00:08",
+                                                                                                   "text":  "Управитель 8-го дома (Солнце) в аспекте «соединение» с Уран: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:ruler:sun:aspect:conjunction:saturn",
+                                                                                                   "knowledge_item_id":  9071,
+                                                                                                   "key":  "natal.house.8.ruler.sun.aspect.conjunction.saturn",
+                                                                                                   "priority":  91,
+                                                                                                   "created_at":  "2026-02-22 07:00:08",
+                                                                                                   "text":  "Управитель 8-го дома (Солнце) в аспекте «соединение» с Сатурн: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:5:ruler:any",
+                                                                                                   "knowledge_item_id":  1981,
+                                                                                                   "key":  "natal.house.5.ruler.any",
+                                                                                                   "priority":  88,
+                                                                                                   "created_at":  "1771652937",
+                                                                                                   "text":  "Управитель 5 дома показывает, как проявляется романтика, флирт и то, что поддерживает чувство игры и притяжения."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:7:cusp:any",
+                                                                                                   "knowledge_item_id":  1523,
+                                                                                                   "key":  "natal.house.7.cusp.sign.any",
+                                                                                                   "priority":  88,
+                                                                                                   "created_at":  "1771614456",
+                                                                                                   "text":  "7 дом: стиль союза, ожидания от партнёра и динамика \"я-мы\"."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:7:ruler:any",
+                                                                                                   "knowledge_item_id":  1524,
+                                                                                                   "key":  "natal.house.7.ruler.any",
+                                                                                                   "priority":  88,
+                                                                                                   "created_at":  "1771614456",
+                                                                                                   "text":  "Управитель 7 дома показывает, как вы строите отношения и что важно для устойчивости союза."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:ruler:any",
+                                                                                                   "knowledge_item_id":  1982,
+                                                                                                   "key":  "natal.house.8.ruler.any",
+                                                                                                   "priority":  88,
+                                                                                                   "created_at":  "1771652937",
+                                                                                                   "text":  "Управитель 8 дома показывает сценарии доверия, глубины, близости и то, как вы проходите трансформации в отношениях."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:5:cusp:any",
+                                                                                                   "knowledge_item_id":  1526,
+                                                                                                   "key":  "natal.house.5.cusp.sign.any",
+                                                                                                   "priority":  86,
+                                                                                                   "created_at":  "1771614456",
+                                                                                                   "text":  "5 дом: романтика, влюблённость, игра и способ выражать чувства."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:5:cusp",
+                                                                                                   "knowledge_item_id":  1686,
+                                                                                                   "key":  "natal.house.5.cusp.sign.taurus",
+                                                                                                   "priority":  86,
+                                                                                                   "created_at":  "1771651356",
+                                                                                                   "text":  "5 дом в taurus: романтика, влюблённость и творческое самовыражение."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:5:ruler:venus:pos",
+                                                                                                   "knowledge_item_id":  2725,
+                                                                                                   "key":  "natal.house.5.ruler.venus.sign.any",
+                                                                                                   "priority":  86,
+                                                                                                   "created_at":  "2026-02-22 06:19:37",
+                                                                                                   "text":  "Управитель 5-го дома (Венера) стоит в определённом знаке: это задаёт стиль проявления темы 5-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:7:cusp",
+                                                                                                   "knowledge_item_id":  1715,
+                                                                                                   "key":  "natal.house.7.cusp.sign.gemini",
+                                                                                                   "priority":  86,
+                                                                                                   "created_at":  "1771651356",
+                                                                                                   "text":  "7 дом в gemini: стиль партнёрства и ожидания от союза."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:7:ruler:mercury:pos",
+                                                                                                   "knowledge_item_id":  2782,
+                                                                                                   "key":  "natal.house.7.ruler.mercury.sign.any",
+                                                                                                   "priority":  86,
+                                                                                                   "created_at":  "2026-02-22 06:19:37",
+                                                                                                   "text":  "Управитель 7-го дома (Меркурий) стоит в определённом знаке: это задаёт стиль проявления темы 7-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:cusp:any",
+                                                                                                   "knowledge_item_id":  1527,
+                                                                                                   "key":  "natal.house.8.cusp.sign.any",
+                                                                                                   "priority":  86,
+                                                                                                   "created_at":  "1771614456",
+                                                                                                   "text":  "8 дом: интимность, доверие, глубина и трансформации в отношениях."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:cusp",
+                                                                                                   "knowledge_item_id":  1746,
+                                                                                                   "key":  "natal.house.8.cusp.sign.leo",
+                                                                                                   "priority":  86,
+                                                                                                   "created_at":  "1771651356",
+                                                                                                   "text":  "8 дом в leo: близость, доверие и глубина отношений."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:ruler:sun:pos",
+                                                                                                   "knowledge_item_id":  2806,
+                                                                                                   "key":  "natal.house.8.ruler.sun.sign.any",
+                                                                                                   "priority":  86,
+                                                                                                   "created_at":  "2026-02-22 06:19:37",
+                                                                                                   "text":  "Управитель 8-го дома (Солнце) стоит в определённом знаке: это задаёт стиль проявления темы 8-го дома."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:5:ruler:venus",
+                                                                                                   "knowledge_item_id":  1687,
+                                                                                                   "key":  "natal.house.5.ruler.venus",
+                                                                                                   "priority":  84,
+                                                                                                   "created_at":  "1771651356",
+                                                                                                   "text":  "управитель 5 дома (venus) при куспиде в taurus — про романтику и то, как вы проявляете чувства."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:7:ruler:mercury",
+                                                                                                   "knowledge_item_id":  1716,
+                                                                                                   "key":  "natal.house.7.ruler.mercury",
+                                                                                                   "priority":  84,
+                                                                                                   "created_at":  "1771651356",
+                                                                                                   "text":  "управитель 7 дома (mercury) при куспиде в gemini — про модель союза и партнёрские сценарии."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:7:planet:jupiter",
+                                                                                                   "knowledge_item_id":  3021,
+                                                                                                   "key":  "natal.house.7.planet.jupiter",
+                                                                                                   "priority":  84,
+                                                                                                   "created_at":  "2026-02-22 06:20:27",
+                                                                                                   "text":  "Юпитер в 7-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Юпитер — они уточняют стиль и приоритеты проявления."
+                                                                                               },
+                                                                                               {
+                                                                                                   "block_id":  "house:8:ruler:sun",
+                                                                                                   "knowledge_item_id":  1747,
+                                                                                                   "key":  "natal.house.8.ruler.sun",
+                                                                                                   "priority":  84,
+                                                                                                   "created_at":  "1771651356",
+                                                                                                   "text":  "управитель 8 дома (sun) при куспиде в leo — про интимность и глубину связи."
+                                                                                               }
+                                                                                           ]
+                                                                }
+                                          }
+                           }
+             }
+}

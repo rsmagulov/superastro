@@ -1,0 +1,164 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "past_lives_symbolic":  {
+                                                                          "used_blocks_sample":  [
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:sun:aspects:present",
+                                                                                                         "knowledge_item_id":  9059,
+                                                                                                         "key":  "natal.house.8.ruler.sun.aspects.present",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Есть аспекты у управителя 8-го дома (Солнце): они показывают, с чем сцеплена тема 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:sun:aspect:opposition:jupiter",
+                                                                                                         "knowledge_item_id":  9141,
+                                                                                                         "key":  "natal.house.8.ruler.sun.aspect.opposition.jupiter",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Управитель 8-го дома (Солнце) в аспекте «оппозиция» с Юпитер: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:sun:aspect:conjunction:saturn",
+                                                                                                         "knowledge_item_id":  9071,
+                                                                                                         "key":  "natal.house.8.ruler.sun.aspect.conjunction.saturn",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Управитель 8-го дома (Солнце) в аспекте «соединение» с Сатурн: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:sun:aspect:conjunction:neptune",
+                                                                                                         "knowledge_item_id":  9075,
+                                                                                                         "key":  "natal.house.8.ruler.sun.aspect.conjunction.neptune",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Управитель 8-го дома (Солнце) в аспекте «соединение» с Нептун: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:sun:aspect:conjunction:uranus",
+                                                                                                         "knowledge_item_id":  9073,
+                                                                                                         "key":  "natal.house.8.ruler.sun.aspect.conjunction.uranus",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Управитель 8-го дома (Солнце) в аспекте «соединение» с Уран: сцепка тем и влияние на реализацию 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:jupiter:aspects:present",
+                                                                                                         "knowledge_item_id":  11391,
+                                                                                                         "key":  "natal.house.12.ruler.jupiter.aspects.present",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:08",
+                                                                                                         "text":  "Есть аспекты у управителя 12-го дома (Юпитер): они показывают, с чем сцеплена тема 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:jupiter:aspect:opposition:uranus",
+                                                                                                         "knowledge_item_id":  11434,
+                                                                                                         "key":  "natal.house.12.ruler.jupiter.aspect.opposition.uranus",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Управитель 12-го дома (Юпитер) в аспекте «оппозиция» с Уран: сцепка тем и влияние на реализацию 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:jupiter:aspect:opposition:sun",
+                                                                                                         "knowledge_item_id":  11428,
+                                                                                                         "key":  "natal.house.12.ruler.jupiter.aspect.opposition.sun",
+                                                                                                         "priority":  91,
+                                                                                                         "created_at":  "2026-02-22 07:00:09",
+                                                                                                         "text":  "Управитель 12-го дома (Юпитер) в аспекте «оппозиция» с Солнце: сцепка тем и влияние на реализацию 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:cusp",
+                                                                                                         "knowledge_item_id":  3255,
+                                                                                                         "key":  "natal.house.8.cusp.sign.leo",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:53:20",
+                                                                                                         "text":  "Куспид 8-го дома в «Лев»: стиль темы 8-го дома через качества «Лев»."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:sun:pos",
+                                                                                                         "knowledge_item_id":  2806,
+                                                                                                         "key":  "natal.house.8.ruler.sun.sign.any",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:19:37",
+                                                                                                         "text":  "Управитель 8-го дома (Солнце) стоит в определённом знаке: это задаёт стиль проявления темы 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:cusp",
+                                                                                                         "knowledge_item_id":  3311,
+                                                                                                         "key":  "natal.house.12.cusp.sign.sagittarius",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:53:20",
+                                                                                                         "text":  "Куспид 12-го дома в «Стрелец»: стиль темы 12-го дома через качества «Стрелец»."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:jupiter:pos",
+                                                                                                         "knowledge_item_id":  2941,
+                                                                                                         "key":  "natal.house.12.ruler.jupiter.sign.any",
+                                                                                                         "priority":  86,
+                                                                                                         "created_at":  "2026-02-22 06:19:37",
+                                                                                                         "text":  "Управитель 12-го дома (Юпитер) стоит в определённом знаке: это задаёт стиль проявления темы 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:cusp:any",
+                                                                                                         "knowledge_item_id":  3250,
+                                                                                                         "key":  "natal.house.8.cusp.sign.any",
+                                                                                                         "priority":  85,
+                                                                                                         "created_at":  "2026-02-22 06:53:20",
+                                                                                                         "text":  "Куспид 8-го дома в знаке: задаёт тон и стиль проявления темы 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:cusp:any",
+                                                                                                         "knowledge_item_id":  3302,
+                                                                                                         "key":  "natal.house.12.cusp.sign.any",
+                                                                                                         "priority":  85,
+                                                                                                         "created_at":  "2026-02-22 06:53:20",
+                                                                                                         "text":  "Куспид 12-го дома в знаке: задаёт тон и стиль проявления темы 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:sun",
+                                                                                                         "knowledge_item_id":  3393,
+                                                                                                         "key":  "natal.house.8.ruler.sun",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:54:16",
+                                                                                                         "text":  "Управитель 8-го дома — Солнце: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:8:ruler:any",
+                                                                                                         "knowledge_item_id":  3392,
+                                                                                                         "key":  "natal.house.8.ruler.any",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:54:16",
+                                                                                                         "text":  "Управитель 8-го дома: планета, которая показывает «как» и «через что» реализуется тема 8-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:jupiter",
+                                                                                                         "knowledge_item_id":  3442,
+                                                                                                         "key":  "natal.house.12.ruler.jupiter",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:54:16",
+                                                                                                         "text":  "Управитель 12-го дома — Юпитер: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:ruler:any",
+                                                                                                         "knowledge_item_id":  3436,
+                                                                                                         "key":  "natal.house.12.ruler.any",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:54:16",
+                                                                                                         "text":  "Управитель 12-го дома: планета, которая показывает «как» и «через что» реализуется тема 12-го дома."
+                                                                                                     },
+                                                                                                     {
+                                                                                                         "block_id":  "house:12:planet:mars",
+                                                                                                         "knowledge_item_id":  3070,
+                                                                                                         "key":  "natal.house.12.planet.mars",
+                                                                                                         "priority":  84,
+                                                                                                         "created_at":  "2026-02-22 06:20:27",
+                                                                                                         "text":  "Марс в 12-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Марс — они уточняют стиль и приоритеты проявления."
+                                                                                                     }
+                                                                                                 ]
+                                                                      }
+                                          }
+                           }
+             }
+}

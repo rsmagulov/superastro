@@ -1,0 +1,244 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "self_esteem":  {
+                                                                  "used_blocks_sample":  [
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:saturn:aspects:present",
+                                                                                                 "knowledge_item_id":  6307,
+                                                                                                 "key":  "natal.house.2.ruler.saturn.aspects.present",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Есть аспекты у управителя 2-го дома (Сатурн): они показывают, с чем сцеплена тема 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:saturn:aspect:conjunction:sun",
+                                                                                                 "knowledge_item_id":  6308,
+                                                                                                 "key":  "natal.house.2.ruler.saturn.aspect.conjunction.sun",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Управитель 2-го дома (Сатурн) в аспекте «соединение» с Солнце: сцепка тем и влияние на реализацию 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:saturn:aspect:sextile:pluto",
+                                                                                                 "knowledge_item_id":  6325,
+                                                                                                 "key":  "natal.house.2.ruler.saturn.aspect.sextile.pluto",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Управитель 2-го дома (Сатурн) в аспекте «секстиль» с Плутон: сцепка тем и влияние на реализацию 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:saturn:aspect:conjunction:neptune",
+                                                                                                 "knowledge_item_id":  6315,
+                                                                                                 "key":  "natal.house.2.ruler.saturn.aspect.conjunction.neptune",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Управитель 2-го дома (Сатурн) в аспекте «соединение» с Нептун: сцепка тем и влияние на реализацию 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:uranus:aspects:present",
+                                                                                                 "knowledge_item_id":  6353,
+                                                                                                 "key":  "natal.house.2.ruler.uranus.aspects.present",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Есть аспекты у управителя 2-го дома (Уран): они показывают, с чем сцеплена тема 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:uranus:aspect:opposition:jupiter",
+                                                                                                 "knowledge_item_id":  6395,
+                                                                                                 "key":  "natal.house.2.ruler.uranus.aspect.opposition.jupiter",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Управитель 2-го дома (Уран) в аспекте «оппозиция» с Юпитер: сцепка тем и влияние на реализацию 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:uranus:aspect:conjunction:sun",
+                                                                                                 "knowledge_item_id":  6354,
+                                                                                                 "key":  "natal.house.2.ruler.uranus.aspect.conjunction.sun",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Управитель 2-го дома (Уран) в аспекте «соединение» с Солнце: сцепка тем и влияние на реализацию 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:ruler:jupiter:aspects:present",
+                                                                                                 "knowledge_item_id":  5748,
+                                                                                                 "key":  "natal.house.1.ruler.jupiter.aspects.present",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Есть аспекты у управителя 1-го дома (Юпитер): они показывают, с чем сцеплена тема 1-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:ruler:jupiter:aspect:opposition:sun",
+                                                                                                 "knowledge_item_id":  5785,
+                                                                                                 "key":  "natal.house.1.ruler.jupiter.aspect.opposition.sun",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Управитель 1-го дома (Юпитер) в аспекте «оппозиция» с Солнце: сцепка тем и влияние на реализацию 1-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:ruler:jupiter:aspect:opposition:uranus",
+                                                                                                 "knowledge_item_id":  5791,
+                                                                                                 "key":  "natal.house.1.ruler.jupiter.aspect.opposition.uranus",
+                                                                                                 "priority":  91,
+                                                                                                 "created_at":  "2026-02-22 07:00:07",
+                                                                                                 "text":  "Управитель 1-го дома (Юпитер) в аспекте «оппозиция» с Уран: сцепка тем и влияние на реализацию 1-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:cusp",
+                                                                                                 "knowledge_item_id":  3183,
+                                                                                                 "key":  "natal.house.2.cusp.sign.aquarius",
+                                                                                                 "priority":  86,
+                                                                                                 "created_at":  "2026-02-22 06:53:20",
+                                                                                                 "text":  "Куспид 2-го дома в «Водолей»: стиль темы 2-го дома через качества «Водолей»."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:saturn:pos",
+                                                                                                 "knowledge_item_id":  2644,
+                                                                                                 "key":  "natal.house.2.ruler.saturn.sign.any",
+                                                                                                 "priority":  86,
+                                                                                                 "created_at":  "2026-02-22 06:19:37",
+                                                                                                 "text":  "Управитель 2-го дома (Сатурн) стоит в определённом знаке: это задаёт стиль проявления темы 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:uranus:pos",
+                                                                                                 "knowledge_item_id":  2647,
+                                                                                                 "key":  "natal.house.2.ruler.uranus.sign.any",
+                                                                                                 "priority":  86,
+                                                                                                 "created_at":  "2026-02-22 06:19:37",
+                                                                                                 "text":  "Управитель 2-го дома (Уран) стоит в определённом знаке: это задаёт стиль проявления темы 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:cusp",
+                                                                                                 "knowledge_item_id":  3168,
+                                                                                                 "key":  "natal.house.1.cusp.sign.sagittarius",
+                                                                                                 "priority":  86,
+                                                                                                 "created_at":  "2026-02-22 06:53:20",
+                                                                                                 "text":  "Куспид 1-го дома в «Стрелец»: стиль темы 1-го дома через качества «Стрелец»."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:ruler:jupiter:pos",
+                                                                                                 "knowledge_item_id":  2611,
+                                                                                                 "key":  "natal.house.1.ruler.jupiter.sign.any",
+                                                                                                 "priority":  86,
+                                                                                                 "created_at":  "2026-02-22 06:19:37",
+                                                                                                 "text":  "Управитель 1-го дома (Юпитер) стоит в определённом знаке: это задаёт стиль проявления темы 1-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:cusp:any",
+                                                                                                 "knowledge_item_id":  3172,
+                                                                                                 "key":  "natal.house.2.cusp.sign.any",
+                                                                                                 "priority":  85,
+                                                                                                 "created_at":  "2026-02-22 06:53:20",
+                                                                                                 "text":  "Куспид 2-го дома в знаке: задаёт тон и стиль проявления темы 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:cusp:any",
+                                                                                                 "knowledge_item_id":  3159,
+                                                                                                 "key":  "natal.house.1.cusp.sign.any",
+                                                                                                 "priority":  85,
+                                                                                                 "created_at":  "2026-02-22 06:53:20",
+                                                                                                 "text":  "Куспид 1-го дома в знаке: задаёт тон и стиль проявления темы 1-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:saturn",
+                                                                                                 "knowledge_item_id":  3333,
+                                                                                                 "key":  "natal.house.2.ruler.saturn",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:54:16",
+                                                                                                 "text":  "Управитель 2-го дома — Сатурн: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:uranus",
+                                                                                                 "knowledge_item_id":  3334,
+                                                                                                 "key":  "natal.house.2.ruler.uranus",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:54:16",
+                                                                                                 "text":  "Управитель 2-го дома — Уран: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:ruler:any",
+                                                                                                 "knowledge_item_id":  3326,
+                                                                                                 "key":  "natal.house.2.ruler.any",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:54:16",
+                                                                                                 "text":  "Управитель 2-го дома: планета, которая показывает «как» и «через что» реализуется тема 2-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:planet:moon",
+                                                                                                 "knowledge_item_id":  2967,
+                                                                                                 "key":  "natal.house.2.planet.moon",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:20:27",
+                                                                                                 "text":  "Луна в 2-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Луна — они уточняют стиль и приоритеты проявления."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:2:planet:venus",
+                                                                                                 "knowledge_item_id":  2969,
+                                                                                                 "key":  "natal.house.2.planet.venus",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:20:27",
+                                                                                                 "text":  "Венера в 2-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Венера — они уточняют стиль и приоритеты проявления."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:ruler:jupiter",
+                                                                                                 "knowledge_item_id":  3321,
+                                                                                                 "key":  "natal.house.1.ruler.jupiter",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:54:16",
+                                                                                                 "text":  "Управитель 1-го дома — Юпитер: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 1-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:ruler:any",
+                                                                                                 "knowledge_item_id":  3315,
+                                                                                                 "key":  "natal.house.1.ruler.any",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:54:16",
+                                                                                                 "text":  "Управитель 1-го дома: планета, которая показывает «как» и «через что» реализуется тема 1-го дома."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:planet:mercury",
+                                                                                                 "knowledge_item_id":  2958,
+                                                                                                 "key":  "natal.house.1.planet.mercury",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:20:27",
+                                                                                                 "text":  "Меркурий в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Меркурий — они уточняют стиль и приоритеты проявления."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:planet:neptune",
+                                                                                                 "knowledge_item_id":  2964,
+                                                                                                 "key":  "natal.house.1.planet.neptune",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:20:27",
+                                                                                                 "text":  "Нептун в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Нептун — они уточняют стиль и приоритеты проявления."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:planet:saturn",
+                                                                                                 "knowledge_item_id":  2962,
+                                                                                                 "key":  "natal.house.1.planet.saturn",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:20:27",
+                                                                                                 "text":  "Сатурн в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Сатурн — они уточняют стиль и приоритеты проявления."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:planet:sun",
+                                                                                                 "knowledge_item_id":  2956,
+                                                                                                 "key":  "natal.house.1.planet.sun",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:20:27",
+                                                                                                 "text":  "Солнце в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Солнце — они уточняют стиль и приоритеты проявления."
+                                                                                             },
+                                                                                             {
+                                                                                                 "block_id":  "house:1:planet:uranus",
+                                                                                                 "knowledge_item_id":  2963,
+                                                                                                 "key":  "natal.house.1.planet.uranus",
+                                                                                                 "priority":  84,
+                                                                                                 "created_at":  "2026-02-22 06:20:27",
+                                                                                                 "text":  "Уран в 1-м доме: эта жизненная сфера становится заметной зоной действий и решений. Смотри знак и аспекты Уран — они уточняют стиль и приоритеты проявления."
+                                                                                             }
+                                                                                         ]
+                                                              }
+                                          }
+                           }
+             }
+}

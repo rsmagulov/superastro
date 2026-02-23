@@ -1,0 +1,68 @@
+﻿{
+    "meta":  {
+                 "debug":  {
+                               "topics":  {
+                                              "creativity":  {
+                                                                 "used_blocks_sample":  [
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:venus:aspects:present",
+                                                                                                "knowledge_item_id":  7708,
+                                                                                                "key":  "natal.house.5.ruler.venus.aspects.present",
+                                                                                                "priority":  91,
+                                                                                                "created_at":  "2026-02-22 07:00:07",
+                                                                                                "text":  "Есть аспекты у управителя 5-го дома (Венера): они показывают, с чем сцеплена тема 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:venus:aspect:sextile:mars",
+                                                                                                "knowledge_item_id":  7721,
+                                                                                                "key":  "natal.house.5.ruler.venus.aspect.sextile.mars",
+                                                                                                "priority":  91,
+                                                                                                "created_at":  "2026-02-22 07:00:07",
+                                                                                                "text":  "Управитель 5-го дома (Венера) в аспекте «секстиль» с Марс: сцепка тем и влияние на реализацию 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:cusp",
+                                                                                                "knowledge_item_id":  3213,
+                                                                                                "key":  "natal.house.5.cusp.sign.taurus",
+                                                                                                "priority":  86,
+                                                                                                "created_at":  "2026-02-22 06:53:20",
+                                                                                                "text":  "Куспид 5-го дома в «Телец»: стиль темы 5-го дома через качества «Телец»."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:venus:pos",
+                                                                                                "knowledge_item_id":  2725,
+                                                                                                "key":  "natal.house.5.ruler.venus.sign.any",
+                                                                                                "priority":  86,
+                                                                                                "created_at":  "2026-02-22 06:19:37",
+                                                                                                "text":  "Управитель 5-го дома (Венера) стоит в определённом знаке: это задаёт стиль проявления темы 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:cusp:any",
+                                                                                                "knowledge_item_id":  3211,
+                                                                                                "key":  "natal.house.5.cusp.sign.any",
+                                                                                                "priority":  85,
+                                                                                                "created_at":  "2026-02-22 06:53:20",
+                                                                                                "text":  "Куспид 5-го дома в знаке: задаёт тон и стиль проявления темы 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:venus",
+                                                                                                "knowledge_item_id":  3363,
+                                                                                                "key":  "natal.house.5.ruler.venus",
+                                                                                                "priority":  84,
+                                                                                                "created_at":  "2026-02-22 06:54:16",
+                                                                                                "text":  "Управитель 5-го дома — Венера: его положение (знак/дом/аспекты) уточняет стиль и стратегию по теме 5-го дома."
+                                                                                            },
+                                                                                            {
+                                                                                                "block_id":  "house:5:ruler:any",
+                                                                                                "knowledge_item_id":  3359,
+                                                                                                "key":  "natal.house.5.ruler.any",
+                                                                                                "priority":  84,
+                                                                                                "created_at":  "2026-02-22 06:54:16",
+                                                                                                "text":  "Управитель 5-го дома: планета, которая показывает «как» и «через что» реализуется тема 5-го дома."
+                                                                                            }
+                                                                                        ]
+                                                             }
+                                          }
+                           }
+             }
+}
