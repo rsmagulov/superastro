@@ -692,6 +692,8 @@ async def interpret_v2(
     req: InterpretV2Request,
     locale: str = Query("ru", min_length=2, max_length=32),
     debug: int = Query(0, ge=0, le=2, description="0=off, 1=counts, 2=samples"),
+    max_blocks: int = Query(50, ge=1, le=200, description="Max KB blocks per topic"),
+    max_chars: int = Query(30_000, ge=1_000, le=200_000, description="Max total chars per topic"),
     session: AsyncSession = Depends(get_session),
     knowledge_session: AsyncSession = Depends(get_knowledge_session),
 ) -> InterpretV2Response:
@@ -740,6 +742,8 @@ async def interpret_v2(
         topic_categories=topics,
         locale=locale,
         tone_namespace="natal",
+        max_blocks=int(max_blocks),
+        max_chars=int(max_chars),
     )
 
     if int(debug) > 0:
@@ -747,6 +751,7 @@ async def interpret_v2(
             topics=[str(t) for t in topics],
             cores_by_topic=cores_by_topic,
             debug=int(debug),
+            max_hits=int(max_blocks),
         )
 
     # debug=2: keydiff must be topic-aware (use each topic's own knowledge_blocks)
@@ -762,6 +767,7 @@ async def interpret_v2(
                 topics=[t],                 # IMPORTANT: per-topic query
                 locale=locale,
                 knowledge_blocks_dump=kb_dump,
+                max_blocks=int(max_blocks),
             )
             # _debug_keydiff_for_topics returns {candidate_keys_total_unique, topics:{t:{...}}, limits:{...}}
             # unwrap per topic for compactness
