@@ -97,15 +97,21 @@ SIGN_TRAITS_RU: dict[str, dict[str, str]] = {
 
 @dataclass(frozen=True)
 class Opt:
-    in_path: Path | None
-    mini_path: Path | None
-    source_path: Path  # for header/debug only
-    out_path: Path
-    topic: str
-    locale: str
-    max_len: int
-    max_keys: int
-    priority: int
+    """
+    Generator options.
+
+    Backward-compatible: tests may instantiate Opt without mini_path/source_path.
+    CLI enforces mutual exclusion between in_path and mini_path separately.
+    """
+    in_path: Path | None = None
+    mini_path: Path | None = None
+    source_path: Path | None = None  # for header/debug only
+    out_path: Path = Path("seed.sql")
+    topic: str = "career"
+    locale: str = "ru-RU"
+    max_len: int = 420
+    max_keys: int = 200
+    priority: int = 140
 
 
 def _load_used_blocks_from_debug(path: Path, topic: str) -> list[dict[str, Any]]:
@@ -236,10 +242,13 @@ def load_used_blocks(opt: Opt) -> list[dict[str, Any]]:
 
 
 def build_sql(keys: list[str], opt: Opt) -> str:
+    source_path = opt.source_path or opt.mini_path or opt.in_path
+    source_s = source_path.as_posix() if isinstance(source_path, Path) else "<unknown>"
+
     out: list[str] = [
         "-- AUTO-GENERATED. DO NOT EDIT BY HAND.",
-        f"-- Overrides from shortest used blocks (topic_category={opt.topic})",
-        f"-- Source JSON: {opt.source_path.as_posix()}",
+        f"-- Overrides from debug shortest used blocks (topic_category={opt.topic})",
+        f"-- Source JSON: {source_s}",
         f"-- Filter: len(text)<= {opt.max_len}, max_keys={opt.max_keys}",
         "",
         "BEGIN;",
@@ -1050,10 +1059,13 @@ def select_short_keys(used_blocks: list[dict[str, Any]], opt: Opt) -> list[str]:
 
 
 def build_sql(keys: list[str], opt: Opt) -> str:
+    source_path = opt.source_path or opt.mini_path or opt.in_path
+    source_s = source_path.as_posix() if isinstance(source_path, Path) else "<unknown>"
+
     out: list[str] = [
         "-- AUTO-GENERATED. DO NOT EDIT BY HAND.",
-        f"-- Overrides from debug shortest used blocks (topic_category={opt.topic})",
-        f"-- Source JSON: {opt.source_path.as_posix()}",
+        f"-- Overrides from shortest used blocks (topic_category={opt.topic})",
+        f"-- Source JSON: {source_s}",
         f"-- Filter: len(text)<= {opt.max_len}, max_keys={opt.max_keys}",
         "",
         "BEGIN;",
@@ -1063,9 +1075,7 @@ def build_sql(keys: list[str], opt: Opt) -> str:
     for key in keys:
         txt = synth_text(key=key, topic=opt.topic).replace("'", "''")
         out.append(
-            "INSERT INTO knowledge_items("
-            "key, topic_category, locale, text, is_active, priority, meta_json, created_at, updated_at"
-            ")\n"
+            "INSERT INTO knowledge_items(key, topic_category, locale, text, is_active, priority, meta_json, created_at, updated_at)\n"
             f"VALUES('{key}', '{opt.topic}', '{opt.locale}', '{txt}', 1, {opt.priority}, '{{}}', "
             "datetime('now'), CAST(strftime('%s','now') AS INTEGER))\n"
             "ON CONFLICT(key, topic_category, locale) DO UPDATE SET\n"

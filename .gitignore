@@ -15,6 +15,10 @@ astroprocessor/data/
 astroprocessor/se/   # или astroprocessor/se, если это файл
 astroprocessor/knowledge/docs/
 source/
+debug/
+astroprocessor/tools/seed/runs/20260223
+astroprocessor/tools/seed/runs/
+
 # IDE
 .vscode/
 .idea/

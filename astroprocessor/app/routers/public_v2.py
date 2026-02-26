@@ -1,6 +1,7 @@
 from __future__ import annotations
 import hashlib
 import json
+import re
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
@@ -99,15 +100,36 @@ def _resolve_topics(req: InterpretV2Request) -> list[str]:
 
     return ["personality_core"]
 
+_WS_RE = re.compile(r"\s+", flags=re.UNICODE)
+
 def _dedupe_keep_order(items: list[str]) -> list[str]:
+    """
+    Dedupe while preserving order.
+    - Comparison key is whitespace-normalized (incl. NBSP), so duplicates differing
+      only by spacing/newlines are removed.
+    - Original paragraph is preserved for the first occurrence.
+    """
     seen: set[str] = set()
     out: list[str] = []
+
     for it in items:
-        k = it.strip()
-        if not k or k in seen:
+        if not isinstance(it, str):
             continue
-        seen.add(k)
-        out.append(it)
+
+        raw = it.strip()
+        if not raw:
+            continue
+
+        # Normalize whitespace for comparison only (keep original text in output).
+        norm = raw.replace("\u00A0", " ")  # NBSP -> space
+        norm = _WS_RE.sub(" ", norm).strip()
+
+        if not norm or norm in seen:
+            continue
+
+        seen.add(norm)
+        out.append(raw)
+
     return out
 
 def _split_to_messages(text: str, limit: int = SAFE_LIMIT) -> list[str]:
@@ -513,15 +535,15 @@ def _error_etag_unknown_ids(*, ids_list: list[str], unknown_ids: list[str], enab
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
-def _dedupe_keep_order(items: list[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for x in items:
-        if x in seen:
-            continue
-        seen.add(x)
-        out.append(x)
-    return out
+#def _dedupe_keep_order(items: list[str]) -> list[str]:
+#    seen: set[str] = set()
+#    out: list[str] = []
+#    for x in items:
+#        if x in seen:
+#            continue
+#        seen.add(x)
+#        out.append(x)
+#    return out
 
 def _count_unique_candidate_keys_from_kb_dump(
     knowledge_blocks_dump: list[dict[str, Any]],
