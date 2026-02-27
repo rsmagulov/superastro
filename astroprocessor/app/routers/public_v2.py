@@ -17,6 +17,8 @@ from app.schemas.public_v2 import (
     InterpretV2Request,
     InterpretV2Response,
     TopicResultV2,
+    ChatV2Request,
+    ChatV2Response
 )
 from app.services.chart_service import ChartService
 from app.services.coverage_rules import aggregate_coverage_v2, topic_coverage_v2
@@ -767,7 +769,8 @@ async def interpret_v2(
 
     birth = req.birth.to_birth_input().to_domain()
     natal_data = await _chart_service.build_natal(user_name=req.name, birth=birth, place=place)
-    
+    llm_engine = getattr(request.app.state, "llm", None)
+
     cores_by_topic = await _chart_service.interpret_topics_v2(
         knowledge_session=knowledge_session,
         natal_data=natal_data,
@@ -776,8 +779,10 @@ async def interpret_v2(
         tone_namespace="natal",
         max_blocks=int(max_blocks),
         max_chars=int(max_chars),
+        llm_engine=llm_engine,
     )
 
+    
     if int(debug) > 0:
         dbg = _build_debug_payload(
             topics=[str(t) for t in topics],
@@ -931,4 +936,42 @@ async def interpret_v2(
         natal_data=natal_data_public,
         meta=meta,
         error=None,
+    )
+
+@router.post("/chat", response_model=ChatV2Response)
+async def chat_v2(
+    req: ChatV2Request,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    knowledge_session: AsyncSession = Depends(get_knowledge_session),
+    locale: str = Query(default="ru"),
+    debug: int = Query(default=0),
+):
+    if locale != "ru":
+        raise HTTPException(status_code=422, detail="only_ru_locale_supported")
+
+    # темы (если пользователь выбрал кнопку/топик)
+    topics = _resolve_topics(req)  # у тебя уже есть эта функция в файле
+
+    # строим натал как обычно
+    place = await resolve_place(req.birth.place_query, locale, session)
+    birth = req.birth.to_birth_input().to_domain()
+    natal_data = await _chart_service.build_natal(user_name=req.name, birth=birth, place=place)
+
+    llm_engine = getattr(request.app.state, "llm", None)
+    if llm_engine is None:
+        raise HTTPException(status_code=503, detail="llm_not_configured")
+
+    reply = await _chart_service.chat_with_natal_v2(
+        natal_data=natal_data,
+        topics=[str(t) for t in topics],
+        messages=[m.model_dump() for m in req.messages],
+        llm_engine=llm_engine,
+    )
+
+    return ChatV2Response(
+        request_id="chat_v2",
+        ok=True,
+        reply=reply,
+        meta={"topics": topics, "debug": debug},
     )

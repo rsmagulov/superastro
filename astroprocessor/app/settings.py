@@ -35,7 +35,18 @@ class Settings(BaseSettings):
             "btn_psychology": ["psychology"],
         }
     )
+    # --- LLM settings (NEW) ---
+    llm_enabled: bool = Field(default=False)  # ASTRO_LLM_ENABLED=true
+    llm_model_dir: str = Field(default="./models/saiga_llama3_8b")
+    llm_adapter_dir: str | None = Field(default=None)
 
+    llm_cpu_offload: bool = Field(default=True)
+    llm_gpu_mem_gb: float = Field(default=10.5)
+
+    llm_max_new_tokens: int = Field(default=900)
+    llm_temperature: float = Field(default=0.6)
+    llm_top_p: float = Field(default=0.9)
+    llm_repetition_penalty: float = Field(default=1.05)
     astro_db_path: str = "./astro.db"
     knowledge_db_path: str = "./data/knowledge.db"
     staging_db_path: str = "./data/staging/staging.db"

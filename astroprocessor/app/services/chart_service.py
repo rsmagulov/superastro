@@ -65,6 +65,12 @@ def _sort_raw_blocks_for_use(blocks: List[RawBlock]) -> List[RawBlock]:
     indexed.sort(key=lambda it: (-it[1].priority, it[0]))
     return [b for _, b in indexed]
 
+def _blocks_to_facts(blocks: list[KeyBlock]) -> list[dict]:
+    facts = []
+    for b in blocks:
+        facts.append({"id": b.id, "meta": b.meta})
+    return facts
+
 class ChartService:
     def __init__(self, *, ephemeris_path: str | None = None) -> None:
         ephe = ephemeris_path if ephemeris_path is not None else settings.se_ephe_path
@@ -333,6 +339,7 @@ class ChartService:
         tone_namespace: str = "natal",
         max_blocks: int = 50,
         max_chars: int = 30_000,
+        llm_engine=llm_engine
     ) -> Dict[str, Any]:
         """
         New: per-topic candidate_keys (topic-aware), but keeps old repo call signature.
@@ -419,7 +426,33 @@ class ChartService:
                 "trace": {"selection": selection_trace_by_topic.get(topic, []), "hits": hits_trace},
                 "final_meta": final_meta,
             }
+            if settings.llm_enabled and llm_engine is not None:
+                system = (
+                    "Ты — астролог классической традиции. Отвечай на русском. "
+                    "Используй традиционные понятия: достоинства, рецепции, управители, аспекты, дома. "
+                    "Не придумывай факты. Если информации недостаточно — скажи, чего не хватает. "
+                    "Структура: 1) Ключевые сигнификаторы 2) Анализ 3) Итог."
+                )
 
+                facts = _blocks_to_facts(blocks_by_topic.get(topic, []))
+                user = (
+                    f"Тема интерпретации: {topic}\n\n"
+                    "Ниже — структурированные астрологические факты (из натальной карты) в виде JSON.\n"
+                    "Сгенерируй итоговую интерпретацию по теме.\n\n"
+                    f"FACTS_JSON:\n{json.dumps(facts, ensure_ascii=False)}"
+                )
+
+                final_text = await llm_engine.generate(system=system, user=user)
+
+                out[topic] = {
+                    "topic_category": topic,
+                    "final_text": final_text,
+                    "raw_blocks": [],  # больше нет БЗ
+                    "knowledge_blocks": blocks_dump_by_topic.get(topic, []),
+                    "trace": {"selection": selection_trace_by_topic.get(topic, []), "hits": []},
+                    "final_meta": {"source": "llm.saiga", "mode": "llm_v1"},
+                }
+                continue
         return out
 
     async def interpret_topics_v2(
@@ -432,6 +465,7 @@ class ChartService:
         tone_namespace: str = "natal",
         max_blocks: int = 50,
         max_chars: int = 30_000,
+        llm_engine: Any | None = None
     ) -> Dict[str, Any]:
         """
         V2 contract: topic-aware knowledge blocks per topic.

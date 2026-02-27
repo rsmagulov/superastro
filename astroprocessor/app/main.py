@@ -22,7 +22,7 @@ from app.routers.natal import router as natal_router
 from app.routers.place_resolve import router as place_router
 from app.routers.public_v2 import router as public_v2_router
 from app.settings import settings
-
+from app.llm import SaigaEngine, SaigaGenConfig
 
 class UTF8JSONResponse(JSONResponse):
     media_type = "application/json; charset=utf-8"
@@ -33,6 +33,22 @@ async def lifespan(app: FastAPI):
     await init_db()
     if not os.path.exists(KNOWLEDGE_DB_PATH):
         print(f"[WARN] Knowledge DB file not found: {KNOWLEDGE_DB_PATH}")
+    # inside lifespan():
+    if settings.llm_enabled:
+        app.state.llm = SaigaEngine(
+            model_dir=settings.llm_model_dir,
+            adapter_dir=settings.llm_adapter_dir,
+            cpu_offload=settings.llm_cpu_offload,
+            gpu_mem_gb=settings.llm_gpu_mem_gb,
+            gen=SaigaGenConfig(
+                max_new_tokens=settings.llm_max_new_tokens,
+                temperature=settings.llm_temperature,
+                top_p=settings.llm_top_p,
+                repetition_penalty=settings.llm_repetition_penalty,
+            ),
+        )
+        # eager load (optional but recommended to fail fast)
+        app.state.llm.load()
     yield
 
 

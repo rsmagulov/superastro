@@ -54,3 +54,27 @@ class ButtonsV2Response(BaseModel):
     buttons: dict[str, ButtonDefV2] = Field(default_factory=dict)
     meta: dict[str, Any] = Field(default_factory=dict)
     error: Optional[str] = None
+
+ChatRole = Literal["system", "user", "assistant"]
+
+class ChatMessageV2(BaseModel):
+    role: ChatRole
+    content: str
+
+class ChatV2Request(BaseModel):
+    # либо передаём birth каждый раз:
+    button_id: Optional[str] = None
+    topic_categories: list[TopicCategory] = Field(default_factory=list)
+
+    name: str
+    birth: BirthPayload
+
+    # чат:
+    messages: list[ChatMessageV2] = Field(default_factory=list)  # история, последняя user-реплика обязательна
+
+class ChatV2Response(BaseModel):
+    request_id: str
+    ok: bool = True
+    reply: str = ""
+    meta: dict[str, Any] = Field(default_factory=dict)
+    error: Optional[str] = None
