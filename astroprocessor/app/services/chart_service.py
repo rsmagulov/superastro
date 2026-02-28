@@ -15,6 +15,7 @@ from app.services.knowledge_repo import KnowledgeHit, KnowledgeRepo
 from app.services.meta_codec import build_response_meta
 from app.services.natal_data_codec import to_plain_natal_data
 from app.settings import settings
+from app.services.user_profile import Profile, profile_to_system_hint
 
 
 @dataclass(frozen=True)
@@ -505,3 +506,53 @@ class ChartService:
             "meta": meta,
             "error": None,
         }
+
+
+    async def chat_with_natal_by_context_v2(
+        self,
+        *,
+        natal_context: dict,
+        active_topic: str | None,
+        history: list[dict[str, str]],
+        user_message: str,
+        llm_engine: Any,
+        user_profile: dict | None = None,   # NEW
+        
+    ) -> str:
+        signals_block = "KEY_SIGNALS:\n- " + "\n- ".join(signals) if signals else "KEY_SIGNALS:\n(нет)"
+        messages.append({"role": "user", "content": signals_block})
+        messages.append({"role": "user", "content": "NATAL_CONTEXT_JSON:\n" + json.dumps(natal_context, ensure_ascii=False)})
+        
+        import json
+
+        p = Profile.from_dict(user_profile)
+
+        system = (
+            "Ты — астролог классической традиции. Отвечай по-русски.\n"
+            "КРИТИЧЕСКОЕ ПРАВИЛО: используй ТОЛЬКО факты из NATAL_CONTEXT_JSON.\n"
+            "Запрещено придумывать положения планет/знаки/дома/аспекты/градусы/даты.\n"
+            "Если данных в NATAL_CONTEXT_JSON недостаточно — скажи, чего не хватает.\n"
+            "Если вопрос общий и не следует из карты — отметь это и ответь кратко.\n"
+            "В ответе ссылайся на факты карты (например: 'Солнце в Козероге в 10 доме').\n"
+            + profile_to_system_hint(p) + "\n"
+        )
+        if active_topic:
+            system += f"Активная тема: {active_topic}. Держись темы, если вопрос не просит иначе.\n"
+        from app.services.signals_builder import build_signals
+
+        signals = build_signals(natal_data, topic=active_topic, max_items=12)
+        messages = [{"role": "system", "content": system}]
+        messages.append({"role": "user", "content": "NATAL_CONTEXT_JSON:\n" + json.dumps(natal_context, ensure_ascii=False)})
+
+        for m in history:
+            if m["role"] in {"user", "assistant"} and m["content"].strip():
+                messages.append({"role": m["role"], "content": m["content"]})
+
+        messages.append({"role": "user", "content": user_message.strip()})
+
+        # anti-hallucination decoding baseline (can be overridden by profile if needed)
+        llm_engine.gen.temperature = 0.25 if p.verbosity != "detailed" else 0.3
+        llm_engine.gen.top_p = 0.85
+        llm_engine.gen.repetition_penalty = 1.05
+
+        return await llm_engine.generate_chat(messages)
