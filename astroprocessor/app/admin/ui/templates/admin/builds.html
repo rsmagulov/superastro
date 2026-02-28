@@ -1,0 +1,508 @@
+{% extends "admin/_layout.html" %}
+
+{% block content %}
+<h1>Builds</h1>
+<p class="muted">
+  Управление импортом → сборкой chunks/FTS в <code>knowledge.db</code> и обслуживанием EV1 ключей.
+</p>
+
+{% include "admin/_flash.html" %}
+
+{# --- kb_meta helpers --- #}
+{% set ev1_total = (kb_meta_dict.get('ev1_total', '0') | int) %}
+{% set ev1_present_active = (kb_meta_dict.get('ev1_present_active', '0') | int) %}
+{% set ev1_missing = (kb_meta_dict.get('ev1_missing', '0') | int) %}
+{% if ev1_total > 0 %}
+  {% set ev1_pct = ((ev1_present_active * 100) // ev1_total) %}
+{% else %}
+  {% set ev1_pct = 0 %}
+{% endif %}
+
+{# ---------------------------
+   Unified UI helpers (no CSS file changes required)
+   --------------------------- #}
+<style>
+  .hint { margin-top: 6px; font-size: 13px; opacity: .8; }
+  .box { padding: 10px 12px; border: 1px solid #2a2a2a; border-radius: 12px; background: rgba(255,255,255,0.02); }
+  .alert { padding: 10px 12px; border-radius: 12px; border: 1px solid #2a2a2a; }
+  .alert-warn { border-color: rgba(255,200,0,0.35); background: rgba(255,200,0,0.08); }
+  .alert-err { border-color: rgba(255,0,0,0.35); background: rgba(255,0,0,0.08); }
+  .badge { display:inline-block; padding:2px 8px; border-radius: 999px; font-size: 12px; margin-left: 8px; border: 1px solid #2a2a2a; opacity: .9; }
+  .badge-danger { border-color: rgba(255,0,0,0.35); background: rgba(255,0,0,0.10); }
+  .badge-warn { border-color: rgba(255,200,0,0.35); background: rgba(255,200,0,0.08); }
+</style>
+
+<div class="card">
+  <h2>Import + Build chunks</h2>
+  <div class="box">
+    <div><b>Что делает:</b></div>
+    <ul style="margin:6px 0 0 18px;">
+      <li>Импортирует файлы из <code>inbox</code> → Markdown в <code>docs_dir</code></li>
+      <li>Собирает chunks + FTS индекс в <code>knowledge.db</code></li>
+    </ul>
+    <div class="hint"><b>Когда нажимать:</b> добавил новые книги/документы и хочешь, чтобы они попали в поиск.</div>
+  </div>
+
+  <form method="post" action="{{ url_for('builds_import_build') }}" style="margin-top:12px;">
+    <div class="row">
+      <label>build_version</label>
+      <input name="build_version" value="{{ build_version }}" placeholder="например 2026.02.13.1405">
+      <div class="hint">Метка версии сборки (для истории/диагностики).</div>
+    </div>
+
+    <div class="row">
+      <label>knowledge_build_version</label>
+      <input name="knowledge_build_version" value="{{ knowledge_build_version }}" placeholder="например kb-0.1">
+      <div class="hint">Метка версии “пакета знаний”.</div>
+    </div>
+
+    <div class="row">
+      <label>inbox</label>
+      <input name="inbox_dir" value="{{ inbox_dir }}" placeholder="./data/knowledge_sources/inbox">
+      <div class="hint">Папка входящих источников (PDF/тексты) для импорта.</div>
+    </div>
+
+    <div class="row">
+      <label>docs_dir</label>
+      <input name="docs_dir" value="{{ docs_dir }}" placeholder="./knowledge/docs">
+      <div class="hint">Папка с Markdown-документами и manifest.</div>
+    </div>
+
+    <div class="row">
+      <button type="submit">Импортировать и пересобрать базу (chunks/FTS)</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Seed (default knowledge_items)</h2>
+  <div class="box">
+    <div><b>Что делает:</b> добавляет “базовые” элементы знаний (идемпотентно).</div>
+    <div class="hint"><b>Когда нажимать:</b> после первого развёртывания БД или если нужно восстановить базовые элементы.</div>
+  </div>
+
+  <form method="post" action="{{ url_for('builds_seed') }}" style="margin-top:12px;">
+    <div class="row">
+      <label>build_version</label>
+      <input name="build_version" value="{{ build_version }}">
+    </div>
+
+    <div class="row">
+      <label>knowledge_build_version</label>
+      <input name="knowledge_build_version" value="{{ knowledge_build_version }}">
+    </div>
+
+    <div class="row">
+      <button type="submit">Добавить базовые элементы (seed)</button>
+    </div>
+  </form>
+</div>
+
+<section class="card">
+  <h2>EV1 Coverage</h2>
+
+  <div class="box" style="margin-top:10px;">
+    <div><b>Шпаргалка:</b></div>
+    <ul style="margin:6px 0 0 18px;">
+      <li><b>EV1 live coverage</b> — фактическое покрытие по БД (без kb_meta)</li>
+      <li><b>Seed missing only</b> — создаёт только недостающие записи</li>
+      <li><b>Repair</b> — чинит дрейф категорий/локалей/дубли после ручных тестов</li>
+      <li><b>Пустой текст</b> — защита от “пустых активных” ответов в API</li>
+    </ul>
+  </div>
+
+  <div style="display:flex; gap:12px; flex-wrap:wrap; margin: 12px 0 8px;">
+    <div><b>present:</b> {{ ev1_present_active }}</div>
+    <div><b>total:</b> {{ ev1_total }}</div>
+    <div><b>missing:</b> {{ ev1_missing }}</div>
+    <div><b>%:</b> {{ ev1_pct }}</div>
+  </div>
+
+  <div class="progress" style="margin-top: 6px;">
+    <div class="progress__bar" data-pct="{{ ev1_pct }}"></div>
+  </div>
+
+  <hr class="hr"/>
+
+  <h3 style="margin-top:0;">EV1: Seed (все ключи)</h3>
+  <div class="box">
+    <div><b>Что делает:</b> создаёт/обновляет записи для <b>всех EV1 ключей</b> в выбранных <code>locale/topic_category</code>.</div>
+    <div class="hint"><b>Обычно:</b> это первичная заливка EV1. Для “дозаливки дыр” лучше использовать <b>Seed missing only</b>.</div>
+  </div>
+
+  <form method="post" action="{{ url_for('builds_seed_ev1') }}" style="margin-top:12px;">
+    <div class="row">
+      <label>build_version</label>
+      <input type="text" name="build_version" value="{{ build_version }}" required>
+    </div>
+
+    <div class="row">
+      <label>knowledge_build_version</label>
+      <input type="text" name="knowledge_build_version" value="{{ knowledge_build_version }}" required>
+    </div>
+
+    <div class="row">
+      <label>keys_file</label>
+      <input type="text" name="keys_file" value="{{ ev1_keys_file }}">
+      <div class="hint">Файл EV1 ключей (1 ключ на строку).</div>
+    </div>
+
+    <div class="row">
+      <label>locale</label>
+      <input type="text" name="locale" value="{{ ev1_locale|default('ru-RU') }}">
+    </div>
+
+    <div class="row">
+      <label>topic_category</label>
+      <input type="text" name="topic_category" value="{{ ev1_topic_category|default('personality_core') }}">
+    </div>
+
+    <div class="row">
+      <label>priority</label>
+      <input type="number" name="priority" value="{{ ev1_priority|default(200) }}">
+      <div class="hint">Рекомендуется <code>200</code> для stub-черновиков.</div>
+    </div>
+
+    <div class="row">
+      <button class="btn btn-primary" type="submit">Seed EV1 (все ключи)</button>
+    </div>
+  </form>
+
+  <hr class="hr"/>
+
+  {% if ev1_live_error %}
+    <div class="alert alert-err">
+      <b>EV1 live:</b> {{ ev1_live_error }}<br>
+      <span class="hint">resolved keys_file: <code>{{ ev1_keys_file_resolved }}</code></span>
+    </div>
+  {% else %}
+    <div class="box">
+      <div><b>EV1 live</b> (реальные данные в БД):</div>
+      <div class="hint">
+        resolved keys_file: <code>{{ ev1_keys_file_resolved }}</code><br>
+        coverage: <b>{{ ev1_present_active_live }}</b>/<b>{{ ev1_total_live }}</b> (missing={{ ev1_missing_live }})
+      </div>
+    </div>
+
+    <hr class="hr"/>
+
+    {# --- EV1 empty_text (active) --- #}
+    <h3>EV1: пустой текст у активных записей</h3>
+
+    {% set _empty_err = ev1_empty_text_error|default(None) %}
+    {% set _empty_cnt = ev1_empty_text_active_count|default(0) %}
+    {% set _empty_sample = ev1_empty_text_active_sample|default([]) %}
+
+    {% if _empty_err %}
+      <div class="alert alert-err">
+        <b>Ошибка:</b> {{ _empty_err }}
+      </div>
+    {% else %}
+      <div class="box">
+        <div class="hint">
+          Считаем только EV1 записи в <code>{{ ev1_locale }}</code> / <code>{{ ev1_topic_category }}</code>.
+          Пустые активные ответы лучше выключать, чтобы они не “светились” в API.
+        </div>
+        <div style="margin-top:6px;">
+          Активных EV1 записей с пустым текстом: <b>{{ _empty_cnt }}</b>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;">
+          <a class="btn"
+             title="Скачать список ключей, у которых активные записи имеют пустой text"
+             href="{{ url_for('builds_ev1_empty_txt') }}?ev1_keys_file={{ ev1_keys_file|urlencode }}&ev1_locale={{ ev1_locale|urlencode }}&ev1_topic_category={{ ev1_topic_category|urlencode }}">
+            Экспорт ключей с пустым текстом (.txt)
+          </a>
+        </div>
+      </div>
+
+      <div class="box" style="margin-top:10px;">
+        <div><b>Действия</b></div>
+
+        <form method="post" action="{{ url_for('builds_ev1_deactivate_empty') }}" style="margin-top:10px;">
+          <input type="hidden" name="keys_file" value="{{ ev1_keys_file }}">
+          <input type="hidden" name="locale" value="{{ ev1_locale }}">
+          <input type="hidden" name="topic_category" value="{{ ev1_topic_category }}">
+
+          <div class="hint" style="margin-bottom:8px;">
+            Выключает активные EV1 записи с пустым текстом.
+            По умолчанию — только stubs (<code>priority=200</code>), чтобы не задеть “настоящие” ответы.
+          </div>
+
+          <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <input type="checkbox" name="only_priority_200" checked>
+            Деактивировать только <b>stubs</b> (priority=200)
+          </label>
+
+          <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+            <input type="checkbox" name="dry_run">
+            Dry-run (ничего не менять, только показать сколько затронет)
+          </label>
+
+          <button class="btn" type="submit">
+            Deactivate empty_text (active)
+            <span class="badge badge-danger">⚠️ опасно</span>
+          </button>
+        </form>
+
+        <form method="post" action="{{ url_for('builds_ev1_activate_nonempty') }}" style="margin-top:14px;">
+          <input type="hidden" name="keys_file" value="{{ ev1_keys_file }}">
+          <input type="hidden" name="locale" value="{{ ev1_locale }}">
+          <input type="hidden" name="topic_category" value="{{ ev1_topic_category }}">
+
+          <div class="hint" style="margin-bottom:8px;">
+            Включает только те записи, у которых <b>text НЕ пустой</b>.
+            Это защита от случайной активации пустых ответов.
+          </div>
+
+          <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <input type="checkbox" name="only_priority_200">
+            Активировать только <b>stubs</b> (priority=200)
+          </label>
+
+          <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+            <input type="checkbox" name="dry_run">
+            Dry-run (ничего не менять, только показать сколько затронет)
+          </label>
+
+          <button class="btn" type="submit">
+            Make active only if text not empty
+            <span class="badge badge-warn">защита</span>
+          </button>
+        </form>
+      </div>
+
+      {% if _empty_sample and _empty_sample|length > 0 %}
+        <div class="box" style="margin-top:10px;">
+          <div class="hint"><b>Примеры ключей (active + пустой text):</b></div>
+          <pre style="margin:6px 0 0 0;">{% for k in _empty_sample %}{{ k }}
+{% endfor %}</pre>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <hr class="hr"/>
+
+    <h3>EV1 Repair</h3>
+    <div class="box">
+      <div class="hint">
+        Приводит EV1 данные к канону: <code>locale</code> → <b>{{ ev1_locale }}</b>, <code>topic_category</code> → <b>{{ ev1_topic_category }}</b>.
+        Чинит дрейф после ручных тестов (например EV1 key попал в <code>money</code>) и дубли на один ключ.
+      </div>
+    </div>
+
+    <form method="post" action="{{ url_for('builds_ev1_repair') }}" style="margin-top:12px;">
+      <div class="row">
+        <label>keys_file</label>
+        <input type="text" name="keys_file" value="{{ ev1_keys_file }}">
+      </div>
+
+      <div class="row">
+        <label>canonical_locale</label>
+        <input type="text" name="canonical_locale" value="{{ ev1_locale }}">
+      </div>
+
+      <div class="row">
+        <label>desired_topic_category</label>
+        <input type="text" name="desired_topic_category" value="{{ ev1_topic_category }}">
+      </div>
+
+      <div class="row">
+        <label>conflict_strategy</label>
+        <select name="conflict_strategy">
+          <option value="delete" selected>delete (чисто, но необратимо)</option>
+          <option value="deactivate">deactivate (безопаснее)</option>
+        </select>
+        <div class="hint">
+          delete — удалит лишние строки. deactivate — выключит лишние строки.
+          <span class="badge badge-danger">⚠️ опасно</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <label></label>
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" name="touch_inactive">
+          Править также неактивные (<code>is_active=0</code>)
+        </label>
+        <div class="hint">Обычно не нужно. Включай только если хочешь “выровнять” всю БД включая черновики.</div>
+      </div>
+
+      <div class="row">
+        <button class="btn" type="submit">
+          Repair EV1 data
+          <span class="badge badge-danger">⚠️ опасно</span>
+        </button>
+      </div>
+    </form>
+
+    <hr class="hr"/>
+
+    <h3>Seed missing only (EV1)</h3>
+    <div class="box">
+      <div class="hint">
+        Создаёт <b>только недостающие</b> EV1 записи для выбранных <code>locale/topic_category</code>.
+        По умолчанию — создаём <b>черновики</b> (<code>is_active=0</code>) и добавляем тег <code>ev1_stub</code>.
+      </div>
+    </div>
+
+    <form method="post" action="{{ url_for('builds_ev1_seed_missing') }}" style="margin-top:12px;">
+      <div class="row">
+        <label>keys_file</label>
+        <input type="text" name="keys_file" value="{{ ev1_keys_file }}">
+      </div>
+
+      <div class="row">
+        <label>locale</label>
+        <input type="text" name="locale" value="{{ ev1_locale }}">
+      </div>
+
+      <div class="row">
+        <label>topic_category</label>
+        <input type="text" name="topic_category" value="{{ ev1_topic_category }}">
+      </div>
+
+      <div class="row">
+        <label>priority</label>
+        <input type="number" name="priority" value="{{ ev1_priority }}" min="0" step="1">
+        <div class="hint">Рекомендуется <code>200</code> для stub-черновиков.</div>
+      </div>
+
+      <div class="row">
+        <label></label>
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" name="make_active">
+          Сделать активными сразу (<code>is_active=1</code>)
+        </label>
+        <div class="hint"><b>Осторожно:</b> лучше активировать только после заполнения текста.</div>
+      </div>
+
+      <div class="row">
+        <label></label>
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" name="add_stub_tag" checked>
+          Добавить тег <code>ev1_stub</code>
+        </label>
+        <div class="hint">Удобно фильтровать/массово обрабатывать stub-записи.</div>
+      </div>
+
+      <div class="row">
+        <button class="btn" type="submit">Seed missing only</button>
+      </div>
+    </form>
+
+  {% endif %}
+
+  {% if ev1_issues_null_topic_category_count and ev1_issues_null_topic_category_count > 0 %}
+    <div class="alert alert-warn" style="margin-top:10px;">
+      <b>Проблема данных:</b> EV1 активные элементы с <code>topic_category = NULL/empty</code>:
+      <b>{{ ev1_issues_null_topic_category_count }}</b>
+      <div class="hint">Примеры ключей:</div>
+      <ul class="mono" style="margin-top:6px;">
+        {% for k in ev1_issues_null_topic_category_sample %}
+          <li><code>{{ k }}</code></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <h3>EV1 Breakdown (active items)</h3>
+
+  {% if ev1_breakdown and ev1_breakdown|length > 0 %}
+    <table class="table" style="margin-top:10px;">
+      <thead>
+        <tr>
+          <th>locale</th>
+          <th>topic_category</th>
+          <th>present</th>
+          <th>missing</th>
+          <th>total</th>
+          <th>%</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in ev1_breakdown %}
+          <tr>
+            <td>{{ r.locale }}</td>
+            <td>{{ r.topic_category }}</td>
+            <td>{{ r.present_active }}</td>
+            <td>{{ r.missing }}</td>
+            <td>{{ r.total }}</td>
+            <td>{{ r.pct }}%</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="hint">Нет данных для breakdown.</div>
+  {% endif %}
+
+  <hr class="hr"/>
+
+  <h3>Missing EV1 keys (top 50)</h3>
+  <div class="hint">Экспорты формируются по <b>EV1 live</b> (реальные данные в БД).</div>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0;">
+    <a class="btn"
+       href="/admin/ui/builds/ev1/missing.txt?ev1_keys_file={{ ev1_keys_file|urlencode }}&ev1_locale={{ ev1_locale|urlencode }}&ev1_topic_category={{ ev1_topic_category|urlencode }}">
+      Export missing keys (.txt)
+    </a>
+
+    <a class="btn"
+       href="/admin/ui/builds/ev1/missing.jsonl?ev1_keys_file={{ ev1_keys_file|urlencode }}&ev1_locale={{ ev1_locale|urlencode }}&ev1_topic_category={{ ev1_topic_category|urlencode }}&priority={{ ev1_priority }}">
+      Export missing stubs (.jsonl)
+    </a>
+  </div>
+
+  {% if ev1_missing_keys and ev1_missing_keys|length > 0 %}
+    <pre style="white-space:pre-wrap; max-height:280px; overflow:auto; padding:10px; border:1px solid #2a2a2a; border-radius:10px;">{% for k in ev1_missing_keys -%}
+{{ k }}
+{% endfor -%}</pre>
+  {% else %}
+    <div class="hint">Missing keys: пусто (похоже, покрытие 100%).</div>
+  {% endif %}
+
+  <hr class="hr"/>
+
+  <h3>EV1 Coverage (из kb_meta)</h3>
+  <div class="box">
+    <div class="hint">
+      Это сохранённые метаданные. Для фактического статуса смотри <b>EV1 live</b> выше.
+    </div>
+    <div style="margin-top:6px;">
+      <div><b>ev1_total:</b> {{ kb_meta_dict.get('ev1_total', '') }}</div>
+      <div><b>ev1_present_active:</b> {{ kb_meta_dict.get('ev1_present_active', '') }}</div>
+      <div><b>ev1_missing:</b> {{ kb_meta_dict.get('ev1_missing', '') }}</div>
+    </div>
+  </div>
+</section>
+
+{% if kb_meta %}
+<div class="card">
+  <h2>KB meta</h2>
+  <div class="box">
+    <div class="hint">Технические метаданные сборки/операций (для диагностики).</div>
+  </div>
+
+  <table class="table" style="margin-top:10px;">
+    <thead><tr><th>key</th><th>value</th></tr></thead>
+    <tbody>
+    {% for k,v in kb_meta %}
+      <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<script>
+  (function () {
+    const bar = document.querySelector(".progress__bar[data-pct]");
+    if (!bar) return;
+    const pctRaw = bar.getAttribute("data-pct");
+    const pct = Math.max(0, Math.min(100, parseInt(pctRaw || "0", 10) || 0));
+    bar.style.width = pct + "%";
+  })();
+</script>
+
+{% endblock %}

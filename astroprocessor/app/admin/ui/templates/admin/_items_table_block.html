@@ -1,0 +1,49 @@
+{# app/admin/ui/templates/admin/_items_table_block.html #}
+<table class="items-table">
+  <thead>
+    <tr>
+      <th></th>
+      <th>ID</th>
+      <th>Key</th>
+      <th>Topic</th>
+      <th>Locale</th>
+      <th>Priority</th>
+      <th>Active</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for it in items %}
+    <tr class="{% if it.id==selected_id %}selected{% endif %}">
+      <td>
+        <input class="row-check"
+              id="cb-{{ it.id }}"
+              name="ids"
+              type="checkbox"
+              value="{{ it.id }}">
+      </td>
+      <td>{{ it.id }}</td>
+      <td>{{ it.key }}</td>
+      <td>{{ it.topic_category or "" }}</td>
+      <td>{{ it.locale or "" }}</td>
+      <td>{{ it.priority }}</td>
+      <td>{{ it.is_active }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="pagination muted" style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+  <span>Показано {{ pagination.shown_from }}–{{ pagination.shown_to }} из {{ pagination.total }}</span>
+
+  <button type="button"
+    {% if not pagination.has_prev %}disabled{% endif %}
+    hx-get="/admin/ui/items/table?limit={{ pagination.limit }}&offset={{ pagination.prev_offset }}&q={{ filters.q }}&locale={{ filters.locale }}&topic_category={{ filters.topic_category }}&is_active={{ filters.is_active }}"
+    hx-target="#items-table"
+    hx-swap="innerHTML">← Prev</button>
+
+  <button type="button"
+    {% if not pagination.has_next %}disabled{% endif %}
+    hx-get="/admin/ui/items/table?limit={{ pagination.limit }}&offset={{ pagination.next_offset }}&q={{ filters.q }}&locale={{ filters.locale }}&topic_category={{ filters.topic_category }}&is_active={{ filters.is_active }}"
+    hx-target="#items-table"
+    hx-swap="innerHTML">Next →</button>
+</div>

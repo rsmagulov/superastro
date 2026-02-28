@@ -1,0 +1,72 @@
+<!-- app/admin/ui/templates/admin/_item_editor.html -->
+<div class="editor">
+  {% if flash %}
+    {% include "admin/_flash.html" %}
+  {% endif %}
+
+  <h3>Редактор #{{ item.id }}</h3>
+
+  <div class="meta">
+    <div><b>key:</b> <span class="mono">{{ item.key }}</span></div>
+    <div><b>locale:</b> {{ item.locale }}</div>
+    <div><b>topic:</b> <span class="mono">{{ item.topic_category or "NULL" }}</span></div>
+  </div>
+
+  <form
+    hx-post="/admin/ui/items/editor/{{ item.id }}/save"
+    hx-target="#item-editor"
+    hx-swap="outerHTML"
+  >
+    <!-- context: сохраняем фильтры/контекст таблицы при save -->
+    <input type="hidden" name="q" value="{{ request.query_params.get('q','') }}">
+    <input type="hidden" name="locale" value="{{ request.query_params.get('locale','ru-RU') }}">
+    <input type="hidden" name="topic_category" value="{{ request.query_params.get('topic_category','') }}">
+    <input type="hidden" name="is_active_filter" value="{{ request.query_params.get('is_active','') }}">
+
+    <label>text</label>
+    <textarea name="text" rows="12">{{ item.text }}</textarea>
+
+    <label>priority</label>
+    <input type="number" name="priority" value="{{ item.priority }}">
+
+    <label>is_active</label>
+    <select name="is_active">
+      <option value="1" {% if item.is_active %}selected{% endif %}>1</option>
+      <option value="0" {% if not item.is_active %}selected{% endif %}>0</option>
+    </select>
+
+    <hr>
+
+    <label>tone</label>
+    <select name="tone">
+      <option value=""></option>
+      {% for t in allowed_tones %}
+        <option value="{{ t }}" {% if item.meta and item.meta.tone==t %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+
+    <label>abstraction_level</label>
+    <select name="abstraction_level">
+      <option value=""></option>
+      {% for a in allowed_abstraction_levels %}
+        <option value="{{ a }}" {% if item.meta and item.meta.abstraction_level==a %}selected{% endif %}>{{ a }}</option>
+      {% endfor %}
+    </select>
+
+    <label>tags (через запятую)</label>
+    <input name="tags" value="{{ (item.meta.tags|join(', ') if item.meta and item.meta.tags else '') }}">
+
+    <label>notes</label>
+    <textarea name="notes" rows="4">{{ item.meta.notes if item.meta else "" }}</textarea>
+
+    <div class="actions">
+      <button type="submit">Сохранить</button>
+      <button
+        type="button"
+        onclick="document.querySelector('#item-editor').innerHTML='<div class=&quot;placeholder&quot;>Выберите строку слева</div>'"
+      >
+        Отменить
+      </button>
+    </div>
+  </form>
+</div>

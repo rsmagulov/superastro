@@ -1,0 +1,30 @@
+<table class="tbl">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Название</th>
+      <th>Автор</th>
+      <th>Тип</th>
+      <th>Статус</th>
+      <th>Приоритет</th>
+      <th>Фрагментов</th>
+      <th>Включено</th>
+      <th>Изменено</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in sources %}
+    <tr>
+      <td>{{ s.id }}</td>
+      <td><a href="/admin/ui/sources/{{ s.id }}">{{ s.title }}</a></td>
+      <td>{{ s.author_name }}</td>
+      <td>{{ s.source_type }}</td>
+      <td>{{ s.status }}</td>
+      <td>{{ s.priority }}</td>
+      <td>{{ s.fragments_count }}</td>
+      <td>{{ "yes" if s.is_enabled else "no" }}</td>
+      <td>{{ s.updated_at }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

@@ -1,0 +1,73 @@
+{% extends "admin/base.html" %}
+{% block body %}
+
+<div class="layout">
+  <div class="left">
+    <h2>Источники</h2>
+
+    {% if flash %}
+      <div class="flash {{ flash.kind }}">{{ flash.text }}</div>
+    {% endif %}
+
+    <form method="post" action="/admin/ui/sources/import">
+      <div style="display:flex; flex-direction:column; gap:8px; max-width:360px;">
+        <input name="title" placeholder="Название источника" required>
+        <input name="author" placeholder="Автор">
+        <input name="school" placeholder="Школа">
+
+        <select name="source_type">
+          {% for st in source_types %}
+            <option value="{{ st }}">{{ st }}</option>
+          {% endfor %}
+        </select>
+
+        <input name="language" placeholder="Язык (ru/en...)" value="ru">
+        <input name="priority" placeholder="Приоритет" value="100">
+        <label style="display:flex; gap:8px; align-items:center;">
+          <input type="checkbox" name="is_enabled" value="1" checked>
+          Включено
+        </label>
+
+        <button type="submit">Импорт (без файла)</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="center">
+    <h3>Список</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Название</th>
+          <th>Автор</th>
+          <th>Школа</th>
+          <th>Тип</th>
+          <th>Язык</th>
+          <th>Приоритет</th>
+          <th>Включено</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sources %}
+          <tr>
+            <td>{{ s.id }}</td>
+            <td>{{ s.title }}</td>
+            <td>{{ s.author }}</td>
+            <td>{{ s.school }}</td>
+            <td>{{ s.source_type }}</td>
+            <td>{{ s.language }}</td>
+            <td>{{ s.priority }}</td>
+            <td>{{ "1" if s.is_enabled else "0" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="right">
+    <div class="placeholder">MVP: позже добавим карточку источника, извлечение текста, фрагментацию и т.д.</div>
+  </div>
+</div>
+
+{% endblock %}

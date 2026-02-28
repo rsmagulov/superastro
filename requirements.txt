@@ -1,0 +1,22 @@
+# ~/Documents/LLM/superastro/requirements.txt
+# Runtime deps for astroprocessor/app (FastAPI API + astro calc + admin ui helpers)
+
+fastapi>=0.100
+uvicorn[standard]>=0.23
+
+pydantic>=2.0
+pydantic-settings>=2.0
+
+SQLAlchemy>=2.0
+aiosqlite>=0.19
+
+kerykeion
+pyswisseph
+
+timezonefinder
+
+httpx
+requests
+
+pypdf
+python-docx

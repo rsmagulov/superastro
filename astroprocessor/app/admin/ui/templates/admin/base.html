@@ -1,0 +1,85 @@
+<!-- app/admin/ui/templates/admin/base.html -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ title or "Admin" }}</title>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  <link rel="stylesheet" href="/admin/static/admin.css">
+</head>
+<body>
+  {% block body %}{% endblock %}
+  <script src="/admin/static/admin.js" defer></script>
+  <script>
+  (() => {
+    // Сохраняем выделенные чекбоксы bulk-операций между HTMX обновлениями таблицы
+    // ВАЖНО: работаем только если на странице реально есть ".row-check"
+    const KEY = "bulk_checked_ids";
+
+    const getCheckedIds = () => {
+      return [...document.querySelectorAll(".row-check:checked")]
+        .map(cb => cb.value)
+        .filter(v => v !== null && v !== undefined && String(v).trim() !== "");
+    };
+
+    const save = () => {
+      // Если это не страница с таблицей фрагментов — просто выходим
+      if (!document.querySelector(".row-check")) return;
+      const ids = getCheckedIds();
+      try {
+        sessionStorage.setItem(KEY, JSON.stringify(ids));
+      } catch (e) {
+        // sessionStorage может быть запрещён политиками/расширениями — молча игнорируем
+      }
+    };
+
+    const restore = () => {
+      if (!document.querySelector(".row-check")) return;
+
+      let ids = [];
+      try {
+        ids = JSON.parse(sessionStorage.getItem(KEY) || "[]");
+      } catch {
+        ids = [];
+      }
+      if (!Array.isArray(ids) || ids.length === 0) return;
+
+      for (const id of ids) {
+        const cb = document.getElementById("cb-" + id);
+        if (cb) cb.checked = true;
+      }
+    };
+
+    // Перед любым HTMX запросом — сохраняем состояние чекбоксов
+    document.body.addEventListener("htmx:beforeRequest", () => {
+      save();
+    });
+
+    // После swap — восстанавливаем.
+    // Раньше было "если target.id === items-table".
+    // Это хрупко, потому что swap может происходить в другом контейнере,
+    // а таблица при этом перерисована.
+    document.body.addEventListener("htmx:afterSwap", () => {
+      restore();
+    });
+
+    // Первый рендер страницы (без HTMX)
+    document.addEventListener("DOMContentLoaded", () => {
+      restore();
+    });
+  })();
+  </script>
+  <script>
+    document.body.addEventListener("htmx:beforeRequest", (e) => {
+      console.log("HTMX beforeRequest:", e.detail.pathInfo?.requestPath, e.detail.requestConfig?.headers);
+    });
+    document.body.addEventListener("htmx:responseError", (e) => {
+      console.log("HTMX responseError:", e.detail.xhr?.status, e.detail.xhr?.responseText?.slice?.(0, 200));
+    });
+  </script>
+
+</body>
+</html>

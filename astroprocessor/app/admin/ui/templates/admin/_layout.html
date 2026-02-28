@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+
+{% block body %}
+  <div class="app">
+      <div class="topbar">
+    <div class="topbar__left">
+      <a class="brand" href="/admin/ui/health">Admin</a>
+      <span class="muted" style="margin-left:10px;">База знаний</span>
+    </div>
+
+    <div class="topbar__right">
+      <details class="menu">
+        <summary class="btn">Функции ▾</summary>
+        <div class="menu__panel">
+          <a class="menu__item {% if nav_active=='health' %}is-active{% endif %}" href="/admin/ui/health">Health / Status</a>
+          <a class="menu__item {% if nav_active=='builds' %}is-active{% endif %}" href="/admin/ui/builds">Builds</a>
+          <a class="menu__item {% if nav_active=='items' %}is-active{% endif %}" href="/admin/ui/items">Items</a>
+          <a class="menu__item {% if nav_active=='sources' %}is-active{% endif %}" href="/admin/ui/sources">Sources</a>
+          <a class="menu__item {% if nav_active=='kb' %}is-active{% endif %}" href="/admin/ui/kb/sources">KB Staging</a>
+          {# сюда легко добавлять новые пункты #}
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div class="page">
+    {% block content %}{% endblock %}
+  </div>
+
+  </div>
+{% endblock %}

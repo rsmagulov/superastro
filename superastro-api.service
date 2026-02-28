@@ -1,0 +1,28 @@
+[Unit]
+Description=SuperAstro API (FastAPI/uvicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ruslan
+Group=ruslan
+WorkingDirectory=/home/ruslan/Documents/LLM/superastro
+
+Environment=HOST=0.0.0.0
+Environment=PORT=8000
+Environment=WORKERS=1
+Environment=RELOAD=0
+
+ExecStart=/home/ruslan/Documents/LLM/superastro/run_api.sh
+
+Restart=always
+RestartSec=2
+TimeoutStartSec=60
+
+# Logs go to journalctl
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

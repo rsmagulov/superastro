@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1970-03-15",
+    "time": null,
+    "place_query": "Wellington, New Zealand",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+httpx
+SQLAlchemy
+aiosqlite
+python-dotenv
+pydantic
+pydantic-settings
+kerykeion
+pyswisseph
+timezonefinder
+orjson
+jinja2

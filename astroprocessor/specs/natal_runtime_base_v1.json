@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "namespace": "natal.runtime",
+  "locale": "ru-RU",
+  "topic_category": null,
+  "enums": {
+    "planet": [
+      "sun",
+      "moon",
+      "mercury",
+      "venus",
+      "mars"
+    ],
+    "angle": [
+      "asc",
+      "mc"
+    ],
+    "sign": [
+      "aries",
+      "taurus",
+      "gemini",
+      "cancer",
+      "leo",
+      "virgo",
+      "libra",
+      "scorpio",
+      "sagittarius",
+      "capricorn",
+      "aquarius",
+      "pisces"
+    ]
+  },
+  "keys": [
+    {
+      "key_template": "natal.planet.{planet}.sign.{sign}"
+    },
+    {
+      "key_template": "natal.angle.{angle}.sign.{sign}"
+    }
+  ],
+  "expected_count": 84
+}

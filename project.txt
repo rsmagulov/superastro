@@ -1,0 +1,1038 @@
+C:\Projects\superastro
+|   .gitattributes
+|   .gitignore
+|   atomize_dryrun.json
+|   auto_iterate_career.ps1
+|   check_overrides.py
+|   ev1_keys_unique.txt
+|   Invoke-AstroInterpretV2.ps1
+|   kb_import_git.patch
+|   Opisanie_BZ.docx
+|   project.txt
+|   pytest.ini
+|   readme.md
+|   run_focus_house_core.ps1
+|   run_focus_planet_aspect_group.ps1
+|   run_focus_topic_core.ps1
+|   run_focus_topic_core.ps1.old
+|   tmp_check_career.sql
+|   результаты_тестов.txt
+|   
++---.pytest_cache
+|   |   .gitignore
+|   |   CACHEDIR.TAG
+|   |   README.md
+|   |   
+|   \---v
+|       \---cache
+|               lastfailed
+|               nodeids
+|               
++---astroprocessor
+|   |   a.json
+|   |   a3.json
+|   |   archived_recheck.json
+|   |   astro.db
+|   |   atomize_autorate.json
+|   |   atomize_dry.json
+|   |   atomize_dryrun.json
+|   |   check_staging.py
+|   |   debug_career.json
+|   |   debug_runtime.json
+|   |   ev1_keys_unique.txt
+|   |   fix_docs_mojibake.py
+|   |   glossary_caps_preview.txt
+|   |   kb_baseline.json
+|   |   out.json
+|   |   payload.json
+|   |   pytest.ini
+|   |   recheck.json
+|   |   rerate.json
+|   |   rerate2.json
+|   |   rerate_3tier.json
+|   |   rerate_mark.json
+|   |   rerate_norm.json
+|   |   rr.json
+|   |   rr2.json
+|   |   rr3.json
+|   |   seed_house_rulers.sql
+|   |   seed_min.sql
+|   |   seed_ruler_aspects.sql
+|   |   smart1.json
+|   |   smart2.json
+|   |   smart_change.json
+|   |   smart_norm.json
+|   |   sources_diag.json
+|   |   stats_quality.json
+|   |   stats_quality2.json
+|   |   t2.json
+|   |   t3.json
+|   |   t3_new.json
+|   |   t3_new2.json
+|   |   t3_new3.json
+|   |   структура.txt
+|   |   
+|   +---.pytest_cache
+|   |   |   .gitignore
+|   |   |   CACHEDIR.TAG
+|   |   |   README.md
+|   |   |   
+|   |   \---v
+|   |       \---cache
+|   |               lastfailed
+|   |               nodeids
+|   |               
+|   +---app
+|   |   |   db.py
+|   |   |   main.py
+|   |   |   main.py.old
+|   |   |   models.py
+|   |   |   settings.py
+|   |   |   __init__.py
+|   |   |   
+|   |   +---admin
+|   |   |   \---ui
+|   |   |       |   constants.py
+|   |   |       |   forms.py
+|   |   |       |   kb_router.py
+|   |   |       |   router.py
+|   |   |       |   router.py.old
+|   |   |       |   router.zip
+|   |   |       |   sources_router.py
+|   |   |       |   viewmodels.py
+|   |   |       |   
+|   |   |       +---static
+|   |   |       |       admin.css
+|   |   |       |       admin.js
+|   |   |       |       favicon.ico
+|   |   |       |       static.zip
+|   |   |       |       
+|   |   |       +---templates
+|   |   |       |   \---admin
+|   |   |       |           admin.zip
+|   |   |       |           base.html
+|   |   |       |           builds.html
+|   |   |       |           dashboard.html
+|   |   |       |           health.html
+|   |   |       |           items.html
+|   |   |       |           kb_chunk_view.html
+|   |   |       |           kb_fragment_view.html
+|   |   |       |           kb_sources.html
+|   |   |       |           kb_source_chunks.html
+|   |   |       |           kb_source_detail.html
+|   |   |       |           kb_source_fragments.html
+|   |   |       |           labeling.html
+|   |   |       |           settings.html
+|   |   |       |           sources.html
+|   |   |       |           source_card.html
+|   |   |       |           verify_build.html
+|   |   |       |           _bulk_bar.html
+|   |   |       |           _flash.html
+|   |   |       |           _items_table.html
+|   |   |       |           _items_table_block.html
+|   |   |       |           _item_editor.html
+|   |   |       |           _item_row.html
+|   |   |       |           _kb_editor_chunk.html
+|   |   |       |           _kb_editor_fragment.html
+|   |   |       |           _kb_save_ok.html
+|   |   |       |           _layout.html
+|   |   |       |           _pagination.html
+|   |   |       |           _save_response.html
+|   |   |       |           _select_response.html
+|   |   |       |           _sources_table.html
+|   |   |       |           
+|   |   |       \---__pycache__
+|   |   |               constants.cpython-312.pyc
+|   |   |               kb_router.cpython-312.pyc
+|   |   |               router.cpython-312.pyc
+|   |   |               sources_router.cpython-312.pyc
+|   |   |               
+|   |   +---astro
+|   |   |   |   kerykeion_adapter.py
+|   |   |   |   kerykeion_adapter.py.old.py
+|   |   |   |   kerykeion_factories.py
+|   |   |   |   kerykeion_factories.py.old.py
+|   |   |   |   key_builder.py
+|   |   |   |   natal_normalizer.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           kerykeion_adapter.cpython-312.pyc
+|   |   |           kerykeion_factories.cpython-312.pyc
+|   |   |           key_builder.cpython-312.pyc
+|   |   |           natal_normalizer.cpython-312.pyc
+|   |   |           __init__.cpython-312.pyc
+|   |   |           
+|   |   +---knowledge
+|   |   |   |   builder.py
+|   |   |   |   builder.py.old
+|   |   |   |   cli.py
+|   |   |   |   cli.py.bak_20260217_160824
+|   |   |   |   cli.py.bak_20260217_160922
+|   |   |   |   cli.py.old
+|   |   |   |   meta_schema.py
+|   |   |   |   models.py
+|   |   |   |   quality_rating_ru.py
+|   |   |   |   schema.py
+|   |   |   |   sql.py
+|   |   |   |   staging_schema.sql
+|   |   |   |   topic_gate_ru_natal.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           builder.cpython-312.pyc
+|   |   |           cli.cpython-312.pyc
+|   |   |           meta_schema.cpython-312.pyc
+|   |   |           quality_rating_ru.cpython-312.pyc
+|   |   |           schema.cpython-312.pyc
+|   |   |           sql.cpython-312.pyc
+|   |   |           topic_gate_ru_natal.cpython-312.pyc
+|   |   |           __init__.cpython-312.pyc
+|   |   |           
+|   |   +---middleware
+|   |   |   |   request_id.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           request_id.cpython-312.pyc
+|   |   |           
+|   |   +---routers
+|   |   |   |   admin_knowledge.py
+|   |   |   |   admin_knowledge_items.py
+|   |   |   |   health.py
+|   |   |   |   keys.py
+|   |   |   |   natal.py
+|   |   |   |   place_resolve.py
+|   |   |   |   public_v2.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           admin_knowledge.cpython-312.pyc
+|   |   |           admin_knowledge_items.cpython-312.pyc
+|   |   |           keys.cpython-312.pyc
+|   |   |           natal.cpython-312.pyc
+|   |   |           place_resolve.cpython-312.pyc
+|   |   |           public_v2.cpython-312.pyc
+|   |   |           
+|   |   +---schemas
+|   |   |   |   admin_knowledge.py
+|   |   |   |   birth.py
+|   |   |   |   meta_json.py
+|   |   |   |   natal.py
+|   |   |   |   natal_out.py
+|   |   |   |   place.py
+|   |   |   |   place_out.py
+|   |   |   |   public_v2.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           admin_knowledge.cpython-312.pyc
+|   |   |           birth.cpython-312.pyc
+|   |   |           natal.cpython-312.pyc
+|   |   |           natal_out.cpython-312.pyc
+|   |   |           place.cpython-312.pyc
+|   |   |           place_out.cpython-312.pyc
+|   |   |           public_v2.cpython-312.pyc
+|   |   |           __init__.cpython-312.pyc
+|   |   |           
+|   |   +---services
+|   |   |   |   admin_input_validator.py
+|   |   |   |   chart_service.py
+|   |   |   |   chunks_repo.py
+|   |   |   |   coverage_rules.py
+|   |   |   |   fallback_composer.py
+|   |   |   |   geocode.py
+|   |   |   |   knowledge_chunks_repo.py
+|   |   |   |   knowledge_items_admin_repo.py
+|   |   |   |   knowledge_items_validator.py
+|   |   |   |   knowledge_repo.py
+|   |   |   |   meta_codec.py
+|   |   |   |   natal_data_codec.py
+|   |   |   |   place_codec.py
+|   |   |   |   search_intent_builder.py
+|   |   |   |   signals_builder.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           admin_input_validator.cpython-312.pyc
+|   |   |           chart_service.cpython-312.pyc
+|   |   |           coverage_rules.cpython-312.pyc
+|   |   |           geocode.cpython-312.pyc
+|   |   |           knowledge_items_admin_repo.cpython-312.pyc
+|   |   |           knowledge_items_validator.cpython-312.pyc
+|   |   |           knowledge_repo.cpython-312.pyc
+|   |   |           meta_codec.cpython-312.pyc
+|   |   |           natal_data_codec.cpython-312.pyc
+|   |   |           place_codec.cpython-312.pyc
+|   |   |           search_intent_builder.cpython-312.pyc
+|   |   |           
+|   |   \---__pycache__
+|   |           db.cpython-312.pyc
+|   |           main.cpython-312.pyc
+|   |           models.cpython-312.pyc
+|   |           settings.cpython-312.pyc
+|   |           __init__.cpython-312.pyc
+|   |           
+|   +---data
+|   |   |   knowledge.db
+|   |   |   knowledge.db-shm
+|   |   |   knowledge.db-wal
+|   |   |   knowledge.zip
+|   |   |   knowledge_items_01_elements_ip__ETALON.jsonl
+|   |   |   knowledge_items_02_planets__ETALON.jsonl
+|   |   |   knowledge_items_03_signs__ETALON.jsonl
+|   |   |   knowledge_items_04_house_rulers__ETALON.jsonl
+|   |   |   knowledge_items_05_house_space_and_cusp__ETALON.jsonl
+|   |   |   knowledge_items_06_aspects__ETALON.jsonl
+|   |   |   knowledge_items_07_aspect_configurations__ETALON.jsonl
+|   |   |   knowledge_items_distortions.jsonl
+|   |   |   knowledge_items_houses_distortions_2levels_and_boundaries.jsonl
+|   |   |   
+|   |   +---exports
+|   |   |       source6_bot_ready.jsonl
+|   |   |       source6_needs_rewrite.jsonl
+|   |   |       
+|   |   +---knowledge_sources
+|   |   |   +---failed
+|   |   |   |   \---inbox
+|   |   |   +---inbox
+|   |   |   |       book_clean_formatted.docx
+|   |   |   |       астрология_для-жизни.txt
+|   |   |   |       
+|   |   |   +---inbox_norm
+|   |   |   |       book_clean_formatted.txt
+|   |   |   |       
+|   |   |   +---inbox__bak
+|   |   |   |       1_elements_integrals.txt
+|   |   |   |       2_planets.txt
+|   |   |   |       3_signs.txt
+|   |   |   |       4_houses_and_rulers.txt
+|   |   |   |       5_house_space_and_cusps.txt
+|   |   |   |       6_aspects.txt
+|   |   |   |       7_aspect_configurations.txt
+|   |   |   |       Andreev_Pavel_Astrologia_Vse_tayny.fb2
+|   |   |   |       Andreev_Pavel_Astrologia_Vse_tayny.pdf
+|   |   |   |       Andreev_Pavel_Astrologia_Vse_tayny_karty.pdf
+|   |   |   |       Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.fb2
+|   |   |   |       Andreev_Pavel_Bioastrologia_Sovremenny_uchebnik_astrologii_novogo.pdf
+|   |   |   |       book_ocr.pdf
+|   |   |   |       book_raw.txt
+|   |   |   |       extract_pdf_text.py
+|   |   |   |       Kniga_o_12_dome.pdf
+|   |   |   |       Pavel_Andreev_Astrologia_dlya_zhizni.fb2
+|   |   |   |       Pavel_Andreev_Astrologia_dlya_zhizni.pdf
+|   |   |   |       uTorrent_Classic.windows.exe
+|   |   |   |       Vronskiy_S_Tom_1__quot_Klassicheskaya_astrologia_Vvedenie_v_astrologiyu_quot.pdf
+|   |   |   |       П. Андреев - Биоастрология.epub
+|   |   |   |       П. Андреев - Биоастрология.fb2
+|   |   |   |       П. Андреев - Биоастрология.pdf
+|   |   |   |       
+|   |   |   \---processed
+|   |   |       \---inbox
+|   |   +---staging
+|   |   |       staging.db
+|   |   |       
+|   |   \---uploads
+|   +---knowledge
+|   |   \---docs
+|   |           b756574bed91fa7a.md
+|   |           fd9dcb07d6bbc278.md
+|   |           _import_manifest.json
+|   |           
+|   +---migrations
+|   |       002_knowledge_docs_chunks.sql
+|   |       
+|   +---specs
+|   |       natal_core_base_v1.json
+|   |       natal_core_base_v2.json
+|   |       natal_runtime_base_v1.json
+|   |       
+|   +---tests
+|   |   |   conftest.py
+|   |   |   test_admin_sources_ui.py
+|   |   |   test_admin_ui.py
+|   |   |   test_api_smoke.py
+|   |   |   test_contract_natal_data.py
+|   |   |   test_e2e_v2_debug2_hits_include_planet_groups_present.py
+|   |   |   test_e2e_v2_debug2_hits_include_sign_present.py
+|   |   |   test_e2e_v2_debug_keydiff_counts_global_fallback.py
+|   |   |   test_e2e_v2_debug_runtime_candidate_keys_growth.py
+|   |   |   test_e2e_v2_debug_runtime_no_natal_generic_in_used_career.py
+|   |   |   test_e2e_v2_interpret_prefers_topic_generic_over_global_generic.py
+|   |   |   test_e2e_v2_interpret_topic_generic_fallbacks.py
+|   |   |   test_error_contract_404.py
+|   |   |   test_error_contract_500.py
+|   |   |   test_kb_build_managed_only.py
+|   |   |   test_kb_fragments_list_filters.py
+|   |   |   test_kb_ingest_atomize_fb2.py
+|   |   |   test_kb_ingest_atomize_modes.py
+|   |   |   test_kb_sources_diagnose.py
+|   |   |   test_kb_validator_profile_ru_v1.py
+|   |   |   test_kb_validator_profile_ru_v1_state_stdout.py
+|   |   |   test_key_builder_include_all_planets.py
+|   |   |   test_knowledge_repo_filters_empty_text.py
+|   |   |   test_project_integrity_smoke.py
+|   |   |   test_public_v2.py
+|   |   |   test_public_v2_buttons_enabled_only.py
+|   |   |   test_public_v2_buttons_enabled_only_304.py
+|   |   |   test_public_v2_buttons_endpoint.py
+|   |   |   test_public_v2_buttons_etag_304.py
+|   |   |   test_public_v2_buttons_ids_csv.py
+|   |   |   test_public_v2_buttons_ids_dedup.py
+|   |   |   test_public_v2_buttons_ids_enabled_only.py
+|   |   |   test_public_v2_buttons_ids_filter.py
+|   |   |   test_public_v2_buttons_ids_repeatable.py
+|   |   |   test_public_v2_buttons_ids_sources_422.py
+|   |   |   test_public_v2_buttons_ids_unknown.py
+|   |   |   test_public_v2_buttons_sorted_ids.py
+|   |   |   test_public_v2_buttons_strict_0.py
+|   |   |   test_public_v2_buttons_strict_0_all_unknown.py
+|   |   |   test_public_v2_buttons_strict_1.py
+|   |   |   test_public_v2_button_id.py
+|   |   |   test_public_v2_button_map_settings.py
+|   |   |   test_public_v2_debug2_keydiff.py
+|   |   |   test_public_v2_debug_runtime_db_path.py
+|   |   |   test_public_v2_locale.py
+|   |   |   test_public_v2_paragraph_dedup.py
+|   |   |   test_public_v2_perf.py
+|   |   |   test_seed_generator_unified_house_templates.py
+|   |   |   test_seed_topic_generic_all_topics.py
+|   |   |   test_structured_errors_flag.py
+|   |   |   test_tools_post_json.py
+|   |   |   utils.py
+|   |   |   
+|   |   \---__pycache__
+|   |           conftest.cpython-312-pytest-9.0.2.pyc
+|   |           test_admin_sources_ui.cpython-312-pytest-9.0.2.pyc
+|   |           test_admin_ui.cpython-312-pytest-9.0.2.pyc
+|   |           test_api_smoke.cpython-312-pytest-9.0.2.pyc
+|   |           test_contract_natal_data.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_debug2_hits_include_planet_groups_present.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_debug2_hits_include_sign_present.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_debug_keydiff_counts_global_fallback.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_debug_runtime_candidate_keys_growth.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_debug_runtime_no_natal_generic_in_used_career.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_interpret_prefers_topic_generic_over_global_generic.cpython-312-pytest-9.0.2.pyc
+|   |           test_e2e_v2_interpret_topic_generic_fallbacks.cpython-312-pytest-9.0.2.pyc
+|   |           test_error_contract_404.cpython-312-pytest-9.0.2.pyc
+|   |           test_error_contract_500.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_build_managed_only.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_fragments_list_filters.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_ingest_atomize_fb2.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_ingest_atomize_modes.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_sources_diagnose.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_validator_profile_ru_v1.cpython-312-pytest-9.0.2.pyc
+|   |           test_kb_validator_profile_ru_v1_state_stdout.cpython-312-pytest-9.0.2.pyc
+|   |           test_key_builder_include_all_planets.cpython-312-pytest-9.0.2.pyc
+|   |           test_knowledge_builder_mvp.cpython-312-pytest-9.0.2.pyc
+|   |           test_knowledge_repo_filters_empty_text.cpython-312-pytest-9.0.2.pyc
+|   |           test_project_integrity_smoke.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_enabled_only.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_enabled_only_304.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_endpoint.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_etag_304.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_csv.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_dedup.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_enabled_only.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_filter.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_repeatable.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_sources_422.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_ids_unknown.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_sorted_ids.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_strict_0.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_strict_0_all_unknown.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_buttons_strict_1.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_button_id.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_button_map_settings.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_debug2_keydiff.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_debug_runtime_db_path.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_locale.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_paragraph_dedup.cpython-312-pytest-9.0.2.pyc
+|   |           test_public_v2_perf.cpython-312-pytest-9.0.2.pyc
+|   |           test_seed_generator_unified_house_templates.cpython-312-pytest-9.0.2.pyc
+|   |           test_seed_topic_generic_all_topics.cpython-312-pytest-9.0.2.pyc
+|   |           test_structured_errors_flag.cpython-312-pytest-9.0.2.pyc
+|   |           test_tools_post_json.cpython-312-pytest-9.0.2.pyc
+|   |           utils.cpython-312.pyc
+|   |           
+|   \---tools
+|       |   capture_cli_stdout.py
+|       |   check_kb_coverage.ps1
+|       |   import_jsonl_items.py
+|       |   kb.ps1
+|       |   make_keybuilder_clones.py
+|       |   migrate_add_sources.py
+|       |   normalize_inbox_ru.py
+|       |   normalize_text_ru.py
+|       |   README.md
+|       |   
+|       +---experiments
+|       |       insert_version_sun_leo.py
+|       |       inspect_indexes.py
+|       |       test_priority.py
+|       |       update_sun_leo_text.py
+|       |       
+|       +---http
+|       |   |   post_json.py
+|       |   |   
+|       |   \---__pycache__
+|       |           post_json.cpython-312.pyc
+|       |           
+|       +---import
+|       |       import_knowledge_layer_b.py
+|       |       knowledge_importer.py
+|       |       validate_knowledge_coverage.py
+|       |       
+|       +---knowledge
+|       |       diagnose_knowledge_db.py
+|       |       normalize_ev1_data.py
+|       |       seed_keys_core_v1.txt
+|       |       
+|       +---migrations_local
+|       |       migrate_add_created_at_is_active.py
+|       |       migrate_add_meta_json.py
+|       |       migrate_add_updated_at.py
+|       |       migration_remove_unique.py
+|       |       
+|       +---outputs
+|       |       out_debug.json
+|       |       out_general.json
+|       |       out_raw.txt
+|       |       
+|       +---patches
+|       |       2026-02-06_mc_signs_ru.sql
+|       |       
+|       +---requests
+|       |   |   req_bad.json
+|       |   |   req_career.json
+|       |   |   req_general.json
+|       |   |   req_known.json
+|       |   |   req_locale_miss.json
+|       |   |   req_money.json
+|       |   |   req_null.json
+|       |   |   req_unknown.json
+|       |   |   
+|       |   \---seed_keys
+|       |           seed_almaty_kz_1990_01_01_0730.json
+|       |           seed_anchorage_us_1980_04_07_0125.json
+|       |           seed_beijing_cn_2006_02_28_1110.json
+|       |           seed_berlin_de_1971_11_08_0220.json
+|       |           seed_buenos_aires_ar_1960_05_09_1935.json
+|       |           seed_cairo_eg_1969_10_12_1002.json
+|       |           seed_cape_town_za_1995_06_30_2008.json
+|       |           seed_delhi_in_1987_09_05_1445.json
+|       |           seed_honolulu_us_1976_09_14_2205.json
+|       |           seed_jakarta_id_2007_09_02_unknown.json
+|       |           seed_kyiv_ua_2003_09_27_1305.json
+|       |           seed_lima_pe_1991_01_29_unknown.json
+|       |           seed_london_uk_2001_09_11_0830.json
+|       |           seed_los_angeles_us_1992_10_22_0505.json
+|       |           seed_madrid_es_1967_07_03_1255.json
+|       |           seed_moscow_ru_1985_06_12_2145.json
+|       |           seed_nairobi_ke_2002_05_11_unknown.json
+|       |           seed_new_york_us_1975_03_03_2315.json
+|       |           seed_paris_fr_1998_04_19_1810.json
+|       |           seed_reykjavik_is_2008_12_24_1740.json
+|       |           seed_rome_it_1989_02_14_0040.json
+|       |           seed_santiago_cl_1964_02_02_0707.json
+|       |           seed_sao_paulo_br_1982_12_01_0950.json
+|       |           seed_seoul_kr_1978_01_17_0615.json
+|       |           seed_singapore_sg_1993_03_26_1559.json
+|       |           seed_sydney_au_1973_08_21_0333.json
+|       |           seed_tokyo_jp_1999_12_31_2355.json
+|       |           seed_toronto_ca_2009_08_16_1625.json
+|       |           seed_tromso_no_1962_12_10_unknown.json
+|       |           seed_ulaanbaatar_mn_1996_11_06_unknown.json
+|       |           seed_vladivostok_ru_1984_07_18_unknown.json
+|       |           seed_wellington_nz_1970_03_15_unknown.json
+|       |           
+|       +---seed
+|       |   |   ev1_seed_any_ru.jsonl
+|       |   |   generate_angle_sign_scaffolds_global.py
+|       |   |   generate_aspect_planet_pair_scaffolds_global.py
+|       |   |   generate_aspect_scaffolds_global.py
+|       |   |   generate_career_depth_all_remaining_seed.py
+|       |   |   generate_career_depth_mc_house10_seed.py
+|       |   |   generate_career_house10_ruler_specific_aspects_seed.py
+|       |   |   generate_career_overrides_from_debug_shortest.py
+|       |   |   generate_career_overrides_from_debug_shortest.py.old
+|       |   |   generate_elements_polarity_modality_exact_global.py
+|       |   |   generate_elements_polarity_modality_scaffolds_global.py
+|       |   |   generate_house_cusp_sign_scaffolds_global.py
+|       |   |   generate_house_planet_presence_global.py
+|       |   |   generate_house_ruler_aspect_scaffolds_global.py
+|       |   |   generate_house_ruler_pos_scaffolds_global.py
+|       |   |   generate_house_ruler_scaffolds_global.py
+|       |   |   generate_outer_planets_sign_seed_global.py
+|       |   |   generate_personality_core_missing_planet_keys_global.py
+|       |   |   generate_planet_groups_seed_all_topics.py
+|       |   |   generate_planet_scaffolds_global.py
+|       |   |   generate_planet_sign_house_scaffolds_global.py
+|       |   |   generate_sign_present_seed_all_topics.py
+|       |   |   load_seed_jsonl.py
+|       |   |   load_seed_jsonl_upsert.py
+|       |   |   seed_house_rulers.py
+|       |   |   seed_knowledge_84.jsonl
+|       |   |   seed_topic_generic_all_topics.sql
+|       |   |   smoke_synth_text.py
+|       |   |   
+|       |   +---runs
+|       |   |   \---20260223
+|       |   |           seed_ancestral_topics_focus_planet_aspect_group_20260223_125010.sql
+|       |   |           seed_ancestral_topics_housecore_20260223_131010.sql
+|       |   |           seed_ancestral_topics_topiccore_20260223_145217.sql
+|       |   |           seed_ancestral_topics_topiccore_20260223_145449.sql
+|       |   |           seed_angles_upsert.sql
+|       |   |           seed_angle_sign_scaffolds_global.sql
+|       |   |           seed_aspect_planet_pair_scaffolds_global.sql
+|       |   |           seed_aspect_scaffolds_global.sql
+|       |   |           seed_career_auto_debug_career_80_len67.sql
+|       |   |           seed_career_auto_debug_career_after_round2_len354.sql
+|       |   |           seed_career_auto_debug_career_after_round2_len565.sql
+|       |   |           seed_career_auto_len80_k25.sql
+|       |   |           seed_career_auto_mini_len120_k25.sql
+|       |   |           seed_career_cap_435_to_360.sql
+|       |   |           seed_career_compress_big.sql
+|       |   |           seed_career_compress_career_generic.sql
+|       |   |           seed_career_compress_hot.sql
+|       |   |           seed_career_compress_house10_libra.sql
+|       |   |           seed_career_compress_sign_present.sql
+|       |   |           seed_career_depth_all_remaining.sql
+|       |   |           seed_career_depth_mc_house10.sql
+|       |   |           seed_career_focus_20260223_223952.sql
+|       |   |           seed_career_focus_20260223_224206.sql
+|       |   |           seed_career_focus_planet_aspect_group_20260223_121344.sql
+|       |   |           seed_career_focus_planet_aspect_group_20260223_125023.sql
+|       |   |           seed_career_house10_ruler_specific_aspects.sql
+|       |   |           seed_career_house2_ruler_saturn_sign_any.sql
+|       |   |           seed_career_house6_ruler_mercury_sign_any.sql
+|       |   |           seed_career_housecore_20260223_130703.sql
+|       |   |           seed_career_overrides_round2.sql
+|       |   |           seed_career_overrides_round3_core.sql
+|       |   |           seed_career_overrides_short_used.sql
+|       |   |           seed_career_quality_focus.sql
+|       |   |           seed_career_quality_focus_450.sql
+|       |   |           seed_career_quality_wave.sql
+|       |   |           seed_career_topiccore_20260223_140630.sql
+|       |   |           seed_career_topiccore_20260223_141229.sql
+|       |   |           seed_career_wave_next_candidates.sql
+|       |   |           seed_creativity_focus_planet_aspect_group_20260223_125034.sql
+|       |   |           seed_creativity_housecore_20260223_130908.sql
+|       |   |           seed_creativity_topiccore_20260223_143001.sql
+|       |   |           seed_creativity_topiccore_20260223_143137.sql
+|       |   |           seed_elements_polarity_modality_exact_global.sql
+|       |   |           seed_elements_polarity_modality_scaffolds_global.sql
+|       |   |           seed_emotional_world_focus_planet_aspect_group_20260223_125049.sql
+|       |   |           seed_emotional_world_housecore_20260223_130809.sql
+|       |   |           seed_emotional_world_topiccore_20260223_142801.sql
+|       |   |           seed_emotional_world_topiccore_20260223_142933.sql
+|       |   |           seed_generic_all_topics.sql
+|       |   |           seed_groups_and_sign_present_min.sql
+|       |   |           seed_house_cusp_sign_scaffolds_global.sql
+|       |   |           seed_house_planet_presence_global.sql
+|       |   |           seed_house_ruler_aspects_cleanup.sql
+|       |   |           seed_house_ruler_aspects_scaffold.sql
+|       |   |           seed_house_ruler_aspect_scaffolds_global.sql
+|       |   |           seed_house_ruler_pos_scaffolds_global.sql
+|       |   |           seed_house_ruler_scaffolds_global.sql
+|       |   |           seed_how_others_see_me_focus_planet_aspect_group_20260223_125101.sql
+|       |   |           seed_how_others_see_me_housecore_20260223_131206.sql
+|       |   |           seed_how_others_see_me_housecore_20260223_131643.sql
+|       |   |           seed_how_others_see_me_housecore_20260223_131719.sql
+|       |   |           seed_how_others_see_me_topiccore_20260223_135928.sql
+|       |   |           seed_how_others_see_me_topiccore_20260223_140018.sql
+|       |   |           seed_how_others_see_me_topiccore_20260223_140221.sql
+|       |   |           seed_karmic_tasks_focus_planet_aspect_group_20260223_125112.sql
+|       |   |           seed_karmic_tasks_housecore_20260223_130954.sql
+|       |   |           seed_karmic_tasks_topiccore_20260223_144651.sql
+|       |   |           seed_karmic_tasks_topiccore_20260223_144852.sql
+|       |   |           seed_love_intimacy_focus_planet_aspect_group_20260223_124935.sql
+|       |   |           seed_love_intimacy_focus_planet_aspect_group_20260223_125124.sql
+|       |   |           seed_love_intimacy_generic_fixes.sql
+|       |   |           seed_love_intimacy_housecore_20260223_130726.sql
+|       |   |           seed_love_intimacy_topiccore_20260223_142606.sql
+|       |   |           seed_money_focus_planet_aspect_group_20260223_124955.sql
+|       |   |           seed_money_focus_planet_aspect_group_20260223_125135.sql
+|       |   |           seed_money_housecore_20260223_130236.sql
+|       |   |           seed_money_housecore_20260223_130711.sql
+|       |   |           seed_money_topiccore_20260223_141445.sql
+|       |   |           seed_money_topiccore_20260223_141727.sql
+|       |   |           seed_outer_planets_sign_global.sql
+|       |   |           seed_partnership_marriage_focus_planet_aspect_group_20260223_124946.sql
+|       |   |           seed_partnership_marriage_focus_planet_aspect_group_20260223_125146.sql
+|       |   |           seed_partnership_marriage_housecore_20260223_130738.sql
+|       |   |           seed_partnership_marriage_housecore_20260223_130747.sql
+|       |   |           seed_partnership_marriage_topiccore_20260223_142259.sql
+|       |   |           seed_partnership_marriage_topiccore_20260223_142536.sql
+|       |   |           seed_past_lives_symbolic_focus_planet_aspect_group_20260223_125159.sql
+|       |   |           seed_past_lives_symbolic_housecore_20260223_131003.sql
+|       |   |           seed_past_lives_symbolic_topiccore_20260223_144935.sql
+|       |   |           seed_past_lives_symbolic_topiccore_20260223_145148.sql
+|       |   |           seed_personality_core_focus_planet_aspect_group_20260223_125210.sql
+|       |   |           seed_personality_core_generic.sql
+|       |   |           seed_personality_core_housecore_20260223_130802.sql
+|       |   |           seed_personality_core_missing_planet_keys_global.sql
+|       |   |           seed_personality_core_topiccore_20260223_135143.sql
+|       |   |           seed_personality_core_topiccore_20260223_135545.sql
+|       |   |           seed_personality_core_topiccore_20260223_135605.sql
+|       |   |           seed_planet_groups_all_topics.sql
+|       |   |           seed_planet_scaffolds_global.sql
+|       |   |           seed_planet_sign_any_topics.sql
+|       |   |           seed_planet_sign_house_scaffolds_global.sql
+|       |   |           seed_psychology_focus_planet_aspect_group_20260223_125225.sql
+|       |   |           seed_psychology_housecore_20260223_130754.sql
+|       |   |           seed_psychology_topiccore_20260223_135708.sql
+|       |   |           seed_psychology_topiccore_20260223_135900.sql
+|       |   |           seed_purpose_path_focus_planet_aspect_group_20260223_125238.sql
+|       |   |           seed_purpose_path_housecore_20260223_130919.sql
+|       |   |           seed_purpose_path_topiccore_20260223_143219.sql
+|       |   |           seed_purpose_path_topiccore_20260223_144220.sql
+|       |   |           seed_purpose_path_topiccore_20260223_144242.sql
+|       |   |           seed_purpose_path_topiccore_20260223_144254.sql
+|       |   |           seed_self_esteem_focus_planet_aspect_group_20260223_125248.sql
+|       |   |           seed_self_esteem_housecore_20260223_130816.sql
+|       |   |           seed_self_esteem_topiccore_20260223_141925.sql
+|       |   |           seed_self_esteem_topiccore_20260223_142021.sql
+|       |   |           seed_self_esteem_topiccore_20260223_142220.sql
+|       |   |           seed_sign_present_all_topics.sql
+|       |   |           seed_strengths_weaknesses_focus_planet_aspect_group_20260223_125259.sql
+|       |   |           seed_strengths_weaknesses_housecore_20260223_131157.sql
+|       |   |           seed_strengths_weaknesses_housecore_20260223_131616.sql
+|       |   |           seed_strengths_weaknesses_housecore_20260223_131727.sql
+|       |   |           seed_strengths_weaknesses_topiccore_20260223_133447.sql
+|       |   |           seed_strengths_weaknesses_topiccore_20260223_134116.sql
+|       |   |           seed_strengths_weaknesses_topiccore_20260223_134359.sql
+|       |   |           seed_talents.sql
+|       |   |           seed_talents_focus_planet_aspect_group_20260223_125310.sql
+|       |   |           seed_talents_housecore_20260223_130900.sql
+|       |   |           seed_talents_topiccore_20260223_144340.sql
+|       |   |           seed_talents_topiccore_20260223_144616.sql
+|       |   |           seed_topic_generic_all_topics.sql
+|       |   |           
+|       |   \---__pycache__
+|       |           generate_career_overrides_from_debug_shortest.cpython-312.pyc
+|       |           generate_planet_groups_seed_all_topics.cpython-312.pyc
+|       |           generate_sign_present_seed_all_topics.cpython-312.pyc
+|       |           
+|       +---tests
+|       |       conftest.py
+|       |       regress_knowledge_pick.ps1
+|       |       test_admin_ui.py
+|       |       
+|       \---_archive
+|           \---app_api_unused
+|               |   __init__.py
+|               |   
+|               \---routes
+|                       natal.py
+|                       __init__.py
+|                       
++---data
+|   |   knowledge.db
+|   |   
+|   \---staging
+|           staging.db
+|           
++---debug
+|   |   debug_ancestral_topics_ru_160_20260223_125010_after.json
+|   |   debug_ancestral_topics_ru_160_20260223_125010_before.json
+|   |   debug_ancestral_topics_ru_160_20260223_125010_mini_focus.json
+|   |   debug_ancestral_topics_ru_160_20260223_131010_after.json
+|   |   debug_ancestral_topics_ru_160_20260223_131010_before.json
+|   |   debug_ancestral_topics_ru_160_20260223_131010_mini_housecore.json
+|   |   debug_ancestral_topics_ru_160_20260223_145217_after.json
+|   |   debug_ancestral_topics_ru_160_20260223_145217_before.json
+|   |   debug_ancestral_topics_ru_160_20260223_145217_mini_topiccore.json
+|   |   debug_ancestral_topics_ru_160_20260223_145449_after.json
+|   |   debug_ancestral_topics_ru_160_20260223_145449_before.json
+|   |   debug_ancestral_topics_ru_160_20260223_145449_mini_topiccore.json
+|   |   debug_career.json
+|   |   debug_career_120.json
+|   |   debug_career_120_after_compress_big.json
+|   |   debug_career_120_after_wave_next.json
+|   |   debug_career_160_100k.json
+|   |   debug_career_160_100k_after_quality.json
+|   |   debug_career_160_100k_after_quality_focus.json
+|   |   debug_career_80.json
+|   |   debug_career_80_after_compress.json
+|   |   debug_career_80_after_fix2.json
+|   |   debug_career_80_after_fix3.json
+|   |   debug_career_80_after_seed.json
+|   |   debug_career_80_mini_no_sign.json
+|   |   debug_career_after.json
+|   |   debug_career_after_compress.json
+|   |   debug_career_after_compress_80.json
+|   |   debug_career_after_round2.json
+|   |   debug_career_auto_after_debug_career_80.json
+|   |   debug_career_auto_after_debug_career_after_round2.json
+|   |   debug_career_mini_candidates.json
+|   |   debug_career_mini_quality_focus.json
+|   |   debug_career_ru-RU_160_20260223_221709_before.json
+|   |   debug_career_ru-RU_160_20260223_222539_before.json
+|   |   debug_career_ru-RU_160_20260223_223437_before.json
+|   |   debug_career_ru-RU_160_20260223_223502_before.json
+|   |   debug_career_ru-RU_160_20260223_223952_before.json
+|   |   debug_career_ru-RU_160_20260223_223952_mini_focus.json
+|   |   debug_career_ru-RU_160_20260223_224206_after.json
+|   |   debug_career_ru-RU_160_20260223_224206_before.json
+|   |   debug_career_ru-RU_160_20260223_224206_mini_focus.json
+|   |   debug_career_ru_160_20260223_121344_after.json
+|   |   debug_career_ru_160_20260223_121344_before.json
+|   |   debug_career_ru_160_20260223_121344_mini_focus.json
+|   |   debug_career_ru_160_20260223_125023_after.json
+|   |   debug_career_ru_160_20260223_125023_before.json
+|   |   debug_career_ru_160_20260223_125023_mini_focus.json
+|   |   debug_career_ru_160_20260223_130703_after.json
+|   |   debug_career_ru_160_20260223_130703_before.json
+|   |   debug_career_ru_160_20260223_130703_mini_housecore.json
+|   |   debug_career_ru_160_20260223_140630_after.json
+|   |   debug_career_ru_160_20260223_140630_before.json
+|   |   debug_career_ru_160_20260223_140630_mini_topiccore.json
+|   |   debug_career_ru_160_20260223_141054_after.json
+|   |   debug_career_ru_160_20260223_141054_before.json
+|   |   debug_career_ru_160_20260223_141054_mini_topiccore.json
+|   |   debug_career_ru_160_20260223_141229_after.json
+|   |   debug_career_ru_160_20260223_141229_before.json
+|   |   debug_career_ru_160_20260223_141229_mini_topiccore.json
+|   |   debug_creativity_ru_160_20260223_125034_after.json
+|   |   debug_creativity_ru_160_20260223_125034_before.json
+|   |   debug_creativity_ru_160_20260223_125034_mini_focus.json
+|   |   debug_creativity_ru_160_20260223_130908_after.json
+|   |   debug_creativity_ru_160_20260223_130908_before.json
+|   |   debug_creativity_ru_160_20260223_130908_mini_housecore.json
+|   |   debug_creativity_ru_160_20260223_143001_after.json
+|   |   debug_creativity_ru_160_20260223_143001_before.json
+|   |   debug_creativity_ru_160_20260223_143001_mini_topiccore.json
+|   |   debug_creativity_ru_160_20260223_143137_after.json
+|   |   debug_creativity_ru_160_20260223_143137_before.json
+|   |   debug_creativity_ru_160_20260223_143137_mini_topiccore.json
+|   |   debug_emotional_world_ru_160_20260223_125049_after.json
+|   |   debug_emotional_world_ru_160_20260223_125049_before.json
+|   |   debug_emotional_world_ru_160_20260223_125049_mini_focus.json
+|   |   debug_emotional_world_ru_160_20260223_130809_after.json
+|   |   debug_emotional_world_ru_160_20260223_130809_before.json
+|   |   debug_emotional_world_ru_160_20260223_130809_mini_housecore.json
+|   |   debug_emotional_world_ru_160_20260223_142801_after.json
+|   |   debug_emotional_world_ru_160_20260223_142801_before.json
+|   |   debug_emotional_world_ru_160_20260223_142801_mini_topiccore.json
+|   |   debug_emotional_world_ru_160_20260223_142933_after.json
+|   |   debug_emotional_world_ru_160_20260223_142933_before.json
+|   |   debug_emotional_world_ru_160_20260223_142933_mini_topiccore.json
+|   |   debug_how_others_see_me_ru_160_20260223_125101_after.json
+|   |   debug_how_others_see_me_ru_160_20260223_125101_before.json
+|   |   debug_how_others_see_me_ru_160_20260223_125101_mini_focus.json
+|   |   debug_how_others_see_me_ru_160_20260223_130926_before.json
+|   |   debug_how_others_see_me_ru_160_20260223_131206_after.json
+|   |   debug_how_others_see_me_ru_160_20260223_131206_before.json
+|   |   debug_how_others_see_me_ru_160_20260223_131206_mini_housecore.json
+|   |   debug_how_others_see_me_ru_160_20260223_131643_after.json
+|   |   debug_how_others_see_me_ru_160_20260223_131643_before.json
+|   |   debug_how_others_see_me_ru_160_20260223_131643_mini_housecore.json
+|   |   debug_how_others_see_me_ru_160_20260223_131719_after.json
+|   |   debug_how_others_see_me_ru_160_20260223_131719_before.json
+|   |   debug_how_others_see_me_ru_160_20260223_131719_mini_housecore.json
+|   |   debug_how_others_see_me_ru_160_20260223_135928_after.json
+|   |   debug_how_others_see_me_ru_160_20260223_135928_before.json
+|   |   debug_how_others_see_me_ru_160_20260223_135928_mini_topiccore.json
+|   |   debug_how_others_see_me_ru_160_20260223_140018_after.json
+|   |   debug_how_others_see_me_ru_160_20260223_140018_before.json
+|   |   debug_how_others_see_me_ru_160_20260223_140018_mini_topiccore.json
+|   |   debug_how_others_see_me_ru_160_20260223_140221_after.json
+|   |   debug_how_others_see_me_ru_160_20260223_140221_before.json
+|   |   debug_how_others_see_me_ru_160_20260223_140221_mini_topiccore.json
+|   |   debug_karmic_tasks_ru_160_20260223_125112_after.json
+|   |   debug_karmic_tasks_ru_160_20260223_125112_before.json
+|   |   debug_karmic_tasks_ru_160_20260223_125112_mini_focus.json
+|   |   debug_karmic_tasks_ru_160_20260223_130954_after.json
+|   |   debug_karmic_tasks_ru_160_20260223_130954_before.json
+|   |   debug_karmic_tasks_ru_160_20260223_130954_mini_housecore.json
+|   |   debug_karmic_tasks_ru_160_20260223_144651_after.json
+|   |   debug_karmic_tasks_ru_160_20260223_144651_before.json
+|   |   debug_karmic_tasks_ru_160_20260223_144651_mini_topiccore.json
+|   |   debug_karmic_tasks_ru_160_20260223_144852_after.json
+|   |   debug_karmic_tasks_ru_160_20260223_144852_before.json
+|   |   debug_karmic_tasks_ru_160_20260223_144852_mini_topiccore.json
+|   |   debug_love_intimacy_ru_160_20260223_124935_after.json
+|   |   debug_love_intimacy_ru_160_20260223_124935_before.json
+|   |   debug_love_intimacy_ru_160_20260223_124935_mini_focus.json
+|   |   debug_love_intimacy_ru_160_20260223_125124_after.json
+|   |   debug_love_intimacy_ru_160_20260223_125124_before.json
+|   |   debug_love_intimacy_ru_160_20260223_125124_mini_focus.json
+|   |   debug_love_intimacy_ru_160_20260223_130726_after.json
+|   |   debug_love_intimacy_ru_160_20260223_130726_before.json
+|   |   debug_love_intimacy_ru_160_20260223_130726_mini_housecore.json
+|   |   debug_love_intimacy_ru_160_20260223_142606_after.json
+|   |   debug_love_intimacy_ru_160_20260223_142606_before.json
+|   |   debug_love_intimacy_ru_160_20260223_142606_mini_topiccore.json
+|   |   debug_money_ru_160_20260223_124955_after.json
+|   |   debug_money_ru_160_20260223_124955_before.json
+|   |   debug_money_ru_160_20260223_124955_mini_focus.json
+|   |   debug_money_ru_160_20260223_125135_after.json
+|   |   debug_money_ru_160_20260223_125135_before.json
+|   |   debug_money_ru_160_20260223_125135_mini_focus.json
+|   |   debug_money_ru_160_20260223_130236_after.json
+|   |   debug_money_ru_160_20260223_130236_before.json
+|   |   debug_money_ru_160_20260223_130236_mini_housecore.json
+|   |   debug_money_ru_160_20260223_130711_after.json
+|   |   debug_money_ru_160_20260223_130711_before.json
+|   |   debug_money_ru_160_20260223_130711_mini_housecore.json
+|   |   debug_money_ru_160_20260223_141445_after.json
+|   |   debug_money_ru_160_20260223_141445_before.json
+|   |   debug_money_ru_160_20260223_141445_mini_topiccore.json
+|   |   debug_money_ru_160_20260223_141727_after.json
+|   |   debug_money_ru_160_20260223_141727_before.json
+|   |   debug_money_ru_160_20260223_141727_mini_topiccore.json
+|   |   debug_one_house2_ruler_saturn_sign_any.json
+|   |   debug_one_house6_mercury_sign_any.json
+|   |   debug_partnership_marriage_ru_160_20260223_124946_after.json
+|   |   debug_partnership_marriage_ru_160_20260223_124946_before.json
+|   |   debug_partnership_marriage_ru_160_20260223_124946_mini_focus.json
+|   |   debug_partnership_marriage_ru_160_20260223_125146_after.json
+|   |   debug_partnership_marriage_ru_160_20260223_125146_before.json
+|   |   debug_partnership_marriage_ru_160_20260223_125146_mini_focus.json
+|   |   debug_partnership_marriage_ru_160_20260223_130738_after.json
+|   |   debug_partnership_marriage_ru_160_20260223_130738_before.json
+|   |   debug_partnership_marriage_ru_160_20260223_130738_mini_housecore.json
+|   |   debug_partnership_marriage_ru_160_20260223_130747_after.json
+|   |   debug_partnership_marriage_ru_160_20260223_130747_before.json
+|   |   debug_partnership_marriage_ru_160_20260223_130747_mini_housecore.json
+|   |   debug_partnership_marriage_ru_160_20260223_142259_after.json
+|   |   debug_partnership_marriage_ru_160_20260223_142259_before.json
+|   |   debug_partnership_marriage_ru_160_20260223_142259_mini_topiccore.json
+|   |   debug_partnership_marriage_ru_160_20260223_142536_after.json
+|   |   debug_partnership_marriage_ru_160_20260223_142536_before.json
+|   |   debug_partnership_marriage_ru_160_20260223_142536_mini_topiccore.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_125159_after.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_125159_before.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_125159_mini_focus.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_131003_after.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_131003_before.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_131003_mini_housecore.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_144935_after.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_144935_before.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_144935_mini_topiccore.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_145148_after.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_145148_before.json
+|   |   debug_past_lives_symbolic_ru_160_20260223_145148_mini_topiccore.json
+|   |   debug_personality_core_ru_160_20260223_125210_after.json
+|   |   debug_personality_core_ru_160_20260223_125210_before.json
+|   |   debug_personality_core_ru_160_20260223_125210_mini_focus.json
+|   |   debug_personality_core_ru_160_20260223_130802_after.json
+|   |   debug_personality_core_ru_160_20260223_130802_before.json
+|   |   debug_personality_core_ru_160_20260223_130802_mini_housecore.json
+|   |   debug_personality_core_ru_160_20260223_135143_after.json
+|   |   debug_personality_core_ru_160_20260223_135143_before.json
+|   |   debug_personality_core_ru_160_20260223_135143_mini_topiccore.json
+|   |   debug_personality_core_ru_160_20260223_135545_after.json
+|   |   debug_personality_core_ru_160_20260223_135545_before.json
+|   |   debug_personality_core_ru_160_20260223_135545_mini_topiccore.json
+|   |   debug_personality_core_ru_160_20260223_135605_after.json
+|   |   debug_personality_core_ru_160_20260223_135605_before.json
+|   |   debug_personality_core_ru_160_20260223_135605_mini_topiccore.json
+|   |   debug_psychology_ru_160_20260223_125225_after.json
+|   |   debug_psychology_ru_160_20260223_125225_before.json
+|   |   debug_psychology_ru_160_20260223_125225_mini_focus.json
+|   |   debug_psychology_ru_160_20260223_130754_after.json
+|   |   debug_psychology_ru_160_20260223_130754_before.json
+|   |   debug_psychology_ru_160_20260223_130754_mini_housecore.json
+|   |   debug_psychology_ru_160_20260223_135708_after.json
+|   |   debug_psychology_ru_160_20260223_135708_before.json
+|   |   debug_psychology_ru_160_20260223_135708_mini_topiccore.json
+|   |   debug_psychology_ru_160_20260223_135900_after.json
+|   |   debug_psychology_ru_160_20260223_135900_before.json
+|   |   debug_psychology_ru_160_20260223_135900_mini_topiccore.json
+|   |   debug_purpose_path_ru_160_20260223_125238_after.json
+|   |   debug_purpose_path_ru_160_20260223_125238_before.json
+|   |   debug_purpose_path_ru_160_20260223_125238_mini_focus.json
+|   |   debug_purpose_path_ru_160_20260223_130919_after.json
+|   |   debug_purpose_path_ru_160_20260223_130919_before.json
+|   |   debug_purpose_path_ru_160_20260223_130919_mini_housecore.json
+|   |   debug_purpose_path_ru_160_20260223_143219_after.json
+|   |   debug_purpose_path_ru_160_20260223_143219_before.json
+|   |   debug_purpose_path_ru_160_20260223_143219_mini_topiccore.json
+|   |   debug_purpose_path_ru_160_20260223_144220_after.json
+|   |   debug_purpose_path_ru_160_20260223_144220_before.json
+|   |   debug_purpose_path_ru_160_20260223_144220_mini_topiccore.json
+|   |   debug_purpose_path_ru_160_20260223_144242_after.json
+|   |   debug_purpose_path_ru_160_20260223_144242_before.json
+|   |   debug_purpose_path_ru_160_20260223_144242_mini_topiccore.json
+|   |   debug_purpose_path_ru_160_20260223_144254_after.json
+|   |   debug_purpose_path_ru_160_20260223_144254_before.json
+|   |   debug_purpose_path_ru_160_20260223_144254_mini_topiccore.json
+|   |   debug_self_esteem_ru_160_20260223_125248_after.json
+|   |   debug_self_esteem_ru_160_20260223_125248_before.json
+|   |   debug_self_esteem_ru_160_20260223_125248_mini_focus.json
+|   |   debug_self_esteem_ru_160_20260223_130816_after.json
+|   |   debug_self_esteem_ru_160_20260223_130816_before.json
+|   |   debug_self_esteem_ru_160_20260223_130816_mini_housecore.json
+|   |   debug_self_esteem_ru_160_20260223_141925_after.json
+|   |   debug_self_esteem_ru_160_20260223_141925_before.json
+|   |   debug_self_esteem_ru_160_20260223_141925_mini_topiccore.json
+|   |   debug_self_esteem_ru_160_20260223_142021_after.json
+|   |   debug_self_esteem_ru_160_20260223_142021_before.json
+|   |   debug_self_esteem_ru_160_20260223_142021_mini_topiccore.json
+|   |   debug_self_esteem_ru_160_20260223_142220_after.json
+|   |   debug_self_esteem_ru_160_20260223_142220_before.json
+|   |   debug_self_esteem_ru_160_20260223_142220_mini_topiccore.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_125259_after.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_125259_before.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_125259_mini_focus.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_130822_before.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_131157_after.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_131157_before.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_131157_mini_housecore.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_131616_after.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_131616_before.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_131616_mini_housecore.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_131727_after.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_131727_before.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_131727_mini_housecore.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_133447_after.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_133447_before.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_133447_mini_topiccore.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_134116_after.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_134116_before.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_134116_mini_topiccore.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_134359_after.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_134359_before.json
+|   |   debug_strengths_weaknesses_ru_160_20260223_134359_mini_topiccore.json
+|   |   debug_talents_ru_160_20260223_125310_after.json
+|   |   debug_talents_ru_160_20260223_125310_before.json
+|   |   debug_talents_ru_160_20260223_125310_mini_focus.json
+|   |   debug_talents_ru_160_20260223_130900_after.json
+|   |   debug_talents_ru_160_20260223_130900_before.json
+|   |   debug_talents_ru_160_20260223_130900_mini_housecore.json
+|   |   debug_talents_ru_160_20260223_144340_after.json
+|   |   debug_talents_ru_160_20260223_144340_before.json
+|   |   debug_talents_ru_160_20260223_144340_mini_topiccore.json
+|   |   debug_talents_ru_160_20260223_144616_after.json
+|   |   debug_talents_ru_160_20260223_144616_before.json
+|   |   debug_talents_ru_160_20260223_144616_mini_topiccore.json
+|   |   resp_career_last.json
+|   |   resp_last.json
+|   |   
+|   \---responses
+|           resp_career_20260223_221709_before.json
+|           resp_career_20260223_222539_before.json
+|           resp_career_20260223_223437_before.json
+|           resp_career_20260223_223502_before.json
+|           resp_career_20260223_223952_before.json
+|           resp_career_20260223_224206_after.json
+|           resp_career_20260223_224206_before.json
+|           
++---requirements
+|       astro.txt
+|       bot.txt
+|       constraints.txt
+|       dev.txt
+|       
++---telegram_bot
+|   \---app
+|           bot.py
+|           client.py
+|           settings.py
+|           
++---tools
+|   |   print_changed_raw_urls.py
+|   |   
+|   \---tests
+|           regress_knowledge_pick.ps1
+|           

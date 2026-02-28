@@ -1,0 +1,34 @@
+# Virtual environment
+venv/
+.venv/
+.env
+.git/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Your project specific folders (исправлены пути)
+astroprocessor/data/
+astroprocessor/se/   # или astroprocessor/se, если это файл
+astroprocessor/knowledge/docs/
+source/
+debug/
+astroprocessor/tools/seed/runs/20260223
+astroprocessor/tools/seed/runs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+*.db-wal
+*.db-shm
+*.db
+*.md

@@ -1,0 +1,47 @@
+{% extends "admin/_layout.html" %}
+{% block content %}
+
+<h2>KB Chunks — Source #{{ source.id }}</h2>
+<p class="muted">
+  {{ source.title }} | {{ source.source_type or "" }} | {{ source.locale or "" }} | {{ source.file_name or "" }}
+</p>
+
+<div class="card" style="display:flex; gap:10px; flex-wrap:wrap;">
+  <a class="btn" href="/admin/ui/kb/source/{{ source.id }}">Overview</a>
+  <a class="btn" href="/admin/ui/kb/source/{{ source.id }}/chunks">Chunks</a>
+  <a class="btn" href="/admin/ui/kb/source/{{ source.id }}/fragments">Fragments</a>
+</div>
+
+<div class="grid-2" style="margin-top:12px;">
+  <div>
+    <h3>Chunks ({{ chunks|length }})</h3>
+    <table class="table">
+      <thead>
+        <tr><th>ID</th><th>Seq</th><th>Len</th><th>Offsets</th></tr>
+      </thead>
+      <tbody>
+        {% for c in chunks %}
+          <tr class="kb-row"
+              onclick="kbSelectRow(this)"
+              hx-get="/admin/ui/kb/chunk/{{ c.id }}"
+              hx-target="#editor_body"
+              hx-swap="innerHTML">
+            <td>{{ c.id }}</td>
+            <td>{{ c.seq }}</td>
+            <td>{{ c.text_len }}</td>
+            <td>{{ c.char_start }}..{{ c.char_end }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div id="editor" class="card" style="position:sticky; top:12px; align-self:start;">
+    <h3 style="margin-top:0;">Editor</h3>
+    <div id="editor_body" class="muted">
+      Выбери chunk слева — загрузится тут.
+    </div>
+  </div>
+</div>
+
+{% endblock %}

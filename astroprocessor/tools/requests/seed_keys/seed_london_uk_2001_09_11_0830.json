@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "2001-09-11",
+    "time": "08:30",
+    "place_query": "London, United Kingdom",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

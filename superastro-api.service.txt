@@ -1,0 +1,9 @@
+2) Быстрые команды “на каждый день”
+# статус
+systemctl status superastro-api.service --no-pager -l
+
+# логи
+journalctl -u superastro-api.service -f
+
+# рестарт
+sudo systemctl restart superastro-api.service

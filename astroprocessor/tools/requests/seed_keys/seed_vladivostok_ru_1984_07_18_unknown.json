@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1984-07-18",
+    "time": null,
+    "place_query": "Vladivostok, Russia",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

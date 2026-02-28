@@ -1,0 +1,26 @@
+<tr id="row-{{ it.id }}"
+    class="{% if selected_id==it.id %}selected{% endif %}"
+    hx-get="/admin/ui/items/select/{{ it.id }}"
+    hx-include="#filters"
+    hx-target="#item-editor"
+    hx-swap="innerHTML"
+    hx-trigger="click[!event.target.closest('input.row-check')]"
+>
+  <td>
+    <input class="row-check"
+           id="cb-{{ it.id }}"
+           name="ids"
+           type="checkbox"
+           value="{{ it.id }}">
+  </td>
+
+  <td class="mono">{{ it.id }}</td>
+  <td class="mono">{{ it.key }}</td>
+  <td class="mono">{{ it.topic_category or "NULL" }}</td>
+  <td>{{ 1 if it.is_active else 0 }}</td>
+  <td>{{ it.priority }}</td>
+  <td>{{ (it.meta.tone if it.meta else "") }}</td>
+  <td>{{ (it.meta.abstraction_level if it.meta else "") }}</td>
+  <td>{{ (it.meta.tags|join(", ") if it.meta and it.meta.tags else "") }}</td>
+  <td>{{ it.created_at }}</td>
+</tr>

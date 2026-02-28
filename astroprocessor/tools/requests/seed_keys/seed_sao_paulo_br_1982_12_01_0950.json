@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1982-12-01",
+    "time": "09:50",
+    "place_query": "Sao Paulo, Brazil",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

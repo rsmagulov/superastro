@@ -1,0 +1,23 @@
+{
+  "dry_run": true,
+  "mode": "b",
+  "inserted": 0,
+  "updated": 0,
+  "created": 0,
+  "skipped_existing": 308,
+  "skipped_mode": 0,
+  "skipped_garbled": 0,
+  "skipped_sanitation": 0,
+  "skipped_topic": 199,
+  "skipped_reasons": {},
+  "skipped_topic_reasons": {
+    "no_topic": 199
+  },
+  "topic_gate": "ru_natal_v1",
+  "topic_threshold": 3,
+  "include_topics": [],
+  "topic_rejected_examples": [],
+  "topic_rejected_total": 199,
+  "topic_rejected_best_topic_counts": {},
+  "topic_rejected_best_score_counts": {}
+}

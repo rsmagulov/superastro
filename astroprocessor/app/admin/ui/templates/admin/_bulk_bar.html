@@ -1,0 +1,60 @@
+{# app/admin/ui/templates/admin/_bulk_bar.html #}
+<div class="bulk-bar">
+  <div class="muted" style="margin-bottom:6px;">
+    Bulk actions apply to selected rows (checkboxes).
+  </div>
+
+  <div class="row" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+
+    <form
+      hx-post="/admin/ui/items/bulk/set-active"
+      hx-target="#flash-area"
+      hx-swap="innerHTML"
+      onsubmit="document.getElementById('bulk-ids-active').value = selectedIds().join(',');"
+      style="display:flex; gap:8px; align-items:center;"
+    >
+      <label>Active:</label>
+      <select name="active">
+        <option value="1">Enable</option>
+        <option value="0">Disable</option>
+      </select>
+      <input type="hidden" name="ids" id="bulk-ids-active" value="">
+      <button type="submit">Apply</button>
+    </form>
+
+    <form
+      hx-post="/admin/ui/items/bulk/set-tone"
+      hx-target="#flash-area"
+      hx-swap="innerHTML"
+      onsubmit="document.getElementById('bulk-ids-tone').value = selectedIds().join(',');"
+      style="display:flex; gap:8px; align-items:center;"
+    >
+      <label>Tone:</label>
+      <select name="tone">
+        {% for t in allowed_tones %}
+          <option value="{{ t }}">{{ t }}</option>
+        {% endfor %}
+      </select>
+      <input type="hidden" name="ids" id="bulk-ids-tone" value="">
+      <button type="submit">Apply</button>
+    </form>
+
+    <form
+      hx-post="/admin/ui/items/bulk/set-topic-category"
+      hx-target="#flash-area"
+      hx-swap="innerHTML"
+      onsubmit="document.getElementById('bulk-ids-topic').value = selectedIds().join(',');"
+      style="display:flex; gap:8px; align-items:center;"
+    >
+      <label>Topic:</label>
+      <select name="topic_category">
+        {% for tc in topic_categories %}
+          <option value="{{ tc }}">{{ tc }}</option>
+        {% endfor %}
+      </select>
+      <input type="hidden" name="ids" id="bulk-ids-topic" value="">
+      <button type="submit">Apply</button>
+    </form>
+
+  </div>
+</div>

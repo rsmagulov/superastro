@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1975-03-03",
+    "time": "23:15",
+    "place_query": "New York, United States",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

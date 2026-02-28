@@ -1,0 +1,23 @@
+{
+  "fragments_total": 737,
+  "enabled_total": 582,
+  "needs_review_total": 72,
+  "archived_total": 83,
+  "min_score": 14,
+  "avg_score": 68.88738127544097,
+  "max_score": 100,
+  "labels": {
+    "D": 185,
+    "C": 173,
+    "F": 155,
+    "B": 118,
+    "A": 106
+  },
+  "buckets": {
+    "0-44": 83,
+    "45-54": 72,
+    "55-69": 185,
+    "70-84": 238,
+    "85-100": 159
+  }
+}

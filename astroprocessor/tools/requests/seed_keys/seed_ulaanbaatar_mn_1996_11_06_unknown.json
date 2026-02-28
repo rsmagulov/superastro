@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1996-11-06",
+    "time": null,
+    "place_query": "Ulaanbaatar, Mongolia",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

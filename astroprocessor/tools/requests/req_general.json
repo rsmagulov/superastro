@@ -1,0 +1,11 @@
+﻿{
+    "user_id":  123,
+    "birth":  {
+                  "date":  "01.01.2000",
+                  "time":  "12:00",
+                  "place_query":  "Almaty, Kazakhstan",
+                  "gender":  "male"
+              },
+    "topic_category":  "general",
+    "locale":  "ru-RU"
+}

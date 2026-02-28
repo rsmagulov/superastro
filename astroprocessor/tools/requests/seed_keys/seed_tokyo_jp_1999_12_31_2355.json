@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1999-12-31",
+    "time": "23:55",
+    "place_query": "Tokyo, Japan",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

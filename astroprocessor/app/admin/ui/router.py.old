@@ -1,0 +1,495 @@
+# astroprocessor/app/admin/ui/router.py
+from __future__ import annotations
+
+import asyncio
+import sqlite3
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
+
+from fastapi import APIRouter, Form, Request
+from fastapi.responses import PlainTextResponse, RedirectResponse, Response
+from starlette.templating import Jinja2Templates
+
+from app.settings import settings
+
+router = APIRouter()
+
+TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+# Try to include existing UI routers (if present)
+try:
+    from app.admin.ui.sources_router import router as sources_router  # type: ignore
+
+    router.include_router(sources_router)
+except Exception:
+    pass
+
+
+# ============================================================
+# Helpers
+# ============================================================
+
+def _qp(request: Request, name: str, default: str = "") -> str:
+    v = (request.query_params.get(name) or "").strip()
+    return v if v else default
+
+
+def _now_build_version() -> str:
+    return datetime.now().strftime("%Y.%m.%d.%H%M")
+
+
+def _flash_redirect(url: str, *, kind: str, text: str) -> RedirectResponse:
+    from urllib.parse import quote
+
+    u = f"{url}?flash_kind={quote(kind)}&flash={quote(text)}"
+    return RedirectResponse(url=u, status_code=303)
+
+
+def _flash_from_query(request: Request) -> dict[str, str] | None:
+    kind = (request.query_params.get("flash_kind") or "").strip()
+    text = (request.query_params.get("flash") or "").strip()
+    if not text:
+        return None
+    return {"kind": kind or "info", "text": text}
+
+
+def _astro_root() -> Path:
+    # .../astroprocessor/app/admin/ui/router.py -> parents[3] = .../astroprocessor
+    return Path(__file__).resolve().parents[3]
+
+
+def _repo_root() -> Path:
+    return _astro_root().parent
+
+
+def _kb_defaults() -> dict[str, str]:
+    root = _astro_root()
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = root / db_path
+    return {
+        "inbox_dir": str(root / "data" / "knowledge_sources" / "inbox"),
+        "docs_dir": str(root / "knowledge" / "docs"),
+        "processed_dir": str(root / "data" / "knowledge_sources" / "processed" / "inbox"),
+        "failed_dir": str(root / "data" / "knowledge_sources" / "failed" / "inbox"),
+        "db_path": str(db_path),
+        "knowledge_build_version": "kb-0.1",
+    }
+
+
+def _default_ev1_keys_file() -> str:
+    """
+    String default for the form.
+    We keep old-looking relative values, but builder will resolve deterministically anyway.
+    """
+    rr = _repo_root()
+    ar = _astro_root()
+
+    if (rr / "ev1_keys_unique.txt").exists():
+        return "../ev1_keys_unique.txt"
+    if (ar / "ev1_keys_unique.txt").exists():
+        return "./ev1_keys_unique.txt"
+    if (ar / "tools" / "knowledge" / "seed_keys_core_v1.txt").exists():
+        return "./tools/knowledge/seed_keys_core_v1.txt"
+    return "../ev1_keys_unique.txt"
+
+
+async def _read_kb_meta_rows() -> list[tuple[str, str]]:
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+    if not db_path.exists():
+        return []
+
+    def _read() -> list[tuple[str, str]]:
+        c = sqlite3.connect(str(db_path))
+        try:
+            c.execute("CREATE TABLE IF NOT EXISTS kb_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+            rows = c.execute("SELECT key, value FROM kb_meta ORDER BY key").fetchall()
+            return [(str(k), str(v)) for (k, v) in rows]
+        finally:
+            c.close()
+
+    return await asyncio.to_thread(_read)
+
+
+def _resolve_keys_file_via_builder(keys_file: str) -> Path:
+    """
+    Uses builder.resolve_ev1_keys_file for stable resolution.
+    """
+    from app.knowledge import builder as kb
+
+    p, ok = kb.resolve_ev1_keys_file(keys_file)
+    if not ok:
+        raise FileNotFoundError(f"keys_file пустой или не найден: {p}")
+    return p
+
+
+def _load_ev1_keys_or_error(keys_file: str) -> tuple[list[str], Optional[str], str]:
+    """
+    Returns: (keys, error, resolved_path_str)
+    """
+    from app.knowledge import builder as kb
+
+    try:
+        keys_path = _resolve_keys_file_via_builder(keys_file)
+    except Exception as e:
+        return [], f"{type(e).__name__}: {e}", str(keys_file)
+
+    try:
+        keys = kb.load_keys_txt(keys_path)
+    except Exception as e:
+        return [], f"{type(e).__name__}: {e}", str(keys_path)
+
+    if not keys:
+        return [], f"keys_file пустой: {keys_path}", str(keys_path)
+
+    return keys, None, str(keys_path)
+
+
+def _ev1_live_compute(
+    *,
+    keys_file: str,
+    locale: str,
+    topic_category: str,
+    top_missing: int = 50,
+) -> dict[str, Any]:
+    """
+    Live EV1 coverage from DB (active items), no seed.
+    Produces ev1_breakdown + ev1_missing_keys for template.
+    """
+    from app.knowledge import builder as kb
+
+    keys, err, keys_path_str = _load_ev1_keys_or_error(keys_file)
+    if err:
+        return {
+            "ev1_keys_file_resolved": keys_path_str,
+            "ev1_live_error": err,
+            "ev1_breakdown": [],
+            "ev1_missing_keys": [],
+            "ev1_total_live": 0,
+            "ev1_present_active_live": 0,
+            "ev1_missing_live": 0,
+            "ev1_issues_null_topic_category_count": 0,
+            "ev1_issues_null_topic_category_sample": [],
+        }
+
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        cov = kb.coverage_ev1(
+            conn,
+            keys,
+            locale=locale,
+            topic_category=topic_category,
+            top_missing=top_missing,
+        )
+
+        breakdown_rows = kb.coverage_breakdown_ev1(conn, keys)
+
+        breakdown: list[dict[str, Any]] = []
+        for r in breakdown_rows:
+            pct = int(round((r.present_active / r.total) * 100)) if r.total else 0
+            loc = (r.locale or "").strip()
+            cat = (r.topic_category or "").strip()
+            breakdown.append(
+                {
+                    "locale": loc if loc else "(empty)",
+                    "topic_category": cat if cat else "(none)",
+                    "total": r.total,
+                    "present_active": r.present_active,
+                    "missing": r.missing,
+                    "pct": pct,
+                }
+            )
+
+        issues = kb.ev1_data_issues(conn, keys, locale=locale, sample_limit=20)
+
+        return {
+            "ev1_keys_file_resolved": keys_path_str,
+            "ev1_live_error": None,
+            "ev1_breakdown": breakdown,
+            "ev1_missing_keys": cov.missing_keys,
+            "ev1_total_live": cov.total,
+            "ev1_present_active_live": cov.present_active,
+            "ev1_missing_live": cov.missing,
+            "ev1_issues_null_topic_category_count": issues.null_topic_category_count,
+            "ev1_issues_null_topic_category_sample": issues.sample_keys,
+        }
+    finally:
+        conn.close()
+
+
+# ============================================================
+# Pages / Exports
+# ============================================================
+
+@router.get("/builds", name="builds_page")
+async def builds_page(request: Request):
+    d = _kb_defaults()
+    kb_rows = await _read_kb_meta_rows()
+    kb_dict = {k: v for (k, v) in kb_rows}
+
+    ev1_keys_file = _default_ev1_keys_file()
+    ev1_locale = "ru-RU"
+    ev1_topic_category = "personality_core"
+    ev1_priority = 200
+
+    ev1_keys_file = _qp(request, "ev1_keys_file", ev1_keys_file)
+    ev1_locale = _qp(request, "ev1_locale", ev1_locale)
+    ev1_topic_category = _qp(request, "ev1_topic_category", ev1_topic_category)
+
+    def _int_or(x: str | None, default: int) -> int:
+        try:
+            return int((x or "").strip())
+        except Exception:
+            return default
+
+    ev1_total = _int_or(kb_dict.get("ev1_total"), 0)
+    ev1_present_active = _int_or(kb_dict.get("ev1_present_active"), 0)
+    ev1_missing = _int_or(kb_dict.get("ev1_missing"), 0)
+    ev1_pct = int(round((ev1_present_active / ev1_total) * 100)) if ev1_total else 0
+
+    live = await asyncio.to_thread(
+        _ev1_live_compute,
+        keys_file=ev1_keys_file,
+        locale=ev1_locale,
+        topic_category=ev1_topic_category,
+        top_missing=50,
+    )
+
+    ctx: dict[str, Any] = {
+        "request": request,
+        "flash": _flash_from_query(request),
+        "build_version": _now_build_version(),
+        "knowledge_build_version": d["knowledge_build_version"],
+        "inbox_dir": d["inbox_dir"],
+        "docs_dir": d["docs_dir"],
+        "kb_meta": kb_rows,
+        "kb_meta_dict": kb_dict,
+        "nav_active": "builds",
+        "ev1_keys_file": ev1_keys_file,
+        "ev1_locale": ev1_locale,
+        "ev1_topic_category": ev1_topic_category,
+        "ev1_priority": ev1_priority,
+        "ev1_total": ev1_total,
+        "ev1_present_active": ev1_present_active,
+        "ev1_missing": ev1_missing,
+        "ev1_pct": ev1_pct,
+        **live,
+    }
+    return templates.TemplateResponse("admin/builds.html", ctx)
+
+
+@router.get("/builds/ev1/missing.txt", name="builds_ev1_missing_txt")
+async def builds_ev1_missing_txt(
+    request: Request,
+    ev1_keys_file: str = "../ev1_keys_unique.txt",
+    ev1_locale: str = "ru-RU",
+    ev1_topic_category: str = "personality_core",
+):
+    from app.knowledge import builder as kb
+
+    keys, err, keys_path_str = _load_ev1_keys_or_error(ev1_keys_file)
+    if err:
+        return PlainTextResponse(f"❌ {err}\n(keys_file={keys_path_str})\n", status_code=404)
+
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        cov = kb.coverage_ev1(conn, keys, locale=ev1_locale, topic_category=ev1_topic_category, top_missing=100_000)
+        return PlainTextResponse(kb.export_missing_txt(cov.missing_keys), media_type="text/plain; charset=utf-8")
+    finally:
+        conn.close()
+
+
+@router.get("/builds/ev1/missing.jsonl", name="builds_ev1_missing_jsonl")
+async def builds_ev1_missing_jsonl(
+    request: Request,
+    ev1_keys_file: str = "../ev1_keys_unique.txt",
+    ev1_locale: str = "ru-RU",
+    ev1_topic_category: str = "personality_core",
+    priority: int = 200,
+):
+    from app.knowledge import builder as kb
+
+    keys, err, keys_path_str = _load_ev1_keys_or_error(ev1_keys_file)
+    if err:
+        return PlainTextResponse(f"❌ {err}\n(keys_file={keys_path_str})\n", status_code=404)
+
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        cov = kb.coverage_ev1(conn, keys, locale=ev1_locale, topic_category=ev1_topic_category, top_missing=100_000)
+        body = kb.export_missing_jsonl(
+            cov.missing_keys,
+            locale=ev1_locale,
+            topic_category=ev1_topic_category,
+            priority=int(priority),
+            stub_text="",
+        )
+        return Response(body, media_type="application/jsonl; charset=utf-8")
+    finally:
+        conn.close()
+
+
+# ============================================================
+# Actions (buttons)
+# ============================================================
+
+@router.post("/builds/import_build", name="builds_import_build")
+async def builds_import_build(
+    request: Request,
+    build_version: str = Form(...),
+    knowledge_build_version: str = Form(...),
+    inbox_dir: str = Form(...),
+    docs_dir: str = Form(...),
+):
+    """
+    One button: import-books + build-chunks (FTS5).
+    """
+    from app.knowledge import builder as kb
+
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
+    def _run() -> str:
+        # import
+        st_import = kb.import_books(inbox_dir=inbox_dir)
+
+        # build chunks
+        conn = sqlite3.connect(str(db_path))
+        try:
+            kb.ensure_schema_meta(conn)
+            res = kb.build_chunks(conn)
+            kb._set_meta(conn, "build_version", str(build_version))
+            kb._set_meta(conn, "knowledge_build_version", str(knowledge_build_version))
+            kb._set_meta(conn, "docs_total", str(res["docs"]))
+            kb._set_meta(conn, "chunks_total", str(res["chunks"]))
+            kb._set_meta(conn, "updated_at", str(int(time.time())))
+            conn.commit()
+        finally:
+            conn.close()
+
+        return (
+            "✅ Import+Build OK. "
+            f"imported={st_import['imported']} failed={st_import['failed']}; "
+            f"docs={res['docs']} chunks={res['chunks']}; "
+            f"build_version={build_version}, kb_build={knowledge_build_version}"
+        )
+
+    try:
+        msg = await asyncio.to_thread(_run)
+        kind = "ok"
+    except Exception as e:
+        msg = f"❌ Import+Build FAILED: {type(e).__name__}: {e}"
+        kind = "err"
+
+    return _flash_redirect(str(request.url_for("builds_page")), kind=kind, text=msg)
+
+
+@router.post("/builds/seed", name="builds_seed")
+async def builds_seed(
+    request: Request,
+    build_version: str = Form(...),
+    knowledge_build_version: str = Form(...),
+):
+    """
+    Seed default JSONL from astroprocessor/data/knowledge_items_*_ETALON.jsonl
+    """
+    from app.knowledge import builder as kb
+
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
+    def _run_seed() -> str:
+        conn = sqlite3.connect(str(db_path))
+        try:
+            kb.ensure_schema_items_and_meta(conn)
+            inserted, skipped = kb.seed_default(conn)
+            kb._set_meta(conn, "build_version", str(build_version))
+            kb._set_meta(conn, "knowledge_build_version", str(knowledge_build_version))
+            kb._set_meta(conn, "updated_at", str(int(time.time())))
+            conn.commit()
+        finally:
+            conn.close()
+
+        return (
+            "✅ Seed OK. "
+            f"inserted={inserted} skipped={skipped}; "
+            f"build_version={build_version}, kb_build={knowledge_build_version}"
+        )
+
+    try:
+        msg = await asyncio.to_thread(_run_seed)
+        kind = "ok"
+    except Exception as e:
+        msg = f"❌ Seed FAILED: {type(e).__name__}: {e}"
+        kind = "err"
+
+    return _flash_redirect(str(request.url_for("builds_page")), kind=kind, text=msg)
+
+
+@router.post("/builds/seed_ev1", name="builds_seed_ev1")
+async def builds_seed_ev1(
+    request: Request,
+    build_version: str = Form(...),
+    knowledge_build_version: str = Form(...),
+    keys_file: str = Form("../ev1_keys_unique.txt"),
+    locale: str = Form("ru-RU"),
+    topic_category: str = Form("personality_core"),
+    priority: int = Form(200),
+):
+    """
+    EV1 seed (idempotent) + write coverage to kb_meta.
+    """
+    from app.knowledge import builder as kb
+
+    db_path = Path(str(settings.knowledge_db_path))
+    if not db_path.is_absolute():
+        db_path = _astro_root() / db_path
+
+    def _run() -> str:
+        conn = sqlite3.connect(str(db_path))
+        try:
+            res = kb.seed_ev1(
+                conn,
+                keys_file=str(keys_file),
+                locale=str(locale),
+                topic_category=str(topic_category),
+                priority=int(priority),
+                build_version=str(build_version),
+                knowledge_build_version=str(knowledge_build_version),
+            )
+            conn.commit()
+            return (
+                "✅ EV1 Seed OK. "
+                f"inserted={res['inserted']} skipped={res['skipped']}; "
+                f"coverage={res['coverage_present_active']}/{res['coverage_total']} missing={res['coverage_missing']}; "
+                f"build_version={build_version}, kb_build={knowledge_build_version}"
+            )
+        finally:
+            conn.close()
+
+    try:
+        msg = await asyncio.to_thread(_run)
+        kind = "ok"
+    except Exception as e:
+        msg = f"❌ EV1 Seed FAILED: {type(e).__name__}: {e}"
+        kind = "err"
+
+    return _flash_redirect(str(request.url_for("builds_page")), kind=kind, text=msg)

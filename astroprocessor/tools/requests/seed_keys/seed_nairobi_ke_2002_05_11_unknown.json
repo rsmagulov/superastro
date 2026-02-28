@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "2002-05-11",
+    "time": null,
+    "place_query": "Nairobi, Kenya",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

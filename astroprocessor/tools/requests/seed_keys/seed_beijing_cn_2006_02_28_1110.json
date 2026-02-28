@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "2006-02-28",
+    "time": "11:10",
+    "place_query": "Beijing, China",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

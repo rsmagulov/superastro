@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1990-01-01",
+    "time": null,
+    "place_query": "Almaty, Kazakhstan",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

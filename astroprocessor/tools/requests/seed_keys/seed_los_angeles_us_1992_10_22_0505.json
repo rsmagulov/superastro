@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1992-10-22",
+    "time": "05:05",
+    "place_query": "Los Angeles, United States",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

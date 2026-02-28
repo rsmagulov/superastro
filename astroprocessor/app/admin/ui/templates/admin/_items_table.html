@@ -1,0 +1,30 @@
+<table class="tbl">
+  <thead>
+    <tr>
+      <th>
+        <input type="checkbox"
+          onclick="
+          const v=this.checked;
+          document.querySelectorAll('.row-check').forEach(x=>{
+            x.checked=v;
+            x.dispatchEvent(new Event('change', {bubbles:true}));
+          });
+          ">
+      </th>
+      <th>id</th>
+      <th>key</th>
+      <th>topic</th>
+      <th>active</th>
+      <th>priority</th>
+      <th>tone</th>
+      <th>abstraction</th>
+      <th>tags</th>
+      <th>created_at</th> 
+    </tr>
+  </thead>
+  <tbody>
+    {% for it in items %}
+      {% include "admin/_item_row.html" %}
+    {% endfor %}
+</tbody>
+</table>

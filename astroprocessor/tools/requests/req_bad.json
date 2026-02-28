@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1991-05-12",
+    "time": "07:30",
+    "place_query": "Almaty, Kazakhstan",
+    "gender": "male"
+  },
+  "topic_category": "general",
+  "locale": "ru-RU"
+}

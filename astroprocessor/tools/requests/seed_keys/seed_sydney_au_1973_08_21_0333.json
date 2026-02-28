@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1973-08-21",
+    "time": "03:33",
+    "place_query": "Sydney, Australia",
+    "gender": "female"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

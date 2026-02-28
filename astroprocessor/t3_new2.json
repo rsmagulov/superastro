@@ -1,0 +1,44 @@
+{
+  "dry_run": true,
+  "mode": "b",
+  "inserted": 15,
+  "updated": 0,
+  "created": 15,
+  "skipped_existing": 150,
+  "skipped_mode": 0,
+  "skipped_garbled": 0,
+  "skipped_sanitation": 0,
+  "skipped_topic": 342,
+  "skipped_reasons": {},
+  "skipped_topic_reasons": {
+    "no_topic": 203,
+    "below_threshold": 139
+  },
+  "topic_gate": "ru_natal_v1",
+  "topic_threshold": 3,
+  "include_topics": [],
+  "topic_rejected_examples": [],
+  "topic_rejected_total": 342,
+  "topic_rejected_best_topic_counts": {
+    "planets": 79,
+    "no_topic": 203,
+    "elements_ip": 6,
+    "signs": 6,
+    "houses_rulers": 36,
+    "angles_space": 3,
+    "aspects": 8,
+    "aspect_configs": 1
+  },
+  "topic_rejected_best_score_counts": {
+    "1": 120,
+    "2": 19,
+    "0": 203
+  },
+  "topic_rejected_near_miss_total": 19,
+  "topic_rejected_near_miss_topic_counts": {
+    "planets": 12,
+    "elements_ip": 1,
+    "aspects": 3,
+    "houses_rulers": 3
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "1960-05-09",
+    "time": "19:35",
+    "place_query": "Buenos Aires, Argentina",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

@@ -1,0 +1,10 @@
+{
+  "birth": {
+    "date": "2003-09-27",
+    "time": "13:05",
+    "place_query": "Kyiv, Ukraine",
+    "gender": "male"
+  },
+  "topic_category": "personality_core",
+  "locale": "ru-RU"
+}

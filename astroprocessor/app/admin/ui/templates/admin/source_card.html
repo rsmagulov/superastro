@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+{% block body %}
+<h1>Источник #{{ source.id }}</h1>
+
+<div class="card">
+  <div><b>Название:</b> {{ source.title }}</div>
+  <div><b>Автор:</b> {{ source.author_name }}</div>
+  <div><b>Школа:</b> {{ source.school }}</div>
+  <div><b>Тип:</b> {{ source.source_type }}</div>
+  <div><b>Язык:</b> {{ source.language }}</div>
+  <div><b>Статус:</b> {{ source.status }}</div>
+  <div><b>Приоритет:</b> {{ source.priority }}</div>
+  <div><b>Фрагментов:</b> {{ source.fragments_count }}</div>
+</div>
+
+<h3 style="margin-top:16px;">Предпросмотр извлечённого текста</h3>
+<pre class="pre">{{ extracted_preview }}</pre>
+
+<p style="margin-top:16px;">
+  <a href="/admin/ui/sources">← назад к источникам</a>
+</p>
+{% endblock %}

@@ -1,0 +1,200 @@
+{
+  "version": 1,
+  "namespace": "natal.core",
+  "mvp_name": "natal_core_base_v1",
+  "lang": "ru",
+
+  "enums": {
+    "slot": [
+      "identity",
+      "emotions",
+      "persona",
+      "mind",
+      "values",
+      "drive",
+      "growth",
+      "limits",
+      "direction",
+      "pattern"
+    ],
+    "factor": ["sun", "moon", "asc", "none"],
+    "sign": [
+      "aries",
+      "taurus",
+      "gemini",
+      "cancer",
+      "leo",
+      "virgo",
+      "libra",
+      "scorpio",
+      "sagittarius",
+      "capricorn",
+      "aquarius",
+      "pisces"
+    ]
+  },
+
+  "render_order": {
+    "slots": [
+      "natal.core.slot.identity",
+      "natal.core.slot.emotions",
+      "natal.core.slot.persona",
+      "natal.core.slot.mind",
+      "natal.core.slot.values",
+      "natal.core.slot.drive",
+      "natal.core.slot.growth",
+      "natal.core.slot.limits",
+      "natal.core.slot.direction",
+      "natal.core.slot.pattern"
+    ],
+    "core_factors": [
+      "natal.core.identity.sun.sign.{sun_sign}",
+      "natal.core.emotions.moon.sign.{moon_sign}",
+      "natal.core.persona.asc.sign.{asc_sign}"
+    ]
+  },
+
+  "keys": [
+    {
+      "id": "slot_identity",
+      "key": "natal.core.slot.identity",
+      "type": "slot",
+      "slot": "identity",
+      "tags": { "topic": "natal_core", "slot": "identity", "factor": "none", "lang": "ru" }
+    },
+    {
+      "id": "slot_emotions",
+      "key": "natal.core.slot.emotions",
+      "type": "slot",
+      "slot": "emotions",
+      "tags": { "topic": "natal_core", "slot": "emotions", "factor": "none", "lang": "ru" }
+    },
+    {
+      "id": "slot_persona",
+      "key": "natal.core.slot.persona",
+      "type": "slot",
+      "slot": "persona",
+      "tags": { "topic": "natal_core", "slot": "persona", "factor": "none", "lang": "ru" }
+    },
+    {
+      "id": "slot_mind",
+      "key": "natal.core.slot.mind",
+      "type": "slot",
+      "slot": "mind",
+      "tags": { "topic": "natal_core", "slot": "mind", "factor": "none", "lang": "ru" }
+    },
+    {
+      "id": "slot_values",
+      "key": "natal.core.slot.values",
+      "type": "slot",
+      "slot": "values",
+      "tags": { "topic": "natal_core", "slot": "values", "factor": "none", "lang": "ru" }
+    },
+    {
+      "id": "slot_drive",
+      "key": "natal.core.slot.drive",
+      "type": "slot",
+      "slot": "drive",
+      "tags": { "topic": "natal_core", "slot": "drive", "factor": "none", "lang": "ru" }
+    },
+    {
+      "id": "slot_growth",
+      "key": "natal.core.slot.growth",
+      "type": "slot",
+      "slot": "growth",
+      "tags": { "topic": "natal_core", "slot": "growth", "factor": "none", "lang": "ru" }
+    },
+    {
+      "id": "slot_limits",
+      "key": "natal.core.slot.limits",
+      "type": "slot",
+      "slot": "limits",
+      "tags": { "topic": "natal_core", "slot": "limits", "factor": "none", "lang": "ru" }
+    },
+    {
+      "id": "slot_direction",
+      "key": "natal.core.slot.direction",
+      "type": "slot",
+      "slot": "direction",
+      "tags": { "topic": "natal_core", "slot": "direction", "factor": "none", "lang": "ru" }
+    },
+    {
+      "id": "slot_pattern",
+      "key": "natal.core.slot.pattern",
+      "type": "slot",
+      "slot": "pattern",
+      "tags": { "topic": "natal_core", "slot": "pattern", "factor": "none", "lang": "ru" }
+    },
+
+    {
+      "id": "identity_sun_sign",
+      "key_template": "natal.core.identity.sun.sign.{sign}",
+      "type": "factor_sign",
+      "slot": "identity",
+      "factor": "sun",
+      "sign_enum": "sign",
+      "tags_template": {
+        "topic": "natal_core",
+        "slot": "identity",
+        "factor": "sun",
+        "sign": "{sign}",
+        "lang": "ru"
+      }
+    },
+    {
+      "id": "emotions_moon_sign",
+      "key_template": "natal.core.emotions.moon.sign.{sign}",
+      "type": "factor_sign",
+      "slot": "emotions",
+      "factor": "moon",
+      "sign_enum": "sign",
+      "tags_template": {
+        "topic": "natal_core",
+        "slot": "emotions",
+        "factor": "moon",
+        "sign": "{sign}",
+        "lang": "ru"
+      }
+    },
+    {
+      "id": "persona_asc_sign",
+      "key_template": "natal.core.persona.asc.sign.{sign}",
+      "type": "factor_sign",
+      "slot": "persona",
+      "factor": "asc",
+      "sign_enum": "sign",
+      "tags_template": {
+        "topic": "natal_core",
+        "slot": "persona",
+        "factor": "asc",
+        "sign": "{sign}",
+        "lang": "ru"
+      }
+    }
+  ],
+
+  "builder_rules": {
+    "always_include": [
+      "natal.core.slot.identity",
+      "natal.core.slot.emotions",
+      "natal.core.slot.persona",
+      "natal.core.slot.mind",
+      "natal.core.slot.values",
+      "natal.core.slot.drive",
+      "natal.core.slot.growth",
+      "natal.core.slot.limits",
+      "natal.core.slot.direction",
+      "natal.core.slot.pattern"
+    ],
+    "dynamic_include": [
+      { "template": "natal.core.identity.sun.sign.{sun_sign}", "required_input": "sun_sign", "enum": "sign" },
+      { "template": "natal.core.emotions.moon.sign.{moon_sign}", "required_input": "moon_sign", "enum": "sign" },
+      { "template": "natal.core.persona.asc.sign.{asc_sign}", "required_input": "asc_sign", "enum": "sign" }
+    ]
+  },
+
+  "chunk_tags": {
+    "required": ["topic", "slot", "factor", "lang"],
+    "optional": ["sign"]
+  }
+}
