@@ -415,6 +415,10 @@ async def interpret_v2(
     birth = req.birth.to_birth_input().to_domain()
     natal_data = await _chart_service.build_natal(user_name=req.name, birth=birth, place=place)
 
+    llm_engine = getattr(request.app.state, "llm", None)
+    if not getattr(settings, "llm_enabled", False):
+        llm_engine = None
+
     cores_by_topic = await _chart_service.interpret_topics_v2(
         knowledge_session=knowledge_session,
         natal_data=natal_data,
@@ -423,6 +427,8 @@ async def interpret_v2(
         tone_namespace="natal",
         max_blocks=int(max_blocks),
         max_chars=int(max_chars),
+        llm_engine=llm_engine,
+        user_profile=None,
     )
 
     topic_results: list[TopicResultV2] = []
@@ -464,3 +470,4 @@ async def interpret_v2(
         meta=meta,
         error=None,
     )
+

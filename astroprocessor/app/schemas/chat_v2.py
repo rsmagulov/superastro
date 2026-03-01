@@ -4,38 +4,35 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-from app.schemas.natal import BirthPayload
+from app.schemas.natal import BirthPayload, TopicCategory
 
 
 class ChatStartRequest(BaseModel):
-    """
-    Iteration-2: chat/start builds natal_data itself from birth payload.
-
-    If user_id is omitted, a stable 'anon' user is used.
-    """
     user_id: Optional[str] = None
+    button_id: Optional[str] = None
+    topic_categories: list[TopicCategory] = Field(default_factory=list)
+
     name: str
     birth: BirthPayload
-    active_topic: Optional[str] = "general"
-    locale: Optional[str] = "ru-RU"
 
 
 class ChatStartResponse(BaseModel):
-    ok: bool = True
     request_id: str
+    ok: bool = True
     chat_id: str
-    user_id: str
-    active_topic: Optional[str] = None
-    natal_context: dict[str, Any] = Field(default_factory=dict)
+    meta: dict[str, Any] = Field(default_factory=dict)
+    error: Optional[str] = None
 
 
 class ChatMessageRequest(BaseModel):
     chat_id: str
     message: str
+    topic: Optional[str] = None
 
 
 class ChatMessageResponse(BaseModel):
-    ok: bool = True
     request_id: str
-    chat_id: str
-    answer: str
+    ok: bool = True
+    reply: str
+    meta: dict[str, Any] = Field(default_factory=dict)
+    error: Optional[str] = None

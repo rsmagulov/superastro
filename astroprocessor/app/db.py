@@ -31,27 +31,21 @@ def _ensure_parent_dir(abs_path: str) -> None:
         parent.mkdir(parents=True, exist_ok=True)
 
 
-# -------------------------
-# Resolved paths (DO NOT depend on CWD)
-# -------------------------
 _ASTRO_DB_PATH = _resolve_db_path(settings.astro_db_path)
 _KNOWLEDGE_DB_PATH = _resolve_db_path(settings.knowledge_db_path)
+_CHAT_DB_PATH = _resolve_db_path(settings.chat_db_path)  # NEW
 _STAGING_DB_PATH = _resolve_db_path(settings.staging_db_path)
-_CHAT_DB_PATH = _resolve_db_path(settings.chat_db_path)
 
 _ensure_parent_dir(_ASTRO_DB_PATH)
 _ensure_parent_dir(_KNOWLEDGE_DB_PATH)
-_ensure_parent_dir(_STAGING_DB_PATH)
 _ensure_parent_dir(_CHAT_DB_PATH)
+_ensure_parent_dir(_STAGING_DB_PATH)
 
 ASTRO_DB_PATH = _ASTRO_DB_PATH
 KNOWLEDGE_DB_PATH = _KNOWLEDGE_DB_PATH
-STAGING_DB_PATH = _STAGING_DB_PATH
 CHAT_DB_PATH = _CHAT_DB_PATH
+STAGING_DB_PATH = _STAGING_DB_PATH
 
-# -------------------------
-# Astro DB (основная БД: геокэш, etc.)
-# -------------------------
 astro_engine = create_async_engine(_make_sqlite_url(_ASTRO_DB_PATH), echo=False, future=True)
 AstroSessionLocal = async_sessionmaker(astro_engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -60,23 +54,14 @@ class Base(DeclarativeBase):
     pass
 
 
-# -------------------------
-# Knowledge DB (БЗ: knowledge.db)
-# -------------------------
 knowledge_engine = create_async_engine(_make_sqlite_url(_KNOWLEDGE_DB_PATH), echo=False, future=True)
 KnowledgeSessionLocal = async_sessionmaker(knowledge_engine, class_=AsyncSession, expire_on_commit=False)
 
-# -------------------------
-# Staging DB (Knowledge Builder staging.db)
-# -------------------------
-staging_engine = create_async_engine(_make_sqlite_url(_STAGING_DB_PATH), echo=False, future=True)
-StagingSessionLocal = async_sessionmaker(staging_engine, class_=AsyncSession, expire_on_commit=False)
-
-# -------------------------
-# Chat DB (server-side chat sessions)
-# -------------------------
 chat_engine = create_async_engine(_make_sqlite_url(_CHAT_DB_PATH), echo=False, future=True)
 ChatSessionLocal = async_sessionmaker(chat_engine, class_=AsyncSession, expire_on_commit=False)
+
+staging_engine = create_async_engine(_make_sqlite_url(_STAGING_DB_PATH), echo=False, future=True)
+StagingSessionLocal = async_sessionmaker(staging_engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def get_staging_session() -> AsyncIterator[AsyncSession]:
@@ -149,8 +134,7 @@ async def _ensure_kb_meta_table_on_engine() -> None:
                 """
                 CREATE TABLE IF NOT EXISTS kb_meta (
                     key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL,
-                    updated_at TEXT DEFAULT (datetime('now'))
+                    value TEXT NOT NULL
                 )
                 """
             )
@@ -186,13 +170,13 @@ async def _ensure_chat_tables_on_engine() -> None:
                     active_topic TEXT,
                     natal_context_json TEXT NOT NULL,
                     created_at TEXT DEFAULT (datetime('now')),
-                    updated_at TEXT DEFAULT (datetime('now'))
+                    updated_at TEXT DEFAULT (datetime('now')),
+                    FOREIGN KEY(user_id) REFERENCES users(user_id)
                 )
                 """
             )
         )
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_chats_user_id ON chats(user_id)"))
-
         await conn.execute(
             text(
                 """
@@ -201,7 +185,8 @@ async def _ensure_chat_tables_on_engine() -> None:
                     chat_id TEXT NOT NULL,
                     role TEXT NOT NULL,
                     content TEXT NOT NULL,
-                    created_at TEXT DEFAULT (datetime('now'))
+                    created_at TEXT DEFAULT (datetime('now')),
+                    FOREIGN KEY(chat_id) REFERENCES chats(chat_id)
                 )
                 """
             )
@@ -210,16 +195,12 @@ async def _ensure_chat_tables_on_engine() -> None:
 
 
 async def init_db() -> None:
-    # Импортируем модели, чтобы Base.metadata увидела таблицы astro-db
     from . import models  # noqa: F401
 
     async with astro_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Knowledge DB: гарантируем системные таблицы
     await _ensure_knowledge_system_tables()
-
-    # Chat DB: гарантируем таблицы чатов/сообщений
     await _ensure_chat_tables_on_engine()
 
 

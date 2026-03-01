@@ -2,127 +2,140 @@ from __future__ import annotations
 
 import json
 import uuid
+from dataclasses import dataclass
 from typing import Any, Optional
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def _json_dumps(v: Any) -> str:
-    if v is None:
-        return "{}"
-    if isinstance(v, str):
-        return v
-    return json.dumps(v, ensure_ascii=False, sort_keys=True)
-
-
-def _json_loads(v: Any) -> dict[str, Any]:
-    if not v:
-        return {}
-    if isinstance(v, dict):
-        return v
-    try:
-        return json.loads(v)
-    except Exception:
-        return {}
+@dataclass(frozen=True)
+class ChatRow:
+    chat_id: str
+    user_id: Optional[str]
+    active_topic: Optional[str]
+    natal_context_json: str
 
 
 class ChatRepo:
-    async def ensure_user(self, s: AsyncSession, *, user_id: str) -> None:
-        # user_profile_json is NOT NULL in current chat.db schema -> default "{}"
-        await s.execute(
+    async def ensure_user(self, session: AsyncSession, *, user_id: str) -> None:
+        await session.execute(
             text(
                 """
-                INSERT INTO users (user_id, user_profile_json, created_at, updated_at)
-                VALUES (:user_id, :profile, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ON CONFLICT(user_id) DO NOTHING
+                INSERT OR IGNORE INTO users(user_id, user_profile_json)
+                VALUES (:user_id, '{}')
                 """
             ),
-            {"user_id": user_id, "profile": "{}"},
+            {"user_id": user_id},
         )
-        await s.commit()
+        await session.commit()
 
-    async def get_user_profile(self, s: AsyncSession, *, user_id: str) -> Optional[str]:
-        row = (
-            await s.execute(
-                text("SELECT user_profile_json FROM users WHERE user_id = :uid"),
-                {"uid": user_id},
-            )
-        ).first()
-        return row[0] if row else None
+    async def get_user_profile(self, session: AsyncSession, *, user_id: str) -> dict[str, Any]:
+        res = await session.execute(
+            text("SELECT user_profile_json FROM users WHERE user_id=:user_id"),
+            {"user_id": user_id},
+        )
+        row = res.first()
+        if not row or not row[0]:
+            return {}
+        try:
+            return json.loads(row[0])
+        except Exception:
+            return {}
 
-    async def set_user_profile(self, s: AsyncSession, *, user_id: str, user_profile_json: Any) -> None:
-        await s.execute(
+    async def set_user_profile(self, session: AsyncSession, *, user_id: str, profile: dict[str, Any]) -> None:
+        await self.ensure_user(session, user_id=user_id)
+        await session.execute(
             text(
                 """
-                INSERT INTO users (user_id, user_profile_json, created_at, updated_at)
-                VALUES (:uid, :p, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ON CONFLICT(user_id) DO UPDATE SET
-                  user_profile_json = excluded.user_profile_json,
-                  updated_at = CURRENT_TIMESTAMP
+                UPDATE users
+                SET user_profile_json=:j, updated_at=datetime('now')
+                WHERE user_id=:user_id
                 """
             ),
-            {"uid": user_id, "p": _json_dumps(user_profile_json)},
+            {"user_id": user_id, "j": json.dumps(profile, ensure_ascii=False)},
         )
-        await s.commit()
+        await session.commit()
 
     async def create_chat(
         self,
-        s: AsyncSession,
+        session: AsyncSession,
         *,
-        user_id: str,
-        active_topic: str,
-        natal_context_json: Any,
+        natal_context_json: str,
+        user_id: Optional[str] = None,
+        active_topic: Optional[str] = None,
     ) -> str:
         chat_id = str(uuid.uuid4())
-        await s.execute(
+        await session.execute(
             text(
                 """
-                INSERT INTO chats (chat_id, user_id, active_topic, natal_context_json, created_at, updated_at)
-                VALUES (:chat_id, :user_id, :active_topic, :natal_context_json, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                INSERT INTO chats(chat_id, user_id, active_topic, natal_context_json)
+                VALUES (:chat_id, :user_id, :active_topic, :natal_context_json)
                 """
             ),
             {
                 "chat_id": chat_id,
                 "user_id": user_id,
                 "active_topic": active_topic,
-                "natal_context_json": _json_dumps(natal_context_json),
+                "natal_context_json": natal_context_json,
             },
         )
-        await s.commit()
+        await session.commit()
         return chat_id
 
-    async def get_chat(self, s: AsyncSession, *, chat_id: str) -> Optional[dict[str, Any]]:
-        row = (
-            await s.execute(
-                text(
-                    """
-                    SELECT chat_id, user_id, active_topic, natal_context_json
-                    FROM chats
-                    WHERE chat_id = :cid
-                    """
-                ),
-                {"cid": chat_id},
-            )
-        ).first()
-        if not row:
-            return None
-
-        return {
-            "chat_id": row[0],
-            "user_id": row[1],
-            "active_topic": row[2],
-            "natal_context_json": _json_loads(row[3]),
-        }
-
-    async def add_message(self, s: AsyncSession, *, chat_id: str, role: str, content: str) -> None:
-        await s.execute(
+    async def get_chat(self, session: AsyncSession, *, chat_id: str) -> ChatRow | None:
+        res = await session.execute(
             text(
                 """
-                INSERT INTO chat_messages (chat_id, role, content, created_at)
-                VALUES (:chat_id, :role, :content, CURRENT_TIMESTAMP)
+                SELECT chat_id, user_id, active_topic, natal_context_json
+                FROM chats
+                WHERE chat_id=:chat_id
+                """
+            ),
+            {"chat_id": chat_id},
+        )
+        row = res.first()
+        if not row:
+            return None
+        return ChatRow(
+            chat_id=str(row[0]),
+            user_id=(str(row[1]) if row[1] is not None else None),
+            active_topic=(str(row[2]) if row[2] is not None else None),
+            natal_context_json=str(row[3] or "{}"),
+        )
+
+    async def set_chat_topic(self, session: AsyncSession, *, chat_id: str, topic: Optional[str]) -> None:
+        await session.execute(
+            text("UPDATE chats SET active_topic=:t, updated_at=datetime('now') WHERE chat_id=:chat_id"),
+            {"chat_id": chat_id, "t": topic},
+        )
+        await session.commit()
+
+    async def add_message(self, session: AsyncSession, *, chat_id: str, role: str, content: str) -> None:
+        await session.execute(
+            text(
+                """
+                INSERT INTO chat_messages(chat_id, role, content)
+                VALUES (:chat_id, :role, :content)
                 """
             ),
             {"chat_id": chat_id, "role": role, "content": content},
         )
-        await s.commit()
+        await session.commit()
+
+    async def get_messages(self, session: AsyncSession, *, chat_id: str, limit: int = 24) -> list[dict[str, str]]:
+        res = await session.execute(
+            text(
+                """
+                SELECT role, content
+                FROM chat_messages
+                WHERE chat_id=:chat_id
+                ORDER BY id ASC
+                """
+            ),
+            {"chat_id": chat_id},
+        )
+        rows = [{"role": str(r[0]), "content": str(r[1])} for r in res.fetchall()]
+        if limit > 0 and len(rows) > limit:
+            return rows[-limit:]
+        return rows

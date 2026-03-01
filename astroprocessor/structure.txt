@@ -1,0 +1,529 @@
+.
+├── a3.json
+├── a.json
+├── app
+│   ├── admin
+│   │   └── ui
+│   │       ├── constants.py
+│   │       ├── forms.py
+│   │       ├── kb_router.py
+│   │       ├── router.py
+│   │       ├── router.py.old
+│   │       ├── router.zip
+│   │       ├── sources_router.py
+│   │       ├── static
+│   │       │   ├── admin.css
+│   │       │   ├── admin.js
+│   │       │   ├── favicon.ico
+│   │       │   └── static.zip
+│   │       ├── templates
+│   │       │   └── admin
+│   │       │       ├── admin.zip
+│   │       │       ├── base.html
+│   │       │       ├── builds.html
+│   │       │       ├── _bulk_bar.html
+│   │       │       ├── dashboard.html
+│   │       │       ├── _flash.html
+│   │       │       ├── health.html
+│   │       │       ├── _item_editor.html
+│   │       │       ├── _item_row.html
+│   │       │       ├── items.html
+│   │       │       ├── _items_table_block.html
+│   │       │       ├── _items_table.html
+│   │       │       ├── kb_chunk_view.html
+│   │       │       ├── _kb_editor_chunk.html
+│   │       │       ├── _kb_editor_fragment.html
+│   │       │       ├── kb_fragment_view.html
+│   │       │       ├── _kb_save_ok.html
+│   │       │       ├── kb_source_chunks.html
+│   │       │       ├── kb_source_detail.html
+│   │       │       ├── kb_source_fragments.html
+│   │       │       ├── kb_sources.html
+│   │       │       ├── labeling.html
+│   │       │       ├── _layout.html
+│   │       │       ├── _pagination.html
+│   │       │       ├── _save_response.html
+│   │       │       ├── _select_response.html
+│   │       │       ├── settings.html
+│   │       │       ├── source_card.html
+│   │       │       ├── sources.html
+│   │       │       ├── _sources_table.html
+│   │       │       └── verify_build.html
+│   │       └── viewmodels.py
+│   ├── astro
+│   │   ├── __init__.py
+│   │   ├── kerykeion_adapter.py
+│   │   ├── kerykeion_adapter.py.old.py
+│   │   ├── kerykeion_factories.py
+│   │   ├── kerykeion_factories.py.old.py
+│   │   ├── key_builder.py
+│   │   └── natal_normalizer.py
+│   ├── db.py
+│   ├── __init__.py
+│   ├── knowledge
+│   │   ├── builder.py
+│   │   ├── builder.py.old
+│   │   ├── cli.py
+│   │   ├── cli.py.bak_20260217_160824
+│   │   ├── cli.py.bak_20260217_160922
+│   │   ├── cli.py.old
+│   │   ├── __init__.py
+│   │   ├── meta_schema.py
+│   │   ├── models.py
+│   │   ├── quality_rating_ru.py
+│   │   ├── schema.py
+│   │   ├── sql.py
+│   │   ├── staging_schema.sql
+│   │   └── topic_gate_ru_natal.py
+│   ├── llm
+│   │   └── saiga_engine.py
+│   ├── main.py
+│   ├── main.py.old
+│   ├── middleware
+│   │   └── request_id.py
+│   ├── models.py
+│   ├── routers
+│   │   ├── admin_knowledge_items.py
+│   │   ├── admin_knowledge.py
+│   │   ├── chat_v2.py
+│   │   ├── health.py
+│   │   ├── keys.py
+│   │   ├── natal.py
+│   │   ├── place_resolve.py
+│   │   └── public_v2.py
+│   ├── schemas
+│   │   ├── admin_knowledge.py
+│   │   ├── birth.py
+│   │   ├── chat_v2.py
+│   │   ├── __init__.py
+│   │   ├── meta_json.py
+│   │   ├── natal_out.py
+│   │   ├── natal.py
+│   │   ├── natal_v2.py
+│   │   ├── place_out.py
+│   │   ├── place.py
+│   │   └── public_v2.py
+│   ├── services
+│   │   ├── admin_input_validator.py
+│   │   ├── chart_service.py
+│   │   ├── chat_repo.py
+│   │   ├── chunks_repo.py
+│   │   ├── coverage_rules.py
+│   │   ├── fallback_composer.py
+│   │   ├── geocode.py
+│   │   ├── knowledge_chunks_repo.py
+│   │   ├── knowledge_items_admin_repo.py
+│   │   ├── knowledge_items_validator.py
+│   │   ├── knowledge_repo.py
+│   │   ├── meta_codec.py
+│   │   ├── natal_context.py
+│   │   ├── natal_context_v1.py
+│   │   ├── natal_data_codec.py
+│   │   ├── place_codec.py
+│   │   ├── probe_20260228_124652.jsonl
+│   │   ├── search_intent_builder.py
+│   │   ├── signals_builder.py
+│   │   └── user_profile.py
+│   └── settings.py
+├── archived_recheck.json
+├── astro.db
+├── atomize_autorate.json
+├── atomize_dry.json
+├── atomize_dryrun.json
+├── check_staging.py
+├── data
+│   ├── chat.db
+│   ├── exports
+│   │   ├── source6_bot_ready.jsonl
+│   │   └── source6_needs_rewrite.jsonl
+│   ├── knowledge.db
+│   ├── knowledge.db-shm
+│   ├── knowledge.db-wal
+│   ├── knowledge_items_01_elements_ip__ETALON.jsonl
+│   ├── knowledge_items_02_planets__ETALON.jsonl
+│   ├── knowledge_items_03_signs__ETALON.jsonl
+│   ├── knowledge_items_04_house_rulers__ETALON.jsonl
+│   ├── knowledge_items_05_house_space_and_cusp__ETALON.jsonl
+│   ├── knowledge_items_06_aspects__ETALON.jsonl
+│   ├── knowledge_items_07_aspect_configurations__ETALON.jsonl
+│   ├── knowledge_items_distortions.jsonl
+│   ├── knowledge_items_houses_distortions_2levels_and_boundaries.jsonl
+│   ├── knowledge_sources
+│   │   ├── failed
+│   │   │   └── inbox
+│   │   ├── inbox
+│   │   │   ├── book_clean_formatted.docx
+│   │   │   └── ╨░╤Б╤В╤А╨╛╨╗╨╛╨│╨╕╤П_╨┤╨╗╤П-╨╢╨╕╨╖╨╜╨╕.txt
+│   │   ├── inbox_norm
+│   │   │   └── book_clean_formatted.txt
+│   │   └── processed
+│   │       └── inbox
+│   ├── knowledge.zip
+│   ├── staging
+│   │   └── staging.db
+│   └── uploads
+├── debug_career.json
+├── debug_runtime.json
+├── .env
+├── ev1_keys_unique.txt
+├── fix_docs_mojibake.py
+├── glossary_caps_preview.txt
+├── kb_baseline.json
+├── knowledge
+│   └── docs
+│       ├── b756574bed91fa7a.md
+│       ├── fd9dcb07d6bbc278.md
+│       └── _import_manifest.json
+├── migrations
+│   └── 002_knowledge_docs_chunks.sql
+├── out.json
+├── payload.json
+├── probe_20260228_124652.jsonl
+├── .pytest_cache
+│   ├── CACHEDIR.TAG
+│   ├── .gitignore
+│   ├── README.md
+│   └── v
+│       └── cache
+│           ├── lastfailed
+│           └── nodeids
+├── pytest.ini
+├── recheck.json
+├── rerate2.json
+├── rerate_3tier.json
+├── rerate.json
+├── rerate_mark.json
+├── rerate_norm.json
+├── rr2.json
+├── rr3.json
+├── rr.json
+├── runs
+│   ├── probe_20260228_124652.jsonl
+│   └── probe_20260228_124652.txt
+├── scripts
+│   └── probe_llm.sh
+├── seed_house_rulers.sql
+├── seed_min.sql
+├── seed_ruler_aspects.sql
+├── smart1.json
+├── smart2.json
+├── smart_change.json
+├── smart_norm.json
+├── sources_diag.json
+├── specs
+│   ├── natal_core_base_v1.json
+│   ├── natal_core_base_v2.json
+│   └── natal_runtime_base_v1.json
+├── stats_quality2.json
+├── stats_quality.json
+├── structure.txt
+├── t2.json
+├── t3.json
+├── t3_new2.json
+├── t3_new3.json
+├── t3_new.json
+├── tests
+│   ├── conftest.py
+│   ├── test_admin_sources_ui.py
+│   ├── test_admin_ui.py
+│   ├── test_api_smoke.py
+│   ├── test_contract_natal_data.py
+│   ├── test_e2e_v2_debug2_hits_include_planet_groups_present.py
+│   ├── test_e2e_v2_debug2_hits_include_sign_present.py
+│   ├── test_e2e_v2_debug_keydiff_counts_global_fallback.py
+│   ├── test_e2e_v2_debug_runtime_candidate_keys_growth.py
+│   ├── test_e2e_v2_debug_runtime_no_natal_generic_in_used_career.py
+│   ├── test_e2e_v2_interpret_prefers_topic_generic_over_global_generic.py
+│   ├── test_e2e_v2_interpret_topic_generic_fallbacks.py
+│   ├── test_error_contract_404.py
+│   ├── test_error_contract_500.py
+│   ├── test_kb_build_managed_only.py
+│   ├── test_kb_fragments_list_filters.py
+│   ├── test_kb_ingest_atomize_fb2.py
+│   ├── test_kb_ingest_atomize_modes.py
+│   ├── test_kb_sources_diagnose.py
+│   ├── test_kb_validator_profile_ru_v1.py
+│   ├── test_kb_validator_profile_ru_v1_state_stdout.py
+│   ├── test_key_builder_include_all_planets.py
+│   ├── test_knowledge_repo_filters_empty_text.py
+│   ├── test_project_integrity_smoke.py
+│   ├── test_public_v2_button_id.py
+│   ├── test_public_v2_button_map_settings.py
+│   ├── test_public_v2_buttons_enabled_only_304.py
+│   ├── test_public_v2_buttons_enabled_only.py
+│   ├── test_public_v2_buttons_endpoint.py
+│   ├── test_public_v2_buttons_etag_304.py
+│   ├── test_public_v2_buttons_ids_csv.py
+│   ├── test_public_v2_buttons_ids_dedup.py
+│   ├── test_public_v2_buttons_ids_enabled_only.py
+│   ├── test_public_v2_buttons_ids_filter.py
+│   ├── test_public_v2_buttons_ids_repeatable.py
+│   ├── test_public_v2_buttons_ids_sources_422.py
+│   ├── test_public_v2_buttons_ids_unknown.py
+│   ├── test_public_v2_buttons_sorted_ids.py
+│   ├── test_public_v2_buttons_strict_0_all_unknown.py
+│   ├── test_public_v2_buttons_strict_0.py
+│   ├── test_public_v2_buttons_strict_1.py
+│   ├── test_public_v2_debug2_keydiff.py
+│   ├── test_public_v2_debug_runtime_db_path.py
+│   ├── test_public_v2_locale.py
+│   ├── test_public_v2_paragraph_dedup.py
+│   ├── test_public_v2_perf.py
+│   ├── test_public_v2.py
+│   ├── test_seed_generator_unified_house_templates.py
+│   ├── test_seed_topic_generic_all_topics.py
+│   ├── test_structured_errors_flag.py
+│   ├── test_tools_post_json.py
+│   └── utils.py
+├── tools
+│   ├── _archive
+│   │   └── app_api_unused
+│   │       ├── __init__.py
+│   │       └── routes
+│   │           ├── __init__.py
+│   │           └── natal.py
+│   ├── capture_cli_stdout.py
+│   ├── check_kb_coverage.ps1
+│   ├── experiments
+│   │   ├── insert_version_sun_leo.py
+│   │   ├── inspect_indexes.py
+│   │   ├── test_priority.py
+│   │   └── update_sun_leo_text.py
+│   ├── http
+│   │   └── post_json.py
+│   ├── import
+│   │   ├── import_knowledge_layer_b.py
+│   │   ├── knowledge_importer.py
+│   │   └── validate_knowledge_coverage.py
+│   ├── import_jsonl_items.py
+│   ├── kb.ps1
+│   ├── knowledge
+│   │   ├── diagnose_knowledge_db.py
+│   │   ├── normalize_ev1_data.py
+│   │   └── seed_keys_core_v1.txt
+│   ├── make_keybuilder_clones.py
+│   ├── migrate_add_sources.py
+│   ├── migrations_local
+│   │   ├── migrate_add_created_at_is_active.py
+│   │   ├── migrate_add_meta_json.py
+│   │   ├── migrate_add_updated_at.py
+│   │   └── migration_remove_unique.py
+│   ├── normalize_inbox_ru.py
+│   ├── normalize_text_ru.py
+│   ├── outputs
+│   │   ├── out_debug.json
+│   │   ├── out_general.json
+│   │   └── out_raw.txt
+│   ├── patches
+│   │   └── 2026-02-06_mc_signs_ru.sql
+│   ├── README.md
+│   ├── requests
+│   │   ├── req_bad.json
+│   │   ├── req_career.json
+│   │   ├── req_general.json
+│   │   ├── req_known.json
+│   │   ├── req_locale_miss.json
+│   │   ├── req_money.json
+│   │   ├── req_null.json
+│   │   ├── req_unknown.json
+│   │   └── seed_keys
+│   │       ├── seed_almaty_kz_1990_01_01_0730.json
+│   │       ├── seed_anchorage_us_1980_04_07_0125.json
+│   │       ├── seed_beijing_cn_2006_02_28_1110.json
+│   │       ├── seed_berlin_de_1971_11_08_0220.json
+│   │       ├── seed_buenos_aires_ar_1960_05_09_1935.json
+│   │       ├── seed_cairo_eg_1969_10_12_1002.json
+│   │       ├── seed_cape_town_za_1995_06_30_2008.json
+│   │       ├── seed_delhi_in_1987_09_05_1445.json
+│   │       ├── seed_honolulu_us_1976_09_14_2205.json
+│   │       ├── seed_jakarta_id_2007_09_02_unknown.json
+│   │       ├── seed_kyiv_ua_2003_09_27_1305.json
+│   │       ├── seed_lima_pe_1991_01_29_unknown.json
+│   │       ├── seed_london_uk_2001_09_11_0830.json
+│   │       ├── seed_los_angeles_us_1992_10_22_0505.json
+│   │       ├── seed_madrid_es_1967_07_03_1255.json
+│   │       ├── seed_moscow_ru_1985_06_12_2145.json
+│   │       ├── seed_nairobi_ke_2002_05_11_unknown.json
+│   │       ├── seed_new_york_us_1975_03_03_2315.json
+│   │       ├── seed_paris_fr_1998_04_19_1810.json
+│   │       ├── seed_reykjavik_is_2008_12_24_1740.json
+│   │       ├── seed_rome_it_1989_02_14_0040.json
+│   │       ├── seed_santiago_cl_1964_02_02_0707.json
+│   │       ├── seed_sao_paulo_br_1982_12_01_0950.json
+│   │       ├── seed_seoul_kr_1978_01_17_0615.json
+│   │       ├── seed_singapore_sg_1993_03_26_1559.json
+│   │       ├── seed_sydney_au_1973_08_21_0333.json
+│   │       ├── seed_tokyo_jp_1999_12_31_2355.json
+│   │       ├── seed_toronto_ca_2009_08_16_1625.json
+│   │       ├── seed_tromso_no_1962_12_10_unknown.json
+│   │       ├── seed_ulaanbaatar_mn_1996_11_06_unknown.json
+│   │       ├── seed_vladivostok_ru_1984_07_18_unknown.json
+│   │       └── seed_wellington_nz_1970_03_15_unknown.json
+│   ├── seed
+│   │   ├── ev1_seed_any_ru.jsonl
+│   │   ├── generate_angle_sign_scaffolds_global.py
+│   │   ├── generate_aspect_planet_pair_scaffolds_global.py
+│   │   ├── generate_aspect_scaffolds_global.py
+│   │   ├── generate_career_depth_all_remaining_seed.py
+│   │   ├── generate_career_depth_mc_house10_seed.py
+│   │   ├── generate_career_house10_ruler_specific_aspects_seed.py
+│   │   ├── generate_career_overrides_from_debug_shortest.py
+│   │   ├── generate_career_overrides_from_debug_shortest.py.old
+│   │   ├── generate_elements_polarity_modality_exact_global.py
+│   │   ├── generate_elements_polarity_modality_scaffolds_global.py
+│   │   ├── generate_house_cusp_sign_scaffolds_global.py
+│   │   ├── generate_house_planet_presence_global.py
+│   │   ├── generate_house_ruler_aspect_scaffolds_global.py
+│   │   ├── generate_house_ruler_pos_scaffolds_global.py
+│   │   ├── generate_house_ruler_scaffolds_global.py
+│   │   ├── generate_outer_planets_sign_seed_global.py
+│   │   ├── generate_personality_core_missing_planet_keys_global.py
+│   │   ├── generate_planet_groups_seed_all_topics.py
+│   │   ├── generate_planet_scaffolds_global.py
+│   │   ├── generate_planet_sign_house_scaffolds_global.py
+│   │   ├── generate_sign_present_seed_all_topics.py
+│   │   ├── load_seed_jsonl.py
+│   │   ├── load_seed_jsonl_upsert.py
+│   │   ├── runs
+│   │   │   └── 20260223
+│   │   │       ├── seed_ancestral_topics_focus_planet_aspect_group_20260223_125010.sql
+│   │   │       ├── seed_ancestral_topics_housecore_20260223_131010.sql
+│   │   │       ├── seed_ancestral_topics_topiccore_20260223_145217.sql
+│   │   │       ├── seed_ancestral_topics_topiccore_20260223_145449.sql
+│   │   │       ├── seed_angle_sign_scaffolds_global.sql
+│   │   │       ├── seed_angles_upsert.sql
+│   │   │       ├── seed_aspect_planet_pair_scaffolds_global.sql
+│   │   │       ├── seed_aspect_scaffolds_global.sql
+│   │   │       ├── seed_career_auto_debug_career_80_len67.sql
+│   │   │       ├── seed_career_auto_debug_career_after_round2_len354.sql
+│   │   │       ├── seed_career_auto_debug_career_after_round2_len565.sql
+│   │   │       ├── seed_career_auto_len80_k25.sql
+│   │   │       ├── seed_career_auto_mini_len120_k25.sql
+│   │   │       ├── seed_career_cap_435_to_360.sql
+│   │   │       ├── seed_career_compress_big.sql
+│   │   │       ├── seed_career_compress_career_generic.sql
+│   │   │       ├── seed_career_compress_hot.sql
+│   │   │       ├── seed_career_compress_house10_libra.sql
+│   │   │       ├── seed_career_compress_sign_present.sql
+│   │   │       ├── seed_career_depth_all_remaining.sql
+│   │   │       ├── seed_career_depth_mc_house10.sql
+│   │   │       ├── seed_career_focus_20260223_223952.sql
+│   │   │       ├── seed_career_focus_20260223_224206.sql
+│   │   │       ├── seed_career_focus_planet_aspect_group_20260223_121344.sql
+│   │   │       ├── seed_career_focus_planet_aspect_group_20260223_125023.sql
+│   │   │       ├── seed_career_house10_ruler_specific_aspects.sql
+│   │   │       ├── seed_career_house2_ruler_saturn_sign_any.sql
+│   │   │       ├── seed_career_house6_ruler_mercury_sign_any.sql
+│   │   │       ├── seed_career_housecore_20260223_130703.sql
+│   │   │       ├── seed_career_overrides_round2.sql
+│   │   │       ├── seed_career_overrides_round3_core.sql
+│   │   │       ├── seed_career_overrides_short_used.sql
+│   │   │       ├── seed_career_quality_focus_450.sql
+│   │   │       ├── seed_career_quality_focus.sql
+│   │   │       ├── seed_career_quality_wave.sql
+│   │   │       ├── seed_career_topiccore_20260223_140630.sql
+│   │   │       ├── seed_career_topiccore_20260223_141229.sql
+│   │   │       ├── seed_career_wave_next_candidates.sql
+│   │   │       ├── seed_creativity_focus_planet_aspect_group_20260223_125034.sql
+│   │   │       ├── seed_creativity_housecore_20260223_130908.sql
+│   │   │       ├── seed_creativity_topiccore_20260223_143001.sql
+│   │   │       ├── seed_creativity_topiccore_20260223_143137.sql
+│   │   │       ├── seed_elements_polarity_modality_exact_global.sql
+│   │   │       ├── seed_elements_polarity_modality_scaffolds_global.sql
+│   │   │       ├── seed_emotional_world_focus_planet_aspect_group_20260223_125049.sql
+│   │   │       ├── seed_emotional_world_housecore_20260223_130809.sql
+│   │   │       ├── seed_emotional_world_topiccore_20260223_142801.sql
+│   │   │       ├── seed_emotional_world_topiccore_20260223_142933.sql
+│   │   │       ├── seed_generic_all_topics.sql
+│   │   │       ├── seed_groups_and_sign_present_min.sql
+│   │   │       ├── seed_house_cusp_sign_scaffolds_global.sql
+│   │   │       ├── seed_house_planet_presence_global.sql
+│   │   │       ├── seed_house_ruler_aspect_scaffolds_global.sql
+│   │   │       ├── seed_house_ruler_aspects_cleanup.sql
+│   │   │       ├── seed_house_ruler_aspects_scaffold.sql
+│   │   │       ├── seed_house_ruler_pos_scaffolds_global.sql
+│   │   │       ├── seed_house_ruler_scaffolds_global.sql
+│   │   │       ├── seed_how_others_see_me_focus_planet_aspect_group_20260223_125101.sql
+│   │   │       ├── seed_how_others_see_me_housecore_20260223_131206.sql
+│   │   │       ├── seed_how_others_see_me_housecore_20260223_131643.sql
+│   │   │       ├── seed_how_others_see_me_housecore_20260223_131719.sql
+│   │   │       ├── seed_how_others_see_me_topiccore_20260223_135928.sql
+│   │   │       ├── seed_how_others_see_me_topiccore_20260223_140018.sql
+│   │   │       ├── seed_how_others_see_me_topiccore_20260223_140221.sql
+│   │   │       ├── seed_karmic_tasks_focus_planet_aspect_group_20260223_125112.sql
+│   │   │       ├── seed_karmic_tasks_housecore_20260223_130954.sql
+│   │   │       ├── seed_karmic_tasks_topiccore_20260223_144651.sql
+│   │   │       ├── seed_karmic_tasks_topiccore_20260223_144852.sql
+│   │   │       ├── seed_love_intimacy_focus_planet_aspect_group_20260223_124935.sql
+│   │   │       ├── seed_love_intimacy_focus_planet_aspect_group_20260223_125124.sql
+│   │   │       ├── seed_love_intimacy_generic_fixes.sql
+│   │   │       ├── seed_love_intimacy_housecore_20260223_130726.sql
+│   │   │       ├── seed_love_intimacy_topiccore_20260223_142606.sql
+│   │   │       ├── seed_money_focus_planet_aspect_group_20260223_124955.sql
+│   │   │       ├── seed_money_focus_planet_aspect_group_20260223_125135.sql
+│   │   │       ├── seed_money_housecore_20260223_130236.sql
+│   │   │       ├── seed_money_housecore_20260223_130711.sql
+│   │   │       ├── seed_money_topiccore_20260223_141445.sql
+│   │   │       ├── seed_money_topiccore_20260223_141727.sql
+│   │   │       ├── seed_outer_planets_sign_global.sql
+│   │   │       ├── seed_partnership_marriage_focus_planet_aspect_group_20260223_124946.sql
+│   │   │       ├── seed_partnership_marriage_focus_planet_aspect_group_20260223_125146.sql
+│   │   │       ├── seed_partnership_marriage_housecore_20260223_130738.sql
+│   │   │       ├── seed_partnership_marriage_housecore_20260223_130747.sql
+│   │   │       ├── seed_partnership_marriage_topiccore_20260223_142259.sql
+│   │   │       ├── seed_partnership_marriage_topiccore_20260223_142536.sql
+│   │   │       ├── seed_past_lives_symbolic_focus_planet_aspect_group_20260223_125159.sql
+│   │   │       ├── seed_past_lives_symbolic_housecore_20260223_131003.sql
+│   │   │       ├── seed_past_lives_symbolic_topiccore_20260223_144935.sql
+│   │   │       ├── seed_past_lives_symbolic_topiccore_20260223_145148.sql
+│   │   │       ├── seed_personality_core_focus_planet_aspect_group_20260223_125210.sql
+│   │   │       ├── seed_personality_core_generic.sql
+│   │   │       ├── seed_personality_core_housecore_20260223_130802.sql
+│   │   │       ├── seed_personality_core_missing_planet_keys_global.sql
+│   │   │       ├── seed_personality_core_topiccore_20260223_135143.sql
+│   │   │       ├── seed_personality_core_topiccore_20260223_135545.sql
+│   │   │       ├── seed_personality_core_topiccore_20260223_135605.sql
+│   │   │       ├── seed_planet_groups_all_topics.sql
+│   │   │       ├── seed_planet_scaffolds_global.sql
+│   │   │       ├── seed_planet_sign_any_topics.sql
+│   │   │       ├── seed_planet_sign_house_scaffolds_global.sql
+│   │   │       ├── seed_psychology_focus_planet_aspect_group_20260223_125225.sql
+│   │   │       ├── seed_psychology_housecore_20260223_130754.sql
+│   │   │       ├── seed_psychology_topiccore_20260223_135708.sql
+│   │   │       ├── seed_psychology_topiccore_20260223_135900.sql
+│   │   │       ├── seed_purpose_path_focus_planet_aspect_group_20260223_125238.sql
+│   │   │       ├── seed_purpose_path_housecore_20260223_130919.sql
+│   │   │       ├── seed_purpose_path_topiccore_20260223_143219.sql
+│   │   │       ├── seed_purpose_path_topiccore_20260223_144220.sql
+│   │   │       ├── seed_purpose_path_topiccore_20260223_144242.sql
+│   │   │       ├── seed_purpose_path_topiccore_20260223_144254.sql
+│   │   │       ├── seed_self_esteem_focus_planet_aspect_group_20260223_125248.sql
+│   │   │       ├── seed_self_esteem_housecore_20260223_130816.sql
+│   │   │       ├── seed_self_esteem_topiccore_20260223_141925.sql
+│   │   │       ├── seed_self_esteem_topiccore_20260223_142021.sql
+│   │   │       ├── seed_self_esteem_topiccore_20260223_142220.sql
+│   │   │       ├── seed_sign_present_all_topics.sql
+│   │   │       ├── seed_strengths_weaknesses_focus_planet_aspect_group_20260223_125259.sql
+│   │   │       ├── seed_strengths_weaknesses_housecore_20260223_131157.sql
+│   │   │       ├── seed_strengths_weaknesses_housecore_20260223_131616.sql
+│   │   │       ├── seed_strengths_weaknesses_housecore_20260223_131727.sql
+│   │   │       ├── seed_strengths_weaknesses_topiccore_20260223_133447.sql
+│   │   │       ├── seed_strengths_weaknesses_topiccore_20260223_134116.sql
+│   │   │       ├── seed_strengths_weaknesses_topiccore_20260223_134359.sql
+│   │   │       ├── seed_talents_focus_planet_aspect_group_20260223_125310.sql
+│   │   │       ├── seed_talents_housecore_20260223_130900.sql
+│   │   │       ├── seed_talents.sql
+│   │   │       ├── seed_talents_topiccore_20260223_144340.sql
+│   │   │       ├── seed_talents_topiccore_20260223_144616.sql
+│   │   │       └── seed_topic_generic_all_topics.sql
+│   │   ├── seed_house_rulers.py
+│   │   ├── seed_knowledge_84.jsonl
+│   │   ├── seed_topic_generic_all_topics.sql
+│   │   └── smoke_synth_text.py
+│   └── tests
+│       ├── conftest.py
+│       ├── regress_knowledge_pick.ps1
+│       └── test_admin_ui.py
+└── ╤Б╤В╤А╤Г╨║╤В╤Г╤А╨░.txt
+
+51 directories, 475 files

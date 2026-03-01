@@ -2,6 +2,21 @@
 from __future__ import annotations
 
 import os
+os.environ.pop("TORCH_LOGS", None)
+os.environ.pop("TORCH_LOGS_FORMAT", None)
+os.environ.pop("TORCHINDUCTOR_LOG_LEVEL", None)
+os.environ.setdefault("TORCH_DISABLE_ADDR2LINE", "1")
+os.environ.setdefault("TORCH_LOGS", "")
+os.environ.setdefault("TORCHINDUCTOR_COMPILE_THREADS", "1")
+os.environ.setdefault("TORCHINDUCTOR_CACHE_DIR", "/tmp/torchinductor")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MALLOC_ARENA_MAX", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+# VRAM fragmentation guard (important for 12GB cards)
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True,max_split_size_mb:128")
+import json
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
@@ -29,11 +44,52 @@ class UTF8JSONResponse(JSONResponse):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    await init_db()
-    if not os.path.exists(KNOWLEDGE_DB_PATH):
-        print(f"[WARN] Knowledge DB file not found: {KNOWLEDGE_DB_PATH}")
+async def lifespan(app):
+    # --- MUST initialize state attributes first ---
+    app.state.llm = None
+    app.state.llm_ready = False
+    app.state.llm_loading = False
+
+    # твоя остальная инициализация (db/migrations/etc) может быть выше/ниже — не критично
+
+    if getattr(settings, "llm_enabled", False):
+        from app.llm.saiga_engine import SaigaEngine, SaigaGenConfig
+
+        gen = SaigaGenConfig(
+            max_new_tokens=getattr(settings, "llm_max_new_tokens", 320),
+            temperature=getattr(settings, "llm_temperature", 0.3),
+            top_p=getattr(settings, "llm_top_p", 0.85),
+            repetition_penalty=getattr(settings, "llm_repetition_penalty", 1.05),
+        )
+
+        app.state.llm = SaigaEngine(
+            model_dir=settings.saiga_model_dir,
+            adapter_dir=getattr(settings, "saiga_adapter_dir", None) or None,
+            cpu_offload=settings.saiga_cpu_offload,
+            gpu_mem_gb=settings.saiga_gpu_mem_gb,
+            gen=gen,
+        )
+
+        async def _load_llm_bg():
+            app.state.llm_loading = True
+            try:
+                await asyncio.to_thread(app.state.llm.load)
+                # optional warmup
+                await app.state.llm.generate_chat([{"role": "user", "content": "Привет"}])
+                app.state.llm_ready = True
+                print("[startup] LLM loaded in background")
+            except Exception as e:
+                print("[startup] LLM background load failed:", e)
+                app.state.llm = None
+            finally:
+                app.state.llm_loading = False
+
+        asyncio.create_task(_load_llm_bg())
+
     yield
+
+    # shutdown
+    # (если нужно — добавишь освобождение ресурсов)
 
 
 app = FastAPI(
@@ -79,20 +135,32 @@ def _normalize_http_code(status_code: int, raw_message: str) -> str:
 
 @app.exception_handler(RequestValidationError)
 async def request_validation_error_handler(request: Request, exc: RequestValidationError):
-    if not settings.structured_errors:
-        # fastapi-like: detail is list of errors
-        return JSONResponse(
-            status_code=422,
-            content={"detail": exc.errors()},
-            headers=_error_headers(request),
-        )
+    def _json_safe(obj):
+        try:
+            json.dumps(obj, ensure_ascii=False)
+            return obj
+        except Exception:
+            return str(obj)
 
-    meta = {**_base_error_meta(request), "errors": exc.errors()}
-    detail = _structured_detail(
-        code="request_validation_error",
-        message="Request validation failed",
-        meta=meta,
-    )
+    raw_errors = exc.errors()
+    safe_errors = []
+    for e in raw_errors:
+        e2 = dict(e)
+        if "ctx" in e2 and isinstance(e2["ctx"], dict):
+            e2["ctx"] = {k: _json_safe(v) for k, v in e2["ctx"].items()}
+        e2["input"] = _json_safe(e2.get("input"))
+        safe_errors.append(e2)
+
+    detail = {
+        "code": "request_validation_error",
+        "message": "Request validation failed",
+        "meta": {
+            "request_id": getattr(request.state, "request_id", ""),
+            "path": request.url.path,
+            "method": request.method,
+            "errors": safe_errors,
+        },
+    }
     return JSONResponse(status_code=422, content={"detail": detail}, headers=_error_headers(request))
 
 

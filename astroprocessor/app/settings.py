@@ -55,6 +55,15 @@ class Settings(BaseSettings):
     structured_errors: bool = Field(default=True)
 
     # -------------------------
+    # LLM (in-process SaigaEngine)
+    # -------------------------
+    llm_enabled: bool = Field(default=False)  # ASTRO_LLM_ENABLED=true
+    llm_max_new_tokens: int = Field(default=900)
+    llm_temperature: float = Field(default=0.6)
+    llm_top_p: float = Field(default=0.9)
+    llm_repetition_penalty: float = Field(default=1.05)
+
+    # -------------------------
     # Saiga (subprocess inference)
     # -------------------------
     saiga_server_url: str = "http://127.0.0.1:8002"

@@ -1,6 +1,7 @@
 # astroprocessor/app/services/chart_service.py
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -16,6 +17,7 @@ from app.services.meta_codec import build_response_meta
 from app.services.natal_data_codec import to_plain_natal_data
 from app.settings import settings
 from app.services.user_profile import Profile, profile_to_system_hint
+from app.services.signals_builder import build_signals
 
 
 @dataclass(frozen=True)
@@ -65,6 +67,32 @@ def _sort_raw_blocks_for_use(blocks: List[RawBlock]) -> List[RawBlock]:
     indexed = list(enumerate(blocks))
     indexed.sort(key=lambda it: (-it[1].priority, it[0]))
     return [b for _, b in indexed]
+
+def _llm_system_prompt(*, active_topic: str | None, user_profile: Profile | None) -> str:
+    system = (
+        "Ты — астрологический ассистент SuperAstro. Отвечай по-русски.\n"
+        "КРИТИЧЕСКОЕ ПРАВИЛО: используй ТОЛЬКО факты из NATAL_CONTEXT_JSON.\n"
+        "Запрещено придумывать положения планет/знаки/дома/аспекты/орбы/даты.\n"
+        "Если данных в NATAL_CONTEXT_JSON недостаточно — скажи, чего не хватает.\n"
+        "Если вопрос общий и не следует из карты — отметь это и ответь кратко.\n"
+        "В ответе ссылайся на факты карты (например: 'Солнце в Козероге в 10 доме').\n"
+    )
+    if active_topic:
+        system += f"Активная тема: {active_topic}. Держись темы, если вопрос не просит иначе.\n"
+    if user_profile:
+        system += profile_to_system_hint(user_profile) + "\n"
+    return system
+
+
+def _llm_grounding_user_block(*, natal_context: dict, active_topic: str | None) -> str:
+    signals = build_signals(natal_context, topic=active_topic, max_items=12)
+    signals_block = "KEY_SIGNALS:\n- " + "\n- ".join(signals) if signals else "KEY_SIGNALS:\n- (нет)"
+    return (
+        f"TOPIC: {active_topic or '(не задан)'}\n"
+        f"{signals_block}\n\n"
+        "NATAL_CONTEXT_JSON:\n"
+        + json.dumps(natal_context, ensure_ascii=False)
+    )
 
 class ChartService:
     def __init__(self, *, ephemeris_path: str | None = None) -> None:
@@ -138,7 +166,9 @@ class ChartService:
         return to_plain_natal_data(natal_data_raw)
 
     def build_knowledge_blocks(self, *, natal_data: dict, tone_namespace: str = "natal") -> list[Any]:
-        # Backward-compatible: old behavior (no topic_category here).
+        """
+        Backward-compatible: old behavior (no topic_category here).
+        """
         return list(
             build_knowledge_key_blocks(
                 natal_data,
@@ -146,41 +176,6 @@ class ChartService:
                 include_all_planets=True,
             )
         )
-
-        def build_knowledge_blocks_for_topic(
-            self,
-            *,
-            natal_data: dict,
-            topic_category: str,
-            tone_namespace: str = "natal",
-            include_angles: bool = True,
-            include_aspects: bool = True,
-            include_aspect_configs: bool = True,
-            include_integrals: bool = True,
-            max_aspects: int = 18,
-        ) -> list[Any]:
-            """Topic-aware keygen.
-
-            Важно: намеренно делаем разный “key budget” между темами,
-            чтобы debug_runtime явно показывал topic-awareness.
-
-            - personality_core: более узкий набор (include_all_planets=False)
-            - другие темы: расширенный набор (include_all_planets=True)
-            """
-            include_all_planets = str(topic_category) != "personality_core"
-            return list(
-                build_knowledge_key_blocks(
-                    natal_data,
-                    tone_namespace=tone_namespace,
-                    include_all_planets=include_all_planets,
-                    topic_category=str(topic_category),
-                    include_angles=include_angles,
-                    include_aspects=include_aspects,
-                    include_aspect_configs=include_aspect_configs,
-                    include_integrals=include_integrals,
-                    max_aspects=max_aspects,
-                )
-            )
 
     def _build_selection_trace(self, knowledge_blocks: Sequence[Any]) -> list[dict]:
         return [{"block_id": kb.id, "candidate_keys": list(kb.candidate_keys), "meta": kb.meta} for kb in knowledge_blocks]
@@ -277,6 +272,44 @@ class ChartService:
                 "trace": {"selection": selection_trace, "hits": hits_trace},
                 "final_meta": final_meta,
             }
+
+    async def chat_with_natal_v2(
+        self,
+        *,
+        natal_data: dict,
+        topics: Sequence[str] | None,
+        messages: Sequence[dict[str, Any]],
+        llm_engine: Any,
+        user_profile: dict | None = None,
+    ) -> str:
+        """
+        Compatibility alias for routers/chat_v2.py
+
+        chat_v2 router calls `chat_with_natal_v2`, while the service implements
+        `chat_with_natal_by_context_v2`. This method bridges the two.
+        """
+        active_topic = str(list(topics)[0]) if topics else None
+
+        history: list[dict[str, str]] = []
+        for m in messages or []:
+            role = (m.get("role") or "").strip()
+            content = (m.get("content") or "").strip()
+            if role in {"user", "assistant"} and content:
+                history.append({"role": role, "content": content})
+
+        # natal_data here is already natal_context-like dict in your design
+        last_user = ""
+        if history and history[-1]["role"] == "user":
+            last_user = history.pop()["content"]
+
+        return await self.chat_with_natal_by_context_v2(
+            natal_context=natal_data,
+            active_topic=active_topic,
+            history=history,
+            user_message=last_user,
+            llm_engine=llm_engine,
+            user_profile=user_profile,
+        )
 
         return out
 
@@ -433,20 +466,52 @@ class ChartService:
         tone_namespace: str = "natal",
         max_blocks: int = 50,
         max_chars: int = 30_000,
+        llm_engine: Any | None = None,
+        user_profile: dict | None = None,
     ) -> Dict[str, Any]:
         """
-        V2 contract: topic-aware knowledge blocks per topic.
-        Keep this as a single entrypoint so /v2 router cannot accidentally use non-topic-aware logic.
+        V2 contract:
+        - если llm_engine передан -> LLM-генерация по теме (grounded на карте)
+        - иначе -> текущая KB-логика (topic-aware)
         """
-        return await self.interpret_topics_with_natal_data_batch(
-            session=knowledge_session,
-            natal_data=natal_data,
-            topic_categories=topic_categories,
-            locale=locale,
-            tone_namespace=tone_namespace,
-            max_blocks=max_blocks,
-            max_chars=max_chars,
-        )
+        if llm_engine is None:
+            return await self.interpret_topics_with_natal_data_batch(
+                session=knowledge_session,
+                natal_data=natal_data,
+                topic_categories=topic_categories,
+                locale=locale,
+                tone_namespace=tone_namespace,
+                max_blocks=max_blocks,
+                max_chars=max_chars,
+            )
+
+        p = Profile.from_dict(user_profile or {})
+        out: Dict[str, Any] = {}
+        for topic in [str(t) for t in topic_categories]:
+            system = _llm_system_prompt(active_topic=topic, user_profile=p)
+            grounding = _llm_grounding_user_block(natal_context=natal_data, active_topic=topic)
+            user = (
+                grounding
+                + "\n\nЗадача: дай интерпретацию натальной карты строго по теме TOPIC. "
+                + "Используй KEY_SIGNALS как опорные факты и опирайся на NATAL_CONTEXT_JSON.\n"
+            )
+
+            if hasattr(llm_engine, "gen"):
+                llm_engine.gen.temperature = 0.3
+                llm_engine.gen.top_p = 0.85
+                llm_engine.gen.repetition_penalty = 1.05
+
+            reply = await llm_engine.generate(system=system, user=user)
+
+            out[topic] = {
+                "topic_category": topic,
+                "final_text": (reply or "").strip(),
+                "raw_blocks": [],
+                "knowledge_blocks": [],
+                "trace": {"engine": "llm"},
+                "final_meta": {"engine": "llm"},
+            }
+        return out
 
 
     async def interpret_natal_api(
@@ -516,43 +581,31 @@ class ChartService:
         history: list[dict[str, str]],
         user_message: str,
         llm_engine: Any,
-        user_profile: dict | None = None,   # NEW
-        
+        user_profile: dict | None = None,
     ) -> str:
-        signals_block = "KEY_SIGNALS:\n- " + "\n- ".join(signals) if signals else "KEY_SIGNALS:\n(нет)"
-        messages.append({"role": "user", "content": signals_block})
-        messages.append({"role": "user", "content": "NATAL_CONTEXT_JSON:\n" + json.dumps(natal_context, ensure_ascii=False)})
-        
-        import json
+        p = Profile.from_dict(user_profile or {})
+        system = _llm_system_prompt(active_topic=active_topic, user_profile=p)
 
-        p = Profile.from_dict(user_profile)
-
-        system = (
-            "Ты — астролог классической традиции. Отвечай по-русски.\n"
-            "КРИТИЧЕСКОЕ ПРАВИЛО: используй ТОЛЬКО факты из NATAL_CONTEXT_JSON.\n"
-            "Запрещено придумывать положения планет/знаки/дома/аспекты/градусы/даты.\n"
-            "Если данных в NATAL_CONTEXT_JSON недостаточно — скажи, чего не хватает.\n"
-            "Если вопрос общий и не следует из карты — отметь это и ответь кратко.\n"
-            "В ответе ссылайся на факты карты (например: 'Солнце в Козероге в 10 доме').\n"
-            + profile_to_system_hint(p) + "\n"
+        messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+        messages.append(
+            {
+                "role": "user",
+                "content": _llm_grounding_user_block(natal_context=natal_context, active_topic=active_topic),
+            }
         )
-        if active_topic:
-            system += f"Активная тема: {active_topic}. Держись темы, если вопрос не просит иначе.\n"
-        from app.services.signals_builder import build_signals
 
-        signals = build_signals(natal_data, topic=active_topic, max_items=12)
-        messages = [{"role": "system", "content": system}]
-        messages.append({"role": "user", "content": "NATAL_CONTEXT_JSON:\n" + json.dumps(natal_context, ensure_ascii=False)})
+        for m in history or []:
+            role = (m.get("role") or "").strip()
+            content = (m.get("content") or "").strip()
+            if role in {"user", "assistant"} and content:
+                messages.append({"role": role, "content": content})
 
-        for m in history:
-            if m["role"] in {"user", "assistant"} and m["content"].strip():
-                messages.append({"role": m["role"], "content": m["content"]})
+        messages.append({"role": "user", "content": (user_message or "").strip()})
 
-        messages.append({"role": "user", "content": user_message.strip()})
+        # безопасный baseline декодинга (можно позже сделать из profile)
+        if hasattr(llm_engine, "gen"):
+            llm_engine.gen.temperature = 0.25 if getattr(p, "verbosity", None) != "detailed" else 0.3
+            llm_engine.gen.top_p = 0.85
+            llm_engine.gen.repetition_penalty = 1.05
 
-        # anti-hallucination decoding baseline (can be overridden by profile if needed)
-        llm_engine.gen.temperature = 0.25 if p.verbosity != "detailed" else 0.3
-        llm_engine.gen.top_p = 0.85
-        llm_engine.gen.repetition_penalty = 1.05
-
-        return await llm_engine.generate_chat(messages)
+        return (await llm_engine.generate_chat(messages)).strip()

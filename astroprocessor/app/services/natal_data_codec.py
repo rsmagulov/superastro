@@ -42,5 +42,5 @@ def _to_plain_dict(value: Any) -> dict[str, Any]:
     d = getattr(value, "__dict__", None)
     if isinstance(d, dict) and d:
         return dict(d)
-
+    
     return {"value": value}

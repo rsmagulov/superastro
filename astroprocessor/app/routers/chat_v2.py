@@ -1,123 +1,191 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Optional, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_chat_session, get_session
-from app.llm.saiga_engine import SaigaEngine
-from app.schemas.chat_v2 import (
-    ChatMessageRequest,
-    ChatMessageResponse,
-    ChatStartRequest,
-    ChatStartResponse,
-)
-from app.services.chat_repo import ChatRepo
+from app.schemas.chat_v2 import ChatMessageRequest, ChatMessageResponse, ChatStartRequest, ChatStartResponse
 from app.services.chart_service import ChartService
+from app.services.chat_repo import ChatRepo
 from app.services.geocode import resolve_place
-from app.services.natal_context_v1 import build_natal_context_v1
+from app.services.natal_context import dumps_natal_context_v1
+from app.settings import settings
+from dataclasses import asdict
+from app.services.signals_builder import build_signals, build_signals_structured
 
-router = APIRouter(prefix="/v2/chat", tags=["chat_v2"])
-
-_chart = ChartService()
+router = APIRouter(prefix="/v2", tags=["chat_v2"])
+_chart_service = ChartService()
 _repo = ChatRepo()
-_llm = SaigaEngine()
 
 
-def _system_prompt(*, natal_context: dict[str, Any], user_profile_json: str | None) -> str:
-    profile_part = ""
-    if user_profile_json:
-        profile_part = f"\n\nUSER_PROFILE_JSON:\n{user_profile_json}"
-    else:
-        profile_part = "\n\nUSER_PROFILE_JSON: (absent)"
+def _resolve_topics(button_id: Optional[str], topic_categories: list[str]) -> list[str]:
+    out: list[str] = []
+    if topic_categories:
+        out.extend([str(x) for x in topic_categories])
+    if button_id:
+        m = getattr(settings, "button_topic_map", {}) or {}
+        out.extend([str(x) for x in (m.get(button_id) or [])])
 
-    return (
-        "Ты — астрологический ассистент SuperAstro.\n"
-        "Отвечай ТОЛЬКО на основе фактов из NATAL_CONTEXT_JSON.\n"
-        "USER_PROFILE_JSON может отсутствовать — это НЕ причина отказываться отвечать.\n"
-        "Запрещено использовать внешние знания о натальной карте, если этого нет в NATAL_CONTEXT_JSON.\n"
-        "Если данных для ответа не хватает — перечисли, каких именно полей не хватает.\n"
-        "Не делай общих советов и не выдумывай положения планет/домов/аспектов.\n\n"
-        "Если в NATAL_CONTEXT_JSON нет houses или houses пустой — запрещено упоминать дома (1/2/…/10 дом).\n"
-        "Каждое утверждение должно ссылаться на конкретное поле NATAL_CONTEXT_JSON (пример: planets.sun.sign, aspects_sorted[0].p1/aspect/orb, angles.asc.sign). Если поля нет — нельзя утверждать это; вместо этого скажи “в контексте нет поля X”.\n"
-        "Если в NATAL_CONTEXT_JSON нет sign/degree/house для объекта — запрещено называть знак/градус/дом.\n"
-        f"NATAL_CONTEXT_JSON:\n{json.dumps(natal_context, ensure_ascii=False, sort_keys=True)}"
-        f"{profile_part}"
-    )
+    seen = set()
+    ded = []
+    for t in out:
+        if t not in seen:
+            seen.add(t)
+            ded.append(t)
+    return ded
 
+@router.get("/health/llm")
+async def llm_health(request: Request):
+    return {
+        "llm_configured": getattr(request.app.state, "llm", None) is not None,
+        "llm_loading": bool(getattr(request.app.state, "llm_loading", False)),
+        "llm_ready": bool(getattr(request.app.state, "llm_ready", False)),
+    }
 
-@router.post("/start", response_model=ChatStartResponse)
+@router.get("/chat/signals")
+async def chat_signals(
+    request: Request,
+    chat_id: str = Query(...),
+    topic: Optional[str] = Query(default=None),
+    format: Literal["compact", "full"] = Query(default="compact"),
+    chat_session: AsyncSession = Depends(get_chat_session),
+):
+    chat = await _repo.get_chat(chat_session, chat_id=chat_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="chat_not_found")
+
+    try:
+        natal_ctx = json.loads(chat.natal_context_json)
+    except Exception:
+        natal_ctx = {}
+
+    active_topic = topic if topic is not None else chat.active_topic
+
+    if format == "compact":
+        signals = build_signals(natal_ctx, topic=active_topic, max_items=12, max_aspects=8)
+        return {
+            "request_id": getattr(request.state, "request_id", ""),
+            "ok": True,
+            "chat_id": chat_id,
+            "topic": active_topic,
+            "signals": signals,
+        }
+
+    resp = build_signals_structured(natal_ctx, topic=active_topic, max_items=12, max_aspects=8)
+    return {
+        "request_id": getattr(request.state, "request_id", ""),
+        "ok": True,
+        "chat_id": chat_id,
+        "topic": active_topic,
+        "data": asdict(resp),
+    }   
+
+@router.post("/chat/start", response_model=ChatStartResponse)
 async def chat_start(
     request: Request,
     req: ChatStartRequest,
-    locale_q: str = Query(None, description="optional override locale"),
-    session: AsyncSession = Depends(get_session),          # astro.db (places)
-    chat_session: AsyncSession = Depends(get_chat_session) # chat.db
+    locale: str = Query(default="ru"),
+    session: AsyncSession = Depends(get_session),
+    chat_session: AsyncSession = Depends(get_chat_session),
 ) -> ChatStartResponse:
-    request_id = getattr(request.state, "request_id", "")
-    user_id = (req.user_id or "anon").strip() or "anon"
-    locale = (locale_q or req.locale or "ru-RU").strip() or "ru-RU"
-    active_topic = (req.active_topic or "general").strip() or "general"
-
-    await _repo.ensure_user(chat_session, user_id=user_id)
+    if locale != "ru":
+        raise HTTPException(status_code=422, detail="only_ru_locale_supported")
 
     place = await resolve_place(req.birth.place_query, locale, session)
-    if not getattr(place, "ok", True) or not getattr(place, "tz_str", None):
-        raise HTTPException(status_code=422, detail=f"place_not_resolved: {getattr(place, 'error', None) or 'unknown'}")
+    if not place.ok or not place.tz_str:
+        return ChatStartResponse(
+            request_id=getattr(request.state, "request_id", ""),
+            ok=False,
+            chat_id="",
+            meta={"place_ok": bool(place.ok), "place_error": place.error},
+            error=place.error or "place_not_resolved",
+        )
 
     birth = req.birth.to_birth_input().to_domain()
-    natal_data = await _chart.build_natal(user_name=req.name, birth=birth, place=place)
+    natal_data = await _chart_service.build_natal(user_name=req.name, birth=birth, place=place)
+    natal_context_json = dumps_natal_context_v1(natal_data)
 
-    natal_context = build_natal_context_v1(natal_data)
+    topics = _resolve_topics(req.button_id, req.topic_categories)
+    active_topic = topics[0] if topics else None
+
+    if req.user_id:
+        await _repo.ensure_user(chat_session, user_id=req.user_id)
 
     chat_id = await _repo.create_chat(
         chat_session,
-        user_id=user_id,
+        natal_context_json=natal_context_json,
+        user_id=req.user_id,
         active_topic=active_topic,
-        natal_context_json=natal_context,
     )
 
     return ChatStartResponse(
+        request_id=getattr(request.state, "request_id", ""),
         ok=True,
-        request_id=request_id,
         chat_id=chat_id,
-        user_id=user_id,
-        active_topic=active_topic,
-        natal_context={"__probe": natal_context.get("__probe", {})},
+        meta={"active_topic": active_topic, "topics": topics},
+        error=None,
     )
 
 
-@router.post("", response_model=ChatMessageResponse)
+@router.post("/chat", response_model=ChatMessageResponse)
 async def chat_message(
     request: Request,
     req: ChatMessageRequest,
     chat_session: AsyncSession = Depends(get_chat_session),
 ) -> ChatMessageResponse:
-    request_id = getattr(request.state, "request_id", "")
+    llm_engine = getattr(request.app.state, "llm", None)
+    if llm_engine is None:
+        raise HTTPException(status_code=503, detail="llm_not_configured")
+    
+    if getattr(request.app.state, "llm_loading", False) or not getattr(request.app.state, "llm_ready", False):
+        raise HTTPException(status_code=503, detail="llm_loading")
+
+    if hasattr(llm_engine, "is_ready") and not llm_engine.is_ready():
+        raise HTTPException(status_code=503, detail="llm_loading")
 
     chat = await _repo.get_chat(chat_session, chat_id=req.chat_id)
-    if not chat:
+    if chat is None:
         raise HTTPException(status_code=404, detail="chat_not_found")
 
-    natal_context = chat.get("natal_context_json") or {}
-    user_id = chat.get("user_id") or "anon"
+    topic = req.topic if req.topic is not None else chat.active_topic
+    if req.topic is not None:
+        await _repo.set_chat_topic(chat_session, chat_id=chat.chat_id, topic=req.topic)
 
-    await _repo.add_message(chat_session, chat_id=req.chat_id, role="user", content=req.message)
+    try:
+        natal_ctx = json.loads(chat.natal_context_json)
+    except Exception:
+        natal_ctx = {}
 
-    user_profile_json = await _repo.get_user_profile(chat_session, user_id=user_id)
+    user_profile = {}
+    if chat.user_id:
+        user_profile = await _repo.get_user_profile(chat_session, user_id=chat.user_id)
 
-    system = _system_prompt(natal_context=natal_context, user_profile_json=user_profile_json)
+    history = await _repo.get_messages(chat_session, chat_id=chat.chat_id, limit=12)
+    history_plus = [*history, {"role": "user", "content": req.message}]
 
-    import asyncio
-    answer = await asyncio.to_thread(_llm.generate, system_prompt=system, user_prompt=req.message)
+    try:
+        reply = await _chart_service.chat_with_natal_v2(
+            natal_data=natal_ctx,
+            topics=[topic] if topic else [],
+            messages=history_plus,
+            llm_engine=llm_engine,
+            user_profile=user_profile,
+        )
+    except RuntimeError as e:
+        if str(e) == "llm_not_ready":
+            raise HTTPException(status_code=503, detail="llm_loading")
+        raise
 
-    await _repo.add_message(chat_session, chat_id=req.chat_id, role="assistant", content=answer)
+    await _repo.add_message(chat_session, chat_id=chat.chat_id, role="user", content=req.message)
+    await _repo.add_message(chat_session, chat_id=chat.chat_id, role="assistant", content=reply)
 
     return ChatMessageResponse(
+        request_id=getattr(request.state, "request_id", ""),
         ok=True,
-        request_id=request_id,
-        chat_id=req.chat_id,
-        answer=answer,
+        reply=reply,
+        meta={"active_topic": topic, "user_id": chat.user_id},
+        error=None,
     )
